@@ -11,13 +11,15 @@ import android.app.*;
 import android.content.*;
 import android.widget.*;
 import android.os.*;
+import org.w3c.dom.*;
+import com.zst.xposed.halo.floatingwindow3.*;
 
 
 public class XHFWService extends Service {
 	Context mContext;
-	static final String SERVICE_NAME = "service.XHFWService";
-	public static final String SHOW_MULTIWINDOW_DRAGGER = "com.zst.xposed.halo.floatingwindow3" + ".SHOW_MULTIWINDOW_DRAGGER";
-	public static final String INTENT_FLOAT_DOT_BOOL = "float_dot_bool";
+	static final String SERVICE_NAME = Common.FLOAT_DOT_SERVICE_ACTION;
+	public static final String SHOW_MULTIWINDOW_DRAGGER = Common.SHOW_MULTIWINDOW_DRAGGER;
+	public static final String INTENT_FLOAT_DOT_BOOL = Common.INTENT_FLOAT_DOT_BOOL;
 	static Class<?> classSvcMgr;
 	public FloatingDot fd = null;
 

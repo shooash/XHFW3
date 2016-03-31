@@ -55,7 +55,7 @@
                 android:summary="@string/pref_movable_resizing_aero_snap_enabled_summary"
                 android:title="@string/pref_movable_resizing_aero_snap_enabled_title" />
 
-            <com.zst.xposed.halo.floatingwindow.preferences.WidgetNumberPicker
+            <com.zst.xposed.halo.floatingwindow3.preferences.WidgetNumberPicker
                 defaultValue="1000"
                 maximum="10000"
                 minimum="1"
@@ -70,7 +70,7 @@
                 android:key="window_resizing_aero_snap_splitbar"
                 android:summary="@string/pref_movable_resizing_aero_snap_splitbar_summary"
                 android:title="@string/pref_movable_resizing_aero_snap_splitbar_title" />
-            <com.zst.xposed.halo.floatingwindow.preferences.ColorPicker
+            <com.zst.xposed.halo.floatingwindow3.preferences.ColorPicker
                 defaultValue="33b5e5"
                 android:dependency="window_resizing_aero_snap_enabled"
                 android:key="window_resizing_aero_snap_splitbar_color"
@@ -109,14 +109,14 @@
             android:summary="@string/pref_movable_dragging_enabled_summary"
             android:title="@string/pref_movable_dragging_enabled_title" />
 
-        <com.zst.xposed.halo.floatingwindow.preferences.ColorPicker
+        <com.zst.xposed.halo.floatingwindow3.preferences.ColorPicker
             defaultValue="FFFFFF"
             android:dependency="window_triangle_enabled"
             android:key="window_triangle_color"
             android:summary="@string/pref_movable_triangle_color_summary"
             android:title="@string/pref_movable_triangle_color_title" />
 
-        <com.zst.xposed.halo.floatingwindow.preferences.WidgetFloatPercentage
+        <com.zst.xposed.halo.floatingwindow3.preferences.WidgetFloatPercentage
             defaultValue="1"
             maximum="1"
             minimum="0"
@@ -125,7 +125,7 @@
             android:summary="@string/pref_movable_triangle_alpha_summary"
             android:title="@string/pref_movable_triangle_alpha_title" />
 
-        <com.zst.xposed.halo.floatingwindow.preferences.WidgetNumberPicker
+        <com.zst.xposed.halo.floatingwindow3.preferences.WidgetNumberPicker
             defaultValue="36"
             maximum="100"
             minimum="1"
@@ -176,14 +176,14 @@
             android:summary="@string/pref_movable_dragging_enabled_summary"
             android:title="@string/pref_movable_dragging_enabled_title" />
 
-        <com.zst.xposed.halo.floatingwindow.preferences.ColorPicker
+        <com.zst.xposed.halo.floatingwindow3.preferences.ColorPicker
             defaultValue="FFFFFF"
             android:dependency="window_quadrant_enabled"
             android:key="window_quadrant_color"
             android:summary="@string/pref_movable_quadrant_color_summary"
             android:title="@string/pref_movable_quadrant_color_title" />
 
-        <com.zst.xposed.halo.floatingwindow.preferences.WidgetFloatPercentage
+        <com.zst.xposed.halo.floatingwindow3.preferences.WidgetFloatPercentage
             defaultValue="1"
             maximum="1"
             minimum="0"
@@ -192,7 +192,7 @@
             android:summary="@string/pref_movable_quadrant_alpha_summary"
             android:title="@string/pref_movable_quadrant_alpha_title" />
 
-        <com.zst.xposed.halo.floatingwindow.preferences.WidgetNumberPicker
+        <com.zst.xposed.halo.floatingwindow3.preferences.WidgetNumberPicker
             defaultValue="36"
             maximum="100"
             minimum="1"
@@ -230,14 +230,14 @@
             android:summary="@string/pref_movable_border_enable_summary"
             android:title="@string/pref_movable_border_enable_title" />
 
-        <com.zst.xposed.halo.floatingwindow.preferences.ColorPicker
+        <com.zst.xposed.halo.floatingwindow3.preferences.ColorPicker
             defaultValue="000000"
             android:dependency="window_border_enabled"
             android:key="window_border_color"
             android:summary="@string/pref_movable_border_color_summary"
             android:title="@string/pref_movable_border_color_title" />
 
-        <com.zst.xposed.halo.floatingwindow.preferences.WidgetNumberPicker
+        <com.zst.xposed.halo.floatingwindow3.preferences.WidgetNumberPicker
             defaultValue="0"
             maximum="100"
             minimum="0"
@@ -265,7 +265,7 @@
                 android:summary="@string/pref_movable_others_tinted_title_enable_summary"
                 android:title="@string/pref_movable_others_tinted_title_enable_title" />
 
-            <com.zst.xposed.halo.floatingwindow.preferences.WidgetFloatPercentage
+            <com.zst.xposed.halo.floatingwindow3.preferences.WidgetFloatPercentage
                 defaultValue="0.9"
                 maximum="1"
                 minimum="0"
