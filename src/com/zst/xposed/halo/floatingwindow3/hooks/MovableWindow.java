@@ -609,7 +609,8 @@ public class MovableWindow {
 		filters.addAction(Intent.ACTION_CONFIGURATION_CHANGED);
 		filters.addAction(Common.REFRESH_FLOAT_DOT_POSITION);
 
-		if((br!=null)&&(activity!=null)) XposedHelpers.callMethod(activity, "registerReceiver", br, filters);
+		//if((br!=null)&&(activity!=null)) XposedHelpers.callMethod(activity, "registerReceiver", br, filters);
+		window.getContext().registerReceiver(br, filters);
 		setTagInternalForView(window.getDecorView(), Common.LAYOUT_RECEIVER_TAG, br);
 	}
 
