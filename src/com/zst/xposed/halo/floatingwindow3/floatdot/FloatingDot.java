@@ -9,6 +9,7 @@ import android.util.*;
 import android.media.*;
 import java.lang.annotation.*;
 import com.zst.xposed.halo.floatingwindow3.*;
+import android.widget.TableLayout.*;
 
 public class FloatingDot implements Runnable
 {
@@ -31,14 +32,15 @@ public class FloatingDot implements Runnable
 
 	/*Float dot commons*/
 
-	public static final String REFRESH_FLOAT_DOT_POSITION = "com.zst.xposed.halo.floatingwindow3" + ".REFRESH_FLOAT_DOT";
-	public static final String INTENT_FLOAT_DOT_EXTRA = "float_dot_extra";
+	public static final String REFRESH_FLOAT_DOT_POSITION = Common.REFRESH_FLOAT_DOT_POSITION;
+	public static final String INTENT_FLOAT_DOT_EXTRA = Common.INTENT_FLOAT_DOT_EXTRA;
 
 	final WindowManager.LayoutParams paramsF = new WindowManager.LayoutParams(
 		WindowManager.LayoutParams.WRAP_CONTENT,
 		WindowManager.LayoutParams.WRAP_CONTENT,
 		WindowManager.LayoutParams.TYPE_PHONE,
-		WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+		WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE |
+		WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
 		PixelFormat.TRANSLUCENT);
 	Context mContext;
 	boolean mViewOn = false;

@@ -6,14 +6,14 @@
     <PreferenceScreen
         android:summary="@string/pref_window_top_summary"
         android:title="@string/pref_window_top_title" >
-        <com.zst.xposed.halo.floatingwindow.preferences.WidgetWindowAlphaPicker
+        <com.zst.xposed.halo.floatingwindow3.preferences.WidgetWindowAlphaPicker
             defaultValue="1"
             maximum="1"
             minimum="0.25"
             android:key="window_alpha"
             android:summary="@string/pref_alpha_summary"
             android:title="@string/pref_alpha_title" />
-        <com.zst.xposed.halo.floatingwindow.preferences.WidgetBackgroundDimPicker
+        <com.zst.xposed.halo.floatingwindow3.preferences.WidgetBackgroundDimPicker
             defaultValue="0.25"
             maximum="1"
             minimum="0"
@@ -21,7 +21,7 @@
             android:summary="@string/pref_dim_summary"
             android:title="@string/pref_dim_title" />
 
-        <com.zst.xposed.halo.floatingwindow.preferences.WidgetGravityChooser
+        <com.zst.xposed.halo.floatingwindow3.preferences.WidgetGravityChooser
             android:key="window_gravity"
             android:summary="@string/pref_gravity_summary"
             android:title="@string/pref_gravity_title" />
@@ -31,28 +31,28 @@
     <PreferenceScreen
         android:summary="@string/pref_size_top_summary"
         android:title="@string/pref_size_top_title" >
-        <com.zst.xposed.halo.floatingwindow.preferences.WidgetFloatPercentage
+        <com.zst.xposed.halo.floatingwindow3.preferences.WidgetFloatPercentage
             defaultValue="0.95"
             maximum="1"
             minimum="0.1"
             android:key="window_portrait_width"
             android:summary="@string/pref_width_portrait_summary"
             android:title="@string/pref_width_portrait_title" />
-        <com.zst.xposed.halo.floatingwindow.preferences.WidgetFloatPercentage
+        <com.zst.xposed.halo.floatingwindow3.preferences.WidgetFloatPercentage
             defaultValue="0.7"
             maximum="1"
             minimum="0.1"
             android:key="window_portrait_height"
             android:summary="@string/pref_height_portrait_summary"
             android:title="@string/pref_height_portrait_title" />
-        <com.zst.xposed.halo.floatingwindow.preferences.WidgetFloatPercentage
+        <com.zst.xposed.halo.floatingwindow3.preferences.WidgetFloatPercentage
             defaultValue="0.7"
             maximum="1"
             minimum="0.1"
             android:key="window_landscape_width"
             android:summary="@string/pref_width_landscape_summary"
             android:title="@string/pref_width_landscape_title" />
-        <com.zst.xposed.halo.floatingwindow.preferences.WidgetFloatPercentage
+        <com.zst.xposed.halo.floatingwindow3.preferences.WidgetFloatPercentage
             defaultValue="0.85"
             maximum="1"
             minimum="0.1"
@@ -120,7 +120,7 @@
                 android:summary="@string/pref_whiteblacklist_summary"
                 android:title="@string/pref_whiteblacklist_title" />
 
-        <com.zst.xposed.halo.floatingwindow.preferences.IntListPreference
+        <com.zst.xposed.halo.floatingwindow3.preferences.IntListPreference
             android:defaultValue="8193"
             android:entries="@array/option_floating_flags"
             android:entryValues="@array/option_floating_flags_values"
@@ -200,7 +200,7 @@
              android:title="@string/pref_statusbar_taskbar_hide_icon_title"
              android:dependency="statusbar_taskbar_enabled" />
          
-         <com.zst.xposed.halo.floatingwindow.preferences.WidgetNumberPicker
+         <com.zst.xposed.halo.floatingwindow3.preferences.WidgetNumberPicker
              defaultValue="5"
              maximum="15"
              minimum="1"
