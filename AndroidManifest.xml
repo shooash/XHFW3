@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.zst.xposed.halo.floatingwindow"
+    package="com.zst.xposed.halo.floatingwindow3"
     android:installLocation="internalOnly"
     android:versionCode="300"
     android:versionName="3.00beta" >
@@ -28,7 +28,7 @@
             android:value="@string/app_description" />
 
         <activity
-            android:name="com.zst.xposed.halo.floatingwindow.MainPreference"
+            android:name="com.zst.xposed.halo.floatingwindow3.MainPreference"
             android:label="@string/app_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -38,7 +38,7 @@
         </activity>
         
         <activity
-            android:name="com.zst.xposed.halo.floatingwindow.FirstUseActivity"
+            android:name="com.zst.xposed.halo.floatingwindow3.FirstUseActivity"
             android:label="FirstUseActivity" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -46,41 +46,41 @@
         </activity>
         
         <activity
-            android:name="com.zst.xposed.halo.floatingwindow.preferences.BlacklistActivity"
+            android:name="com.zst.xposed.halo.floatingwindow3.preferences.BlacklistActivity"
             android:label="@string/app_blacklist" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
             </intent-filter>
         </activity>
         <activity
-            android:name="com.zst.xposed.halo.floatingwindow.preferences.WhitelistActivity"
+            android:name="com.zst.xposed.halo.floatingwindow3.preferences.WhitelistActivity"
             android:label="@string/app_whitelist" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
             </intent-filter>
         </activity>
         <activity
-            android:name="com.zst.xposed.halo.floatingwindow.preferences.TitleBarSettingsActivity"
+            android:name="com.zst.xposed.halo.floatingwindow3.preferences.TitleBarSettingsActivity"
             android:label="@string/pref_movable_sub_titlebar_title" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
             </intent-filter>
         </activity>
         <activity
-            android:name="com.zst.xposed.halo.floatingwindow.preferences.StatusbarTaskbarPinAppActivity"
+            android:name="com.zst.xposed.halo.floatingwindow3.preferences.StatusbarTaskbarPinAppActivity"
             android:label="@string/app_statusbar_taskbar" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
             </intent-filter>
         </activity>
         <activity
-            android:name="com.zst.xposed.halo.floatingwindow.TestingActivity"
+            android:name="com.zst.xposed.halo.floatingwindow3.TestingActivity"
             android:label="@string/app_testing" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
             </intent-filter>
         </activity>
-		<service android:name="com.zst.xposed.halo.floatingwindow.floatdot.XHFWService" android:process=":remote" >
+		<service android:name="com.zst.xposed.halo.floatingwindow3.floatdot.XHFWService" android:process=":remote" >
 			<intent-filter>
 				<action android:name="service.XHFWService" />
 			</intent-filter>
