@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">XHaloFloatingWindow</string>
+    <string name="app_name">XHFW3 beta</string>
     <string name="app_description">Halo Floating Windows von Paranoid Android, verschiebbar &amp; größenveränderbar.(zst123)</string>
     <string name="app_blacklist">Blacklist</string>
     <string name="app_whitelist">Whitelist</string>

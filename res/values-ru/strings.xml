@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">XHaloFloatingWindow</string>
+    <string name="app_name">XHFW3 beta</string>
     <string name="app_description">Плавающие окна из Paranoid Android с настройками перемещения и изменения размеров.(zst123)</string>
     <string name="app_blacklist">Черный список</string>
     <string name="app_whitelist">Белый список</string>

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">XHalo懸浮窗口</string>
+    <string name="app_name">XHFW3 beta</string>
     <string name="app_description">來自Paranoid Android的懸浮窗口模塊。請通過在模塊內開啟“移動與調整”來使用懸浮窗口功能。（開發by zst123）</string>
     <string name="app_blacklist">黑名單</string>
     <string name="app_whitelist">白名單</string>
