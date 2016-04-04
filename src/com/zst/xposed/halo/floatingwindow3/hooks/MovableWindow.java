@@ -5,12 +5,8 @@ import com.zst.xposed.halo.floatingwindow3.MainXposed;
 import com.zst.xposed.halo.floatingwindow3.R;
 import com.zst.xposed.halo.floatingwindow3.helpers.AeroSnap;
 import com.zst.xposed.halo.floatingwindow3.helpers.MovableOverlayView;
-//import com.zst.xposed.halo.floatingwindow3.helpers.MultiWindowAppManager;
-//import com.zst.xposed.halo.floatingwindow3.helpers.SwipeToNextApp;
 import com.zst.xposed.halo.floatingwindow3.helpers.Util;
-//import com.zst.xposed.halo.floatingwindow3.hooks.ipc.XHFWService;
 import com.zst.xposed.halo.floatingwindow3.floatdot.XHFWInterface;
-//import com.zst.xposed.halo.floatingwindow3.hooks.ipc.XHFWInterface;
 import android.annotation.SuppressLint;
 import android.app.ActionBar;
 import android.app.Activity;
@@ -50,12 +46,14 @@ import android.content.pm.*;
 import de.robv.android.xposed.*;
 import android.app.*;
 import android.content.*;
-import android.util.*; 
+import android.util.*;
+import com.zst.xposed.halo.floatingwindow3.floatdot.*; 
 
 
 public class MovableWindow {
 	
-	static void DEBUG(String tag){
+	public static void DEBUG(String tag){
+//		XposedBridge.log("CHECK " + tag + " mWindows size: " + mWindows.size() + " at " + (mWindowHolder==null? " NULL " : mWindowHolder.packageName));
 //		if(mWindowHolder!=null)
 //			XposedBridge.log("Check " + tag + " mWH: " + mWindowHolder.packageName + " Snap: " + mWindowHolder.SnapGravity + " " + mWindowHolder.isSnapped + " gravity " + mWindowHolder.width + ":" + mWindowHolder.height + " at " + mWindowHolder.x + ":" + mWindowHolder.y);
 //		else
@@ -71,9 +69,9 @@ public class MovableWindow {
 	static final int ID_NOTIFICATION_RESTORE = 22222222;
 	static final String INTENT_APP_PKG = "pkg";
 
-	final MainXposed mMainXposed;
+	static MainXposed mMainXposed;
 	final Resources mModRes;
-	final XSharedPreferences mPref;
+	static XSharedPreferences mPref;
 	
 	/* App ActionBar Moving Values */
 	private Float screenX;
@@ -83,11 +81,13 @@ public class MovableWindow {
 	private Float leftFromScreen;
 	private Float topFromScreen;
 
-	Activity mActivity; // Current app activity
-	boolean mActionBarDraggable;
-	boolean mMinimizeToStatusbar;
+	static Activity mActivity; // Current app activity
+	static boolean mActionBarDraggable;
+	static boolean mMinimizeToStatusbar;
 	public static WindowHolder mWindowHolder = null;
 	public static WindowHolder mWindowHolderCached = null;
+	private static ArrayList<Window> mWindows = new ArrayList<Window>();
+	
 	
 	public static boolean mRetainStartPosition;
 	public static boolean mConstantMovePosition;
@@ -100,13 +100,12 @@ public class MovableWindow {
 	/* AeroSnap*/
 	public static AeroSnap mAeroSnap = null;
 	public static boolean mAeroSnapChangeTitleBarVisibility;
-	boolean mAeroSnapEnabled;
-	int mAeroSnapDelay;
-	boolean mAeroSnapSwipeApp;
-	int mPreviousForceAeroSnap;
+	public static boolean mAeroSnapEnabled;
+	static int mAeroSnapDelay;
+	static boolean mAeroSnapSwipeApp;
+	static int mPreviousForceAeroSnap;
 	
 	//Service
-	static ServiceConnection XHFWServiceConnection = null;
 	static XHFWInterface XHFWInterfaceLink = null;
 	
 	//Float dot
@@ -121,18 +120,169 @@ public class MovableWindow {
 		mModRes = main.sModRes;
 		mPref = main.mPref;
 		
-		activityHook();
+		hook_activity();
 		inject_dispatchTouchEvent();
 
-		try {
-			injectTriangle(lpparam);
-		} catch (Exception e) {
-			XposedBridge.log(Common.LOG_TAG + "Movable / inject_DecorView_generateLayout");
-			XposedBridge.log(e);
-		}
+	}
+	/***********************************************************/
+	/*********** ACTIVITY HOOKS ********************************/
+	/***********************************************************/
+	
+	private void hook_activity(){
+		XposedBridge.hookAllMethods(Activity.class, "onCreate", new XC_MethodHook() {
+				@Override
+				protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+					mActivity = (Activity) param.thisObject;
+					/*  We don't touch floating dialogs  */
+					if (mActivity.getWindow().isFloating()) return;
+					/* Setup window holder */
+					if(!initWindow()) return;
+					/* if it is movable - continue and add it to windows array */
+					mWindows.add(mWindowHolder.mWindow);
+					/* we need to snap from very begining */
+					if((mAeroSnap!=null)&&(mWindowHolder.isSnapped)) mAeroSnap.forceSnapGravity(mWindowHolder.SnapGravity);
+					/* add overlay */
+					setOverlayView();
+					showTitleBar();
+					DEBUG("onCreate");
+				}
+			});
+			
+		XposedBridge.hookAllMethods(Activity.class, "onStart", new XC_MethodHook() {
+				@Override
+				protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+					DEBUG("onStartSTART");
+					mActivity = (Activity) param.thisObject;
+					/*  We don't touch floating dialogs  */
+					if (mActivity.getWindow().isFloating()) return;
+					/* no need to act if it's not movable */
+					if(!mWindowHolder.isMovable) return;
+					// Add our overlay view
+					setOverlayView();
+					showTitleBar();
+					DEBUG("onStartEND");
+				}
+			});
+			
+		XposedBridge.hookAllMethods(Activity.class, "onResume", new XC_MethodHook() {
+				@Override
+				protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+					DEBUG("onResumeSTART");
+					mActivity = (Activity) param.thisObject;
+					/*  We don't touch floating dialogs  */
+					if (mActivity.getWindow().isFloating()) return;
+					/* no need to act if it's not movable */
+					if(!mWindowHolder.isMovable) return;		
+					/** update current window **/
+					if(mWindowHolder!=null) //
+						mWindowHolder.setWindow(mActivity);
+					/* check if we need to show or hide floatdot */
+					toggleDragger();
+					/* FIX FORCED ORIENTATION ON MOVABLE WINDOWS */
+					mActivity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER);		
+					/* bring overlay to front */
+					putOverlayView();
+					showTitleBar();
+					/* reconnect XHFWService if needed */
+					connectService();
+					//restore snap layout if needed
+					if(mWindowHolder.isSnapped&&mAeroSnap!=null) mAeroSnap.forceSnapGravity(mWindowHolder.SnapGravity);
+					else /* restore layout */
+						pushLayout();
+					/* make all windows of the activity to keep layout - they loose it constantly! */
+					syncLayoutParams();
+					DEBUG("onResumeEND");
+				}
+			});
+			
+		XposedBridge.hookAllMethods(Activity.class, "onConfigurationChanged", new XC_MethodHook() {
+				@Override
+				protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+					mActivity = (Activity) param.thisObject;
+					DEBUG("ACTION_CONFIGURATION_CHANGED");
+					/*  We don't touch floating dialogs  */
+					if (mActivity.getWindow().isFloating()) return;
+					/* no need to act if it's not movable */
+					if(!mWindowHolder.isMovable) return;		
+					mAeroSnap.forceSnapGravity(mWindowHolder.SnapGravity);
+					mWindowHolder.cachedRotation = Util.getDisplayRotation(mWindowHolder.mActivity);
+					return;
+				}
+			});
+		
+		XposedBridge.hookAllMethods(Activity.class, "onPause", new XC_MethodHook() {
+				@Override
+				protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+					mActivity = (Activity) param.thisObject;
+					DEBUG("onPause");
+					/*  We don't touch floating dialogs  */
+					if (mActivity.getWindow().isFloating()) return;
+					/* no need to act if it's not movable */
+					if(!mWindowHolder.isMovable) return;		
+					/* disable dragger */
+					toggleDragger(false);
+					return;
+				}
+			});
+			
+		XposedBridge.hookAllMethods(Activity.class, "onDestroy", new XC_MethodHook() {
+				@Override
+				protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+					DEBUG("onDestroy");
+					/*  We don't touch floating dialogs  */
+					if (((Activity)param.thisObject).getWindow().isFloating()) return;
+					/* no need to act if it's not movable */
+					if(mWindowHolder==null||!mWindowHolder.isMovable) return;			
+					/* remove from window stack */
+					mWindows.remove(((Activity)param.thisObject).getWindow());
+					if(mWindows.size()<1) {
+						mWindowHolder = null;
+					}
+					// hide the resizing outline
+					((Activity)param.thisObject).sendBroadcast(new Intent(Common.SHOW_OUTLINE));
+				}
+			});
 	}
 	
-	private void loadPrefs(){
+	/***********************************************************/
+	/********************* INIT ********************************/
+	/***********************************************************/
+	
+	private static boolean initWindow(){ //return: continue?
+		/** if it is not the first call just update current window **/
+		if(mWindowHolder!=null){ //
+			mWindowHolder.setWindow(mActivity);
+			return (mWindowHolder.isMovable);
+		}	
+		/*********** this is what we need to do once **********/
+		/* load and set prefs */
+		loadPrefs();
+		/* setup windowholder - to keep and manipulate window layouts */
+		mWindowHolder = new WindowHolder(mActivity, mPref);
+		/* setup aerosnap class - to manage snap-to-side windows */
+		mAeroSnap = mAeroSnapEnabled ? new AeroSnap(mAeroSnapDelay) : null;
+		/* set current window */
+		mWindowHolder.setWindow(mActivity);
+		/* check white and blacklists */
+		//mWindowHolder.isMovable = blackWhiteListed();
+		/* no need to go on if is not movable */
+		if(!mWindowHolder.isMovable) return false;
+		mPref.reload();
+		/* we should set proper halo flags */
+		setIntentFlags();
+		/* FIX focus other windows not working on some apps */
+		mWindowHolder.mWindow.addFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL);
+		/* Fix Chrome dim */
+		if(!mWindowHolder.mWindow.getContext().getPackageName().startsWith("com.android.chrome"))
+			mWindowHolder.mWindow.setFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND, WindowManager.LayoutParams.FLAG_DIM_BEHIND);
+		/* set initial layout */
+		refreshScreenSize();
+		setInitLayout();
+		pushLayout();
+		return true;
+	}
+	
+	private static void loadPrefs(){
 		mPref.reload();
 		mActionBarDraggable = mPref.getBoolean(Common.KEY_WINDOW_ACTIONBAR_DRAGGING_ENABLED, Common.DEFAULT_WINDOW_ACTIONBAR_DRAGGING_ENABLED);
 		mRetainStartPosition = mPref.getBoolean(Common.KEY_WINDOW_MOVING_RETAIN_START_POSITION, Common.DEFAULT_WINDOW_MOVING_RETAIN_START_POSITION);
@@ -140,11 +290,7 @@ public class MovableWindow {
 
 		mPreviousOrientation = mActivity.getResources().getConfiguration().orientation;
 		mMinimizeToStatusbar = mPref.getBoolean(Common.KEY_MINIMIZE_APP_TO_STATUSBAR, Common.DEFAULT_MINIMIZE_APP_TO_STATUSBAR);
-		//4WAYMOD
-		Display display = ((WindowManager) mActivity.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
-		mPreviousRotation = display.getRotation();
-
-
+		
 		mAeroSnapEnabled = mPref.getBoolean(Common.KEY_WINDOW_RESIZING_AERO_SNAP_ENABLED, Common.DEFAULT_WINDOW_RESIZING_AERO_SNAP_ENABLED);
 		mAeroSnapDelay = mPref.getInt(Common.KEY_WINDOW_RESIZING_AERO_SNAP_DELAY, Common.DEFAULT_WINDOW_RESIZING_AERO_SNAP_DELAY);
 		mAeroSnapSwipeApp = mPref.getBoolean(Common.KEY_WINDOW_RESIZING_AERO_SNAP_SWIPE_APP, Common.DEFAULT_WINDOW_RESIZING_AERO_SNAP_SWIPE_APP);
@@ -152,154 +298,167 @@ public class MovableWindow {
 		mMaximizeChangeTitleBarVisibility = mPref.getBoolean(Common.KEY_WINDOW_TITLEBAR_MAXIMIZE_HIDE, Common.DEFAULT_WINDOW_TITLEBAR_MAXIMIZE_HIDE);
 	}
 	
-	static private void connectService(){
-		DEBUG("connectService");
-		if(mWindowHolder.serviceConnected)
-			{
-				getFloatingDotCoordinates();
-				return;
-				}
-		if(XHFWServiceConnection==null)
-		XHFWServiceConnection = new ServiceConnection(){
-			@Override
-			public void onServiceConnected(ComponentName name, IBinder binder)
-			{
-				XHFWInterfaceLink = XHFWInterface.Stub.asInterface((IBinder) binder);				
-				getFloatingDotCoordinates();
-			}
+	private static void setIntentFlags(){
+		Intent mIntent = mWindowHolder.mActivity.getIntent();
+		int flags = mIntent.getFlags();
+		flags = flags | mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW);
+		flags = flags | Intent.FLAG_ACTIVITY_NO_USER_ACTION;
+		flags &= ~Intent.FLAG_ACTIVITY_TASK_ON_HOME;
 
-			@Override
-			public void onServiceDisconnected(ComponentName name)
-			{
-				XHFWInterfaceLink = null;
-				mWindowHolder.serviceConnected=false;
-			}	
-		};
-		
+		if (!mPref.getBoolean(Common.KEY_SHOW_APP_IN_RECENTS, Common.DEFAULT_SHOW_APP_IN_RECENTS)) {
+			flags = flags | Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS;
+		} else if (mPref.getBoolean(Common.KEY_FORCE_APP_IN_RECENTS, Common.DEFAULT_FORCE_APP_IN_RECENTS)) {
+			flags &= ~Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS;
+		}
+		mIntent.setFlags(flags);
+		mWindowHolder.mActivity.setIntent(mIntent);
+	}
+	
+	private static void setInitLayout(){
+		mWindowHolder.mWindow.setGravity(mPref.getInt(Common.KEY_GRAVITY, Common.DEFAULT_GRAVITY));
+		WindowManager.LayoutParams params = mWindowHolder.mWindow.getAttributes();
+		Util.addPrivateFlagNoMoveAnimationToLayoutParam(params);
+		mWindowHolder.mWindow.setAttributes(params);
+		mWindowHolder.mWindow.addFlags(WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
+		mWindowHolder.mWindow.setWindowAnimations(android.R.style.Animation_Dialog);
+		mWindowHolder.mWindow.clearFlags(WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER);
+		switch(mPref.getInt(Common.KEY_KEYBOARD_MODE, Common.DEFAULT_KEYBOARD_MODE)){
+			case 2:
+				mWindowHolder.mWindow.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
+				break;
+			case 3:
+				mWindowHolder.mWindow.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+				break;
+		}
+		switch(Util.getScreenOrientation(mWindowHolder.mActivity)){
+			case Configuration.ORIENTATION_LANDSCAPE:
+				mWindowHolder.width = (int) (mScreenWidth * mPref.getFloat(Common.KEY_LANDSCAPE_WIDTH, Common.DEFAULT_LANDSCAPE_WIDTH));
+				mWindowHolder.height = (int) (mScreenHeight * mPref.getFloat(Common.KEY_LANDSCAPE_HEIGHT, Common.DEFAULT_LANDSCAPE_HEIGHT));
+				break;
+			case Configuration.ORIENTATION_PORTRAIT:
+			default:
+				mWindowHolder.width = (int) (mScreenWidth * mPref.getFloat(Common.KEY_PORTRAIT_WIDTH, Common.DEFAULT_PORTRAIT_WIDTH));
+				mWindowHolder.height = (int) (mScreenHeight * mPref.getFloat(Common.KEY_PORTRAIT_HEIGHT, Common.DEFAULT_PORTRAIT_HEIGHT));
+				break;
+		}
+		mWindowHolder.x = (mScreenWidth-mWindowHolder.width)/2;
+		mWindowHolder.y = (mScreenHeight-mWindowHolder.height)/2;
+	}
+	
+	
+	/***********************************************************/
+	/************ FLOATING DOT COMMUNICATION *******************/
+	/***********************************************************/
+	final static ServiceConnection XHFWServiceConnection = new ServiceConnection(){
+		@Override
+		public void onServiceConnected(ComponentName name, IBinder binder)
+		{
+			XHFWInterfaceLink = XHFWInterface.Stub.asInterface(binder);				
+			getFloatingDotCoordinates();
+			registerLayoutBroadcastReceiver();
+		}
+
+		@Override
+		public void onServiceDisconnected(ComponentName name)
+		{
+			XHFWInterfaceLink = null;
+			unregisterLayoutBroadcastReceiver();
+		}	
+	};
+
+	public static void connectService(){
+		DEBUG("connectService");
 		if(XHFWInterfaceLink == null){
 			Intent intent = new Intent(Common.FLOAT_DOT_SERVICE_ACTION);
 			intent.setPackage(Common.FLOAT_DOT_PACKAGE);
 			mWindowHolder.mActivity.bindService(intent, XHFWServiceConnection, Service.BIND_AUTO_CREATE);
 		}
-		
-	}
 
-	private void setDebutHaloLayout(){
-		refreshScreenSize();
-		/*FIX focus other windows not working on some apps*/
-		mWindowHolder.mWindow.addFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL);
-		LayoutScaling.appleFloating(mPref, mWindowHolder.mWindow);
-		pullLayout();
-		mWindowHolder.x = (mScreenWidth-mWindowHolder.width)/2;
-		mWindowHolder.y = (mScreenHeight-mWindowHolder.height)/2;
-		pushLayout();
-		connectService();
 	}
 	
-	public static void getFloatingDotCoordinates(){
-		try
-		{
-			mFloatDotCoordinates[0]=mScreenWidth/2;
-			mFloatDotCoordinates[1]=mScreenHeight/2;
-			int[] result = XHFWInterfaceLink.getCurrentFloatdotCoordinates();
-			if(result==null) return;
-			mFloatDotCoordinates = result;
-			/*We need to forceSnap once on create because some apps are started snapped with wrong params - so we just fix the layout*/
-			if((!mWindowHolder.isSet)&&(mWindowHolder.isSnapped)&&(mAeroSnap!=null)){
-				mAeroSnap.forceSnapGravity(mWindowHolder.SnapGravity);
-				mWindowHolder.isSet=true;
-			}
-		} catch (RemoteException e) {}
-	}
+	
+	final static BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			/*if (intent.getAction().equals(Intent.ACTION_CONFIGURATION_CHANGED)) {
 
-	private boolean recheckFloating(Activity sActivity){
-		/*this is to fix wrong size and black screen when movable app is closed and reopened via launcher*/
-		return (sActivity.getIntent().getFlags() & mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW))
-				== mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW);
-	}
+			 DEBUG("ACTION_CONFIGURATION_CHANGED");
+			 if(activity!=null) mWindowHolder.setWindow(activity);
+			 else mWindowHolder.setWindow(window);
+			 int curRotation = Util.getDisplayRotation(activity);
+			 if((curRotation != mWindowHolder.cachedRotation)&&(mWindowHolder.isSnapped)){
+			 if(mWindowHolder.SnapGravity == 0) mWindowHolder.restoreSnap();
+			 ArrayList<Integer> RotationSnaps = new ArrayList<Integer>(Arrays.asList(Gravity.TOP,Gravity.RIGHT,Gravity.BOTTOM,Gravity.LEFT));
+			 int newFlag = 0;
+			 for(int i : RotationSnaps){
+			 if((mWindowHolder.SnapGravity & i)==i){
+			 newFlag=newFlag | RotationSnaps.get(Util.rollInt(RotationSnaps.indexOf(i),RotationSnaps.size()-1,mWindowHolder.cachedRotation-curRotation));
+			 }
+			 }
+			 mAeroSnap.forceSnapGravity(newFlag);
+			 mWindowHolder.cachedRotation = curRotation;
+			 }
+			 return;
+			 }*/
 
-	private void activityHook(){
-		XposedBridge.hookAllMethods(Activity.class, "onCreate", new XC_MethodHook() {
-			@Override
-			protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-				mActivity = (Activity) param.thisObject;
-				if (mWindowHolder == null) {
-					mWindowHolder = new WindowHolder(mActivity, mPref);
-					/*FIX for floating dialogs that shouldn't be treated as movable or halo windows*/
-					if (mWindowHolder.mWindow.isFloating()) return;
-					if (!mWindowHolder.isMovable) return;
-					refreshScreenSize();
-					setDebutHaloLayout();
-				} else mWindowHolder.setWindow(mActivity);
-				/*FIX for floating dialogs that shouldn't be treated as movable or halo windows*/
-				if (mWindowHolder.mWindow.isFloating()) return;//MODAL FIX
-				if (!mWindowHolder.isMovable) return;
-				/*TODO fix wrong size and black screen when movable app is closed and reopened via launcher*/
-				/*if(recheckFloating(mWindowHolder.mActivity)) {
-					mWindowHolder.isFloating=false;	mWindowHolder.isMovable=false; return;
-				}*/
-				loadPrefs();
-				if (mAeroSnap == null)
-					mAeroSnap = mAeroSnapEnabled ? new AeroSnap(mAeroSnapDelay) : null;
-				DEBUG("onCreate");
-				checkIfInitialSnapNeeded();
-
-			}
-		});
-
-		// re-initialize the variables when resuming as they may get replaced by another activity.
-		XposedBridge.hookAllMethods(Activity.class, "onResume", new XC_MethodHook() {
-			@Override
-			protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-				DEBUG("onResumeSTART");
-				mActivity = (Activity) param.thisObject;
-				mWindowHolder.setWindow(mActivity);
-				/*FIX for floating dialogs that shouldn't be treated as movable or halo windows*/
-				if(mWindowHolder.mWindow.isFloating()) return;
-				if(!mWindowHolder.isFloating){
-					toggleDragger(false);
-					return;
+			if (intent.getAction().equals(Common.REFRESH_FLOAT_DOT_POSITION)){
+				DEBUG( "REFRESH_FLOATDOT_POSITION");
+				int[] coordinates = intent.getIntArrayExtra(Common.INTENT_FLOAT_DOT_EXTRA);
+				if(coordinates == null) return;
+				mFloatDotCoordinates=coordinates;
+				if(!mWindowHolder.isSnapped) return;
+				if(mAeroSnap!=null){
+					mAeroSnap.forceSnapGravity(mWindowHolder.SnapGravity);
 				}
-				if(!mWindowHolder.isMovable) return;
-				//restore layout
-				pushLayout();
-				//FIX FORCED ORIENTATION ON MOVABLE WINDOWS
-				mActivity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER);
-				//Get mOverlayView
-				FrameLayout decor_view = (FrameLayout) mActivity.getWindow().peekDecorView().getRootView();
-				mOverlayView = (MovableOverlayView) decor_view.getTag(Common.LAYOUT_OVERLAY_TAG);
-				decor_view.bringChildToFront(mOverlayView);
-				//reconnect XHFWService if needed
-				connectService();
-				//restore snap layout if needed
-				if(mWindowHolder.isSnapped&&mAeroSnap!=null) mAeroSnap.forceSnapGravity(mWindowHolder.SnapGravity);
-				else toggleDragger(false);
-				//make all windows of the activity to keep layout
-				syncLayoutParams();
-				DEBUG("onResumeEND");
 			}
-		});
-
-		// unregister the receiver for syncing window position
-		XposedBridge.hookAllMethods(Activity.class, "onDestroy", new XC_MethodHook() {
-			@Override
-			protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-				DEBUG("onDestroy");
-				//if (!isHoloFloat) return;
-				if(!mWindowHolder.isFloating) return;
-				//syncLayoutParams();
-				unregisterLayoutBroadcastReceiver(((Activity) param.thisObject).getWindow());
-				//MultiWindowAppManager.appsRegisterListener((Activity) param.thisObject, false);
-				// hide the resizing outline
-				((Activity)param.thisObject).sendBroadcast(new Intent(Common.SHOW_OUTLINE));
-			}
-		});
+		}
+	};
+	
+	public static void registerLayoutBroadcastReceiver() {
+		IntentFilter filters = new IntentFilter();
+		filters.addAction(Common.REFRESH_FLOAT_DOT_POSITION);
+		mWindowHolder.mActivity.registerReceiver(mBroadcastReceiver, filters);
+		//setTagInternalForView(window.getDecorView(), Common.LAYOUT_RECEIVER_TAG, br);
 	}
+	
+	private static void unregisterLayoutBroadcastReceiver() {
+		mWindowHolder.mActivity.unregisterReceiver(mBroadcastReceiver);
+	}
+
+	private static void changeFocusApp(Activity a) {
+		if(XHFWInterfaceLink==null) {connectService();}
+		try		{
+			XHFWInterfaceLink.bringToFront(a.getTaskId());
+		}
+		catch (RemoteException e)
+		{
+			XposedBridge.log("changeFocusApp failed");
+		}
+	}
+	
+	public static void toggleDragger(){
+		if(mWindowHolder.isSnapped) toggleDragger(true);
+		else toggleDragger(false);
+	}
+	
+	public static void toggleDragger(boolean show){
+		Intent intent = new Intent(Common.SHOW_MULTIWINDOW_DRAGGER);
+		intent.putExtra(Common.INTENT_FLOAT_DOT_BOOL, show);
+		mWindowHolder.mActivity.sendBroadcast(intent);
+	}
+	
+	/***********************************************************/
+	/**************** Titlebar and corners *********************/
+	/***********************************************************/
+	
 	
 	public static void showTitleBar(){
+		DEBUG("showTitleBar");
 		/*FIX for floating dialogs that shouldn't be treated as movable or halo windows*/
 		if(mWindowHolder.mWindow.isFloating()) return;
 		if(mOverlayView == null) return;
+		toggleDragger(mWindowHolder.isSnapped);
+
 		boolean is_maximized = 
 			mWindowHolder.mWindow.getAttributes().width  == ViewGroup.LayoutParams.MATCH_PARENT &&
 			mWindowHolder.mWindow.getAttributes().height == ViewGroup.LayoutParams.MATCH_PARENT;
@@ -308,11 +467,16 @@ public class MovableWindow {
 			mOverlayView.setTitleBarVisibility(false);
 		}
 		else mOverlayView.setTitleBarVisibility(true);
-		DEBUG("showTitleBar");
 	}
-	
-	public void setOverlayView(){
-		FrameLayout decorView = (FrameLayout) mWindowHolder.mWindow.peekDecorView().getRootView();
+
+	private void setOverlayView(){
+		FrameLayout decorView = null;
+		try{
+		decorView = (FrameLayout) mWindowHolder.mActivity.getWindow().peekDecorView().getRootView();
+		
+		} catch (NullPointerException e){
+			//decorView = (FrameLayout) mWindowHolder.mWindow.peekDecorView().getRootView();
+		}
 		if (decorView == null) return;
 		// make sure the titlebar/drag-to-move-bar is not behind the statusbar
 		decorView.setFitsSystemWindows(true);
@@ -339,31 +503,80 @@ public class MovableWindow {
 			setTagInternalForView(decorView, Common.LAYOUT_OVERLAY_TAG, mOverlayView);
 		}
 	}
+	
+	private static void putOverlayView(){
+		FrameLayout decor_view = (FrameLayout) mActivity.getWindow().peekDecorView().getRootView();
+		//mOverlayView = (MovableOverlayView) decor_view.getTag(Common.LAYOUT_OVERLAY_TAG);
+		decor_view.bringChildToFront(mOverlayView);
+	}
+	
+	public static void getFloatingDotCoordinates(){
+		try
+		{
+			mFloatDotCoordinates[0]=mScreenWidth/2;
+			mFloatDotCoordinates[1]=mScreenHeight/2;
+			int[] result = XHFWInterfaceLink.getCurrentFloatdotCoordinates();
+			if(result==null) return;
+			mFloatDotCoordinates = result;
+			if(mWindowHolder.isSnapped) toggleDragger(true);
+			/*We need to forceSnap once on create because some apps are started snapped with wrong params - so we just fix the layout*/
+			if((!mWindowHolder.isSet)&&(mWindowHolder.isSnapped)&&(mAeroSnap!=null)){
+				mAeroSnap.forceSnapGravity(mWindowHolder.SnapGravity);
 
-	private void injectTriangle(final LoadPackageParam lpparam)
-			throws Throwable {
-		/*TODO: MOVE ALL HOOKS TO ONE METHOD*/
-		XposedBridge.hookAllMethods(Activity.class, "onStart", new XC_MethodHook() {
-			@Override
-			protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-				DEBUG("onStartSTART");
-				if(!mWindowHolder.isMovable) return;
-				mActivity = (Activity) param.thisObject;
-				mWindowHolder.setWindow(mActivity);
-				Window window = (Window) mActivity.getWindow();
-				if(mWindowHolder.mWindow.isFloating()) return;//MODAL FIX
-				// register the receiver for syncing window position
-				registerLayoutBroadcastReceiver(mActivity, window);
-				connectService();
-				// Add our overlay view
-				setOverlayView();
-				showTitleBar();
-				checkIfInitialSnapNeeded();
-				DEBUG("onStartEND");
+				mWindowHolder.isSet=true;
 			}
-		});
+		} catch (RemoteException e) {}
+	}
+	
+	/***********************************************************/
+	/********************* LAYOUT ******************************/
+	/***********************************************************/
+	
+	public static void pullLayout(){
+		mWindowHolder.pullFromWindow();
+		DEBUG("pullLayout");
+		//saveLayout();
 	}
 
+	public static void pushLayout(){
+		DEBUG("pushLayout");
+		mWindowHolder.pushToWindow();
+	}
+
+	public static void saveLayout(){
+		mWindowHolderCached = mWindowHolder;
+		DEBUG("savedLayout");
+	}
+
+	public static void restoreLayout(){
+		if(mWindowHolderCached==null) return;
+		mWindowHolder.restore(mWindowHolderCached);
+		if(mWindowHolder.width == 0) mWindowHolder.width = -1;
+		if(mWindowHolder.height == 0) mWindowHolder.height = -1;
+		DEBUG("restoredLayout");
+	}
+	
+	public static boolean pullAndSyncLayoutParams() {
+		if (!mRetainStartPosition) return false;
+		//pushLayout();
+		pullLayout();
+		syncLayoutParams();
+		return true;
+	}
+
+	public static void syncLayoutParams() {
+
+		if (!mRetainStartPosition) return;
+		for(Window w : mWindows){
+			mWindowHolder.pushToWindow(w);
+		}
+	}
+	
+	/***********************************************************/
+	/********************* ALIA ********************************/
+	/***********************************************************/
+	
+	
 	// maximize and restore the window.
 	public void maximizeApp(Activity activity) {
 		/*TODO make maximized just another snap mode (Gravity.FILL)*/
@@ -395,15 +608,6 @@ public class MovableWindow {
 		}
 		// after that, send a broadcast to sync the position of the window
 		pullAndSyncLayoutParams();
-	}
-	
-	private void checkIfInitialSnapNeeded() {
-		if((mAeroSnap==null)||(!mWindowHolder.isSnapped)||(mWindowHolder.SnapGravity==mPreviousForceAeroSnap)) return;
-		if(mWindowHolder.SnapGravity==0) {mPreviousForceAeroSnap = 0; return;}
-		layout_moved = false;
-		DEBUG("checkInitSnap before forceSnap");
-		mAeroSnap.forceSnapGravity(mWindowHolder.SnapGravity);
-		mPreviousForceAeroSnap = mWindowHolder.SnapGravity;
 	}
 
 	// Send the app to the back, and show a notification to restore
@@ -509,151 +713,7 @@ public class MovableWindow {
 		});
 	}
 
-	/* (Start) Layout Position Method Helpers */
-	static boolean layout_moved;
-	
-	public static void pullLayout(){
-		mWindowHolder.pullFromWindow();
-		DEBUG("pullLayout");
-		//saveLayout();
-		layout_moved = true;
-	}
-	
-	public static void pushLayout(){
-		DEBUG("pushLayout");
-		mWindowHolder.pushToWindow();
-	}
-
-	public static void saveLayout(){
-		mWindowHolderCached = mWindowHolder;
-		DEBUG("savedLayout");
-	}
-
-	public static void restoreLayout(){
-		if(mWindowHolderCached==null) return;
-		mWindowHolder.restore(mWindowHolderCached);
-		if(mWindowHolder.width == 0) mWindowHolder.width = -1;
-		if(mWindowHolder.height == 0) mWindowHolder.height = -1;
-		DEBUG("restoredLayout");
-	}
-
-	public static void registerLayoutBroadcastReceiver(final Activity activity,
-			final Window window) {
-		if (!(mRetainStartPosition || mConstantMovePosition)) return;
-		
-		BroadcastReceiver br = new BroadcastReceiver() {
-			@Override
-			public void onReceive(Context context, Intent intent) {
-				if (intent.getAction().equals(Intent.ACTION_CONFIGURATION_CHANGED)) {
-					
-					DEBUG("ACTION_CONFIGURATION_CHANGED");
-					if(activity!=null) mWindowHolder.setWindow(activity);
-					else mWindowHolder.setWindow(window);
-					int curRotation = Util.getDisplayRotation(activity);
-					if((curRotation != mWindowHolder.cachedRotation)&&(mWindowHolder.isSnapped)){
-						if(mWindowHolder.SnapGravity == 0) mWindowHolder.restoreSnap();
-						ArrayList<Integer> RotationSnaps = new ArrayList<Integer>(Arrays.asList(Gravity.TOP,Gravity.RIGHT,Gravity.BOTTOM,Gravity.LEFT));
-						int newFlag = 0;
-						for(int i : RotationSnaps){
-							if((mWindowHolder.SnapGravity & i)==i){
-								newFlag=newFlag | RotationSnaps.get(Util.rollInt(RotationSnaps.indexOf(i),RotationSnaps.size()-1,mWindowHolder.cachedRotation-curRotation));
-							}
-						}
-						mAeroSnap.forceSnapGravity(newFlag);
-						mWindowHolder.cachedRotation = curRotation;
-					}
-					return;
-				}
-				
-				if (intent.getAction().equals(Common.REFRESH_FLOAT_DOT_POSITION)){
-						int[] coordinates = intent.getIntArrayExtra(Common.INTENT_FLOAT_DOT_EXTRA);
-						if(coordinates == null) return;
-						mFloatDotCoordinates=coordinates;
-						if(!mWindowHolder.isSnapped) return;
-						refreshScreenSize();
-						if(Util.isFlag(mWindowHolder.SnapGravity, Gravity.TOP)){
-							mWindowHolder.height = coordinates[1]+1;
-							mWindowHolder.y=0;
-						}
-						if(Util.isFlag(mWindowHolder.SnapGravity, Gravity.BOTTOM)){
-							mWindowHolder.y = coordinates[1];
-							mWindowHolder.height = mScreenHeight - coordinates[1]+1;
-						}
-						if(Util.isFlag(mWindowHolder.SnapGravity, Gravity.LEFT)){
-							mWindowHolder.width = coordinates[0]+1;
-							mWindowHolder.x = 0;
-						}
-						if(Util.isFlag(mWindowHolder.SnapGravity, Gravity.RIGHT)){
-							mWindowHolder.x = coordinates[0];
-							mWindowHolder.width = mScreenWidth - coordinates[0]+1;
-						}
-						mWindowHolder.setWindow(window);
-						//pushLayout();
-						syncLayoutParams();
-						return;
-				}
-				
-				if (intent.getStringExtra(INTENT_APP_PKG).equals(
-					window.getContext().getApplicationInfo().packageName)) {
-						//get new coordinates
-					DEBUG("REFRESH_APP_LAYOUT");
-					mWindowHolder.setWindow(window);
-					if (layout_moved&&mRetainStartPosition) pushLayout();
-					showTitleBar();
-				}
-				
-			}
-		};
-		IntentFilter filters = new IntentFilter();
-		filters.addAction(Common.REFRESH_APP_LAYOUT);
-		filters.addAction(Intent.ACTION_CONFIGURATION_CHANGED);
-		filters.addAction(Common.REFRESH_FLOAT_DOT_POSITION);
-
-		//if((br!=null)&&(activity!=null)) XposedHelpers.callMethod(activity, "registerReceiver", br, filters);
-		window.getContext().registerReceiver(br, filters);
-		setTagInternalForView(window.getDecorView(), Common.LAYOUT_RECEIVER_TAG, br);
-	}
-
-	private static void unregisterLayoutBroadcastReceiver(Window window) {
-		if (!(mRetainStartPosition || mConstantMovePosition)) return;
-		BroadcastReceiver br = null;
-		try {
-			br = (BroadcastReceiver) window.getDecorView().getTag(Common.LAYOUT_RECEIVER_TAG);
-		} catch(Exception e){}
-		try{
-			if(br!=null) window.getContext().unregisterReceiver(br);
-		} catch (Exception e) {}
-	}
-
-	public static boolean pullAndSyncLayoutParams() {
-		if (!mRetainStartPosition) return false;
-		pullLayout();
-		syncLayoutParams();
-		return true;
-	}
-	
-	public static void syncLayoutParams() {
-		if (!mRetainStartPosition) return;
-		Intent intent = new Intent(Common.REFRESH_APP_LAYOUT);
-		intent.putExtra(INTENT_APP_PKG, mWindowHolder.packageName);
-		// set package so this is broadcasted only to our own package
-		intent.setPackage(mWindowHolder.packageName);
-		mWindowHolder.mActivity.sendBroadcast(intent);
-	}
-	/* (End) Layout Position Method Helpers */
-
-	private static void changeFocusApp(Activity a) {
-		if(XHFWInterfaceLink==null) {mWindowHolder.serviceConnected=false; connectService();}
-		try		{
-			XHFWInterfaceLink.bringToFront(a.getTaskId());
-		}
-		catch (RemoteException e)
-		{
-			XposedBridge.log("changeFocusApp failed");
-		}
-	}
-
-	private void updateView(Window mWindow, float x, float y) {
+	private static void updateView(Window mWindow, float x, float y) {
 		WindowManager.LayoutParams params = mWindow.getAttributes();
 		params.x = (int) x;
 		params.y = (int) y;
@@ -664,12 +724,6 @@ public class MovableWindow {
 		Class<?>[] classes = { Integer.class, Object.class };
 		XposedHelpers.callMethod(view, "setTagInternal", classes, key, object);
 		// view.setTagInternal(key, object);
-	}
-	
-	public static void toggleDragger(boolean show){
-		Intent intent = new Intent(Common.SHOW_MULTIWINDOW_DRAGGER);
-		intent.putExtra(Common.INTENT_FLOAT_DOT_BOOL, show);
-		mWindowHolder.mActivity.sendBroadcast(intent);
 	}
 	
 	private static void refreshScreenSize() {
