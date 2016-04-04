@@ -89,7 +89,6 @@ public class HaloFloating {
 		/*********************************************/
 	}
 	
-	
 	private void hookActivityRecord(final LoadPackageParam lpparam)throws Throwable {
 		Class<?> classActivityRecord = findClass("com.android.server.am.ActivityRecord",
 				lpparam.classLoader);
@@ -159,7 +158,7 @@ public class HaloFloating {
 				
 				/* check if we should inherit the floating flag */
 				boolean forceTaskHalo = mPref.getBoolean(Common.KEY_FORCE_OPEN_APP_ABOVE_HALO, Common.DEFAULT_FORCE_OPEN_APP_ABOVE_HALO);
-				if(!mHasHaloFlag && forceTaskHalo){
+				if(!mHasHaloFlag){
 					ArrayList<?> taskHistoryList = null;
 					if (Build.VERSION.SDK_INT >= 19) { // KK++
 						taskHistoryList = (ArrayList<?>) /* ArrayList<TaskRecord> */
@@ -172,7 +171,7 @@ public class HaloFloating {
 						Object pvRecord = taskHistoryList.get(taskHistoryList.size() - 1);
 						Intent pvIntent = (Intent) XposedHelpers.getObjectField(pvRecord, "intent");
 
-						mHasHaloFlag = !mIsPreviousActivityHome && Util.isFlag(pvIntent.getFlags(), mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW));
+						if(forceTaskHalo || packageName.equals(pvIntent.getPackage())) mHasHaloFlag = !mIsPreviousActivityHome && Util.isFlag(pvIntent.getFlags(), mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW));
 					}
 				}
 
@@ -371,6 +370,7 @@ public class HaloFloating {
 				if (name.startsWith("com.android.systemui")) return;
 				if (name.equals("android")) return;
 				if(window.isFloating()) return; //MODAL fix
+				if(MovableWindow.mWindowHolder==null) return;
 				MovableWindow.mWindowHolder.setWindow(window);
 				MovableWindow.pushLayout();
 				MovableWindow.connectService();

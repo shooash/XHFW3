@@ -109,10 +109,10 @@ public class WindowHolder{
 		height = sWindowHolder.height;
 		x = sWindowHolder.x;
 		y = sWindowHolder.y;
-		isMaximized = sWindowHolder.isMaximized;
-		isFloating = sWindowHolder.isFloating;
-		isSnapped = sWindowHolder.isSnapped;
-		SnapGravity = sWindowHolder.SnapGravity;
+		//isMaximized = sWindowHolder.isMaximized;
+		//isFloating = sWindowHolder.isFloating;
+		//isSnapped = sWindowHolder.isSnapped;
+		//SnapGravity = sWindowHolder.SnapGravity;
 		//pushToWindow();
 	}
 	

@@ -116,7 +116,7 @@ public class Util {
 		 * we need this to speed up our resizing */
 		// params.privateFlags |= 0x00000040; //PRIVATE_FLAG_NO_MOVE_ANIMATION
 		
-	public static int getDisplayRotation(Activity mActivity) {
+	public static int getDisplayRotation(Context mActivity) {
         Display display = ((WindowManager) mActivity.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
         return display.getRotation();
     }

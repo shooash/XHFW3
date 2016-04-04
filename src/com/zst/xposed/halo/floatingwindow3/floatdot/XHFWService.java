@@ -13,6 +13,8 @@ import android.widget.*;
 import android.os.*;
 import org.w3c.dom.*;
 import com.zst.xposed.halo.floatingwindow3.*;
+import android.content.res.*;
+import com.zst.xposed.halo.floatingwindow3.helpers.*;
 
 
 public class XHFWService extends Service {
@@ -22,6 +24,7 @@ public class XHFWService extends Service {
 	public static final String INTENT_FLOAT_DOT_BOOL = Common.INTENT_FLOAT_DOT_BOOL;
 	static Class<?> classSvcMgr;
 	public FloatingDot fd = null;
+	private int cachedRotation = 0;
 
 	@Override
 	public void onCreate()
@@ -45,6 +48,7 @@ public class XHFWService extends Service {
 		//fd.putDragger();
 		//toggle(true);
 		mContext = this;
+		cachedRotation = Util.getDisplayRotation(this);
 		//Toast.makeText(mContext, "toogleDragger", Toast.LENGTH_SHORT).show();
 		fd = new FloatingDot(mContext);
 		fd.putDragger();
@@ -56,20 +60,31 @@ public class XHFWService extends Service {
 	public boolean onUnbind(Intent intent)
 	{
 		if(fd!=null) fd.hideDragger();
+		unregisterReceiver(br);
 		return super.onUnbind(intent);
 	}
+
+	@Override
+	public void onConfigurationChanged(Configuration newConfig)
+	{
+		int curRotation = Util.getDisplayRotation(this);
+		fd.rotatePosition(curRotation-cachedRotation);
+		super.onConfigurationChanged(newConfig);
+	}
+	
+	BroadcastReceiver br = new BroadcastReceiver(){
+
+		@Override
+		public void onReceive(Context sContext, Intent sIntent)
+		{
+			if(!sIntent.getAction().equals(SHOW_MULTIWINDOW_DRAGGER)) return;
+			boolean show = sIntent.getBooleanExtra(INTENT_FLOAT_DOT_BOOL, false);
+			fd.showDragger(show);
+		}
+	};
 	
 	private void registerBroadcast(){
-		BroadcastReceiver br = new BroadcastReceiver(){
-
-			@Override
-			public void onReceive(Context sContext, Intent sIntent)
-			{
-				if(!sIntent.getAction().equals(SHOW_MULTIWINDOW_DRAGGER)) return;
-				boolean show = sIntent.getBooleanExtra(INTENT_FLOAT_DOT_BOOL, false);
-				fd.showDragger(show);
-			}
-		};
+		
 		IntentFilter i = new IntentFilter();
 		i.addAction(SHOW_MULTIWINDOW_DRAGGER);
 		registerReceiver(br,i);

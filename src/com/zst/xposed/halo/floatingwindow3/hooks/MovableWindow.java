@@ -54,11 +54,14 @@ public class MovableWindow {
 	
 	public static void DEBUG(String tag){
 //		XposedBridge.log("CHECK " + tag + " mWindows size: " + mWindows.size() + " at " + (mWindowHolder==null? " NULL " : mWindowHolder.packageName));
-//		if(mWindowHolder!=null)
+//		if(mWindowHolder!=null){
 //			XposedBridge.log("Check " + tag + " mWH: " + mWindowHolder.packageName + " Snap: " + mWindowHolder.SnapGravity + " " + mWindowHolder.isSnapped + " gravity " + mWindowHolder.width + ":" + mWindowHolder.height + " at " + mWindowHolder.x + ":" + mWindowHolder.y);
+//			XposedBridge.log("     flags " + mWindowHolder.mWindow.getAttributes().flags + "  type: " + mWindowHolder.mWindow.getAttributes().type + " for " + mWindowHolder.packageName);
+//			}
 //		else
-//			XposedBridge.log("Check " + tag + "mWindowHolder is NULL!!!");
-//		XposedBridge.log("     flags " + mWindowHolder.mWindow.getAttributes().flags + "  type: " + mWindowHolder.mWindow.getAttributes().type + " for " + mWindowHolder.packageName);
+//		{XposedBridge.log("Check " + tag + "mWindowHolder is NULL!!!");
+//		
+//		}
 //		if(mWindowHolderCached!=null)
 //		{
 //			//mWindowHolderCached.pullFromWindow();
@@ -70,7 +73,7 @@ public class MovableWindow {
 	static final String INTENT_APP_PKG = "pkg";
 
 	static MainXposed mMainXposed;
-	final Resources mModRes;
+	static Resources mModRes;
 	static XSharedPreferences mPref;
 	
 	/* App ActionBar Moving Values */
@@ -203,9 +206,13 @@ public class MovableWindow {
 					/*  We don't touch floating dialogs  */
 					if (mActivity.getWindow().isFloating()) return;
 					/* no need to act if it's not movable */
-					if(!mWindowHolder.isMovable) return;		
-					mAeroSnap.forceSnapGravity(mWindowHolder.SnapGravity);
-					mWindowHolder.cachedRotation = Util.getDisplayRotation(mWindowHolder.mActivity);
+					if(!mWindowHolder.isMovable) return;
+					int curRotation = Util.getDisplayRotation(mActivity);
+//					mFloatDotCoordinates = new int[]{mFloatDotCoordinates[Util.rollInt(0,1,mWindowHolder.cachedRotation-curRotation)], mFloatDotCoordinates[Util.rollInt(0,1,mWindowHolder.cachedRotation-curRotation+1)]};
+//					
+//					mAeroSnap.forceSnapGravity(mWindowHolder.SnapGravity);
+					mWindowHolder.cachedRotation = curRotation;
+					connectService();
 					return;
 				}
 			});
@@ -240,6 +247,7 @@ public class MovableWindow {
 					}
 					// hide the resizing outline
 					((Activity)param.thisObject).sendBroadcast(new Intent(Common.SHOW_OUTLINE));
+					return;
 				}
 			});
 	}
@@ -407,9 +415,12 @@ public class MovableWindow {
 				if(coordinates == null) return;
 				mFloatDotCoordinates=coordinates;
 				if(!mWindowHolder.isSnapped) return;
+				if(mWindowHolder.SnapGravity==0) mWindowHolder.restoreSnap();
 				if(mAeroSnap!=null){
 					mAeroSnap.forceSnapGravity(mWindowHolder.SnapGravity);
 				}
+				//syncLayoutParams();
+				//toggleDragger(true);
 			}
 		}
 	};
@@ -434,6 +445,7 @@ public class MovableWindow {
 		{
 			XposedBridge.log("changeFocusApp failed");
 		}
+		toggleDragger();
 	}
 	
 	public static void toggleDragger(){
@@ -469,7 +481,7 @@ public class MovableWindow {
 		else mOverlayView.setTitleBarVisibility(true);
 	}
 
-	private void setOverlayView(){
+	public static void setOverlayView(){
 		FrameLayout decorView = null;
 		try{
 		decorView = (FrameLayout) mWindowHolder.mActivity.getWindow().peekDecorView().getRootView();

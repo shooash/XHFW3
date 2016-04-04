@@ -252,7 +252,7 @@ public class AeroSnap {
 	// send broadcast to sync the windows
 	private void refreshLayout() {
 		MovableWindow.pullLayout();
-		if(MovableWindow.mRetainStartPosition&&doSync) MovableWindow.syncLayoutParams();
+		if(MovableWindow.mRetainStartPosition) MovableWindow.syncLayoutParams();
 		else MovableWindow.pushLayout();
 	}
 	

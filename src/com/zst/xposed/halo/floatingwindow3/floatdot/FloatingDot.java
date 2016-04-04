@@ -10,6 +10,7 @@ import android.media.*;
 import java.lang.annotation.*;
 import com.zst.xposed.halo.floatingwindow3.*;
 import android.widget.TableLayout.*;
+import com.zst.xposed.halo.floatingwindow3.helpers.*;
 
 public class FloatingDot implements Runnable
 {
@@ -166,11 +167,22 @@ public class FloatingDot implements Runnable
 		coordinates[1]+= mCircleDiameter/2;
 		return coordinates;
 	}
+	
+	public void rotatePosition(int rotation){
+		int[] coordinates = getAbsoluteCoordinates();
+		//coordinates[0] = 100*coordinates[0]/mScreenWidth;
+		//coordinates[1] = 100*coordinates[1]/mScreenHeight;
+		coordinates = new int[]{coordinates[Util.rollInt(0,1,-rotation)], coordinates[Util.rollInt(0,1,-rotation+1)]};
+		paramsF.x = coordinates[0];
+		paramsF.y = coordinates[1];
+		mWindowManager.updateViewLayout(image, paramsF);
+		sendPosition(image);
+	}
 
 	public void sendPosition(View v){
 		
 		//if(SystemClock.uptimeMillis() - checkBroadcastTime < 250) return;
-		checkBroadcastTime = SystemClock.uptimeMillis();
+		//checkBroadcastTime = SystemClock.uptimeMillis();
 		Intent intent = new Intent(REFRESH_FLOAT_DOT_POSITION);
 		
 		intent.putExtra(INTENT_FLOAT_DOT_EXTRA, getAbsoluteCoordinates(v));
