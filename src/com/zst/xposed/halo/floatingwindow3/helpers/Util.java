@@ -9,6 +9,7 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Paint.Style;
+import android.graphics.Point;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.LayerDrawable;
 import android.graphics.drawable.ShapeDrawable;
@@ -30,7 +31,7 @@ public class Util {
 			Process p = new ProcessBuilder("/system/bin/getprop", "ro.sf.lcd_density")
 					.redirectErrorStream(true).start();
 			BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()));
-			String line = "";
+			String line;
 			while ((line = br.readLine()) != null) {
 				dpi = line;
 			}
@@ -46,15 +47,13 @@ public class Util {
 		} else {
 			scale = (scale / 160);
 		}
-		int pixel = (int) (dp * scale + 0.5f);
-		return pixel;
+		return (int) (dp * scale + 0.5f);
 	}
 	
 	/* Get App DPI */
 	public static int dp(int dp, Context c) {
 		float scale = c.getResources().getDisplayMetrics().density;
-		int pixel = (int) (dp * scale + 0.5f);
-		return pixel;
+		return (int) (dp * scale + 0.5f);
 	}
 	
 	/* Create a Border */
@@ -109,8 +108,8 @@ public class Util {
 			Field fieldPrivateFlag = XposedHelpers.findField(WindowManager.LayoutParams.class, "privateFlags");
 			fieldPrivateFlag.setInt(params, (fieldPrivateFlag.getInt(params) | 0x00000040));
 		} catch (Exception e) {
-			
-		}
+		//Just pass
+		 	}
 		}
 		/* this private flag is only in JB and above to turn off move animation.
 		 * we need this to speed up our resizing */
@@ -123,25 +122,20 @@ public class Util {
 	
 	public static int getScreenOrientation(Activity mActivity)
 	{
-		Display getOrient = ((WindowManager) mActivity.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
-		//Display getOrient = ((WindowManager)getSystemService(WINDOW_SERVICE)).getDefaultDisplay();
-		int orientation = Configuration.ORIENTATION_UNDEFINED;
-		if(getOrient.getWidth()==getOrient.getHeight()){
-			orientation = Configuration.ORIENTATION_SQUARE;
-		} else{ 
-			if(getOrient.getWidth() < getOrient.getHeight()){
+		Point screenSize = new Point();
+		((WindowManager) mActivity.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay().getSize(screenSize);
+		int orientation;
+		if(screenSize.x < screenSize.y){
 				orientation = Configuration.ORIENTATION_PORTRAIT;
 			}else { 
 				orientation = Configuration.ORIENTATION_LANDSCAPE;
 			}
-		}
 		return orientation;
 	}
 
 	public static int rollInt(int current, int max, int delta){
 		max++;
-		int result = (current + delta + max) % max;
-		return result;
+		return (current + delta + max) % max;
 	}
 
 	public static boolean isFlag(int flagHolder, int flag){
