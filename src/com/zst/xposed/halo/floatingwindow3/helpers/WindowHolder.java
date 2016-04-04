@@ -134,7 +134,7 @@ public class WindowHolder{
 		mWParams.width = width;
 		mWParams.height = height;
 		mWParams.dimAmount = dim;
-		//mWParams.gravity = Gravity.TOP | Gravity.LEFT;
+		mWParams.gravity = Gravity.TOP | Gravity.LEFT;
 		//Util.addPrivateFlagNoMoveAnimationToLayoutParam(mWParams);
 		mWindow.setAttributes(mWParams);
 	}

@@ -173,7 +173,9 @@ public class MovableWindow {
 					if (mActivity.getWindow().isFloating()) return;
 					/* no need to act if it's not movable */
 					if(!mWindowHolder.isMovable) return;		
-					
+					/** update current window **/
+					if(mWindowHolder!=null) //
+						mWindowHolder.setWindow(mActivity);
 					/* check if we need to show or hide floatdot */
 					toggleDragger();
 					/* FIX FORCED ORIENTATION ON MOVABLE WINDOWS */
