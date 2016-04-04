@@ -14,7 +14,6 @@ import android.view.Window;
 import com.zst.xposed.halo.floatingwindow3.Common;
 import com.zst.xposed.halo.floatingwindow3.MainXposed;
 import com.zst.xposed.halo.floatingwindow3.helpers.AeroSnap;
-import com.zst.xposed.halo.floatingwindow3.helpers.LayoutScaling;
 
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XC_MethodReplacement;
@@ -26,6 +25,9 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam;
 import com.zst.xposed.halo.floatingwindow3.helpers.*;
 import com.zst.xposed.halo.floatingwindow3.helpers.Compatibility;
 import de.robv.android.xposed.*;
+import android.util.*;
+import android.view.*;
+import android.content.*;
 
 public class HaloFloating {
 	MainXposed mMain;
@@ -78,12 +80,12 @@ public class HaloFloating {
 			XposedBridge.log(e);
 		}
 		/*********************************************/
-		try {
+		/*try {
 			fixExceptionWhenResuming(l);
 		} catch (Throwable e) {
 			XposedBridge.log(Common.LOG_TAG + "(fixExceptionWhenResuming)");
 			XposedBridge.log(e);
-		}
+		}*/
 		/*********************************************/
 	}
 	
@@ -124,129 +126,61 @@ public class HaloFloating {
 					activity_stack = param.args[1];
 					activity_info = (ActivityInfo) param.args[6];
 				}
-				
-				if (intent == null) return;
-				
 				String packageName = activity_info.applicationInfo.packageName;
-				boolean skipCheck;
+				if (packageName.startsWith("com.android.systemui")) return;
+				if (packageName.equals("android")) return;
+				if (intent == null) return;
+				mHasHaloFlag = (intent.getFlags() & mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW))
+					== mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW);
 				
 				switch (mMain.getBlackWhiteListOption()) {
-				case 1: /* Always open apps in halo except blacklisted apps */
-					skipCheck = true;
-					if (!mMain.isBlacklisted(packageName)) {
-						mHasHaloFlag = true;
-					}
-					break;
-					
-				case 2: /* Never open apps in halo + force whitelisted apps in halo */
-					skipCheck = true;
-					if (mMain.isWhitelisted(packageName)) {
-						mHasHaloFlag = true;
-					}
-					break;
-				case 3: /* Blacklist all apps & only allow whitelisted apps to be opened in halo */
-					if (mMain.isWhitelisted(packageName)) {
-						skipCheck = false;
-					} else {
-						skipCheck = true;
-						mHasHaloFlag = false;
-						// if not whitelisted, skip the check
-					}
-					break;
-				default: // no additional options
-					skipCheck = false;
-					if (mMain.isWhitelisted(packageName)) {
-						mHasHaloFlag = true;
-						skipCheck = true;
-					}
-					if (mMain.isBlacklisted(packageName)) {
-						mHasHaloFlag = false;
-						skipCheck = true;
-					}
-					break;
-				}
-				
-				if (skipCheck && !mHasHaloFlag) {
-					// We don't need to waste time checking taskAffinity
-					// Just remove flag straight away
-					int intent_flag = intent.getFlags();
-					intent_flag &= ~mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW);					intent.setFlags(intent_flag);
-					
-					mIsPreviousActivityHome = isCurrentActivityHome;
-					return;
-				}
-				
-				ArrayList<?> taskHistoryList = null;
-				if (Build.VERSION.SDK_INT >= 19) { // KK++
-					taskHistoryList = (ArrayList<?>) /* ArrayList<TaskRecord> */
-							XposedHelpers.getObjectField(activity_stack, "mTaskHistory");
-				} else { // ICS & JB
-					taskHistoryList = (ArrayList<?>) /* ArrayList<ActivityRecord> */
-							XposedHelpers.getObjectField(activity_stack, "mHistory");
-				}
-
-				boolean floatingFlag = (intent.getFlags() & mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW))
-						== mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW); //LUCINIAMOD
-				
-				if (!floatingFlag && taskHistoryList != null && taskHistoryList.size() > 0 ) {
-					// pv = previous
-					Object pvRecord = taskHistoryList.get(taskHistoryList.size() - 1);
-					Intent pvIntent = (Intent) XposedHelpers.getObjectField(pvRecord, "intent");
-					
-					boolean pvFloatFlag = !mIsPreviousActivityHome &&
-							(pvIntent.getFlags() & mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW)) == mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW); //LUCINIAMOD
-					int pvSnapSide = Compatibility.AeroSnap.SNAP_NONE;
-					int pvSnapGravity = 0;
-					try {
-						pvSnapSide = pvIntent.getIntExtra(Common.EXTRA_SNAP_SIDE, Compatibility.AeroSnap.SNAP_NONE);
-					} catch (Exception e) {
-						pvSnapSide = Compatibility.AeroSnap.SNAP_NONE;
-					}
-					if(pvIntent.hasExtra(Common.EXTRA_SNAP)) pvSnapGravity = pvIntent.getIntExtra(Common.EXTRA_SNAP,0);
-					else pvSnapGravity = Compatibility.snapSideToGravity(pvSnapSide);
-					XposedBridge.log("haloFloating previous intent: " + pvIntent.getPackage() + " flag: " + pvFloatFlag + " " + pvSnapSide);
-					if (pvFloatFlag) {
-						boolean taskAffinity = packageName.equals(pvIntent.getPackage());
-						boolean forceTaskHalo = mPref.getBoolean(Common.KEY_FORCE_OPEN_APP_ABOVE_HALO,
-								Common.DEFAULT_FORCE_OPEN_APP_ABOVE_HALO);
-						
-						try{
-						if (taskAffinity && pvSnapSide != Compatibility.AeroSnap.SNAP_NONE) {
-							intent.putExtra(Common.EXTRA_SNAP_SIDE, pvSnapSide);
-							//XposedHelpers.callMethod(intent, "putExtra", Common.EXTRA_SNAP_SIDE, pvSnapSide);
+					case 1: /* Always open apps in halo except blacklisted apps */
+						mHasHaloFlag=!mMain.isBlacklisted(packageName);
+						break;
+					case 2: /* Never open apps in halo + force whitelisted apps in halo */
+						mHasHaloFlag = mMain.isWhitelisted(packageName);
+						break;
+					case 3: /* Blacklist all apps & only allow whitelisted apps to be opened in halo */
+						if (!mMain.isWhitelisted(packageName)) {
+							mHasHaloFlag = false;
 						}
-						if (taskAffinity && pvSnapGravity != 0){
-							intent.putExtra(Common.EXTRA_SNAP, pvSnapGravity);
-						}
-						} catch (Exception e){}
-						
-						if (!skipCheck && (forceTaskHalo || taskAffinity)) {
-							// we pass the flag on if it is the same task
+						break;
+					default: // no additional options
+						if (mMain.isWhitelisted(packageName)) {
 							mHasHaloFlag = true;
 						}
-					}
-				} else if (floatingFlag) {
-					mHasHaloFlag = true;
+						if (mMain.isBlacklisted(packageName)) {
+							mHasHaloFlag = false;
+						}
+						break;
 				}
 				
-				if (mHasHaloFlag) {
-					int flags = intent.getFlags();
-					flags = flags | mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW);
-					flags = flags | Intent.FLAG_ACTIVITY_NO_USER_ACTION;
-					flags &= ~Intent.FLAG_ACTIVITY_TASK_ON_HOME;
+				MovableWindow.DEBUG("HaloFloating actRecord " + packageName + " [" + mHasHaloFlag + "]");
+				
+				/* check if we should inherit the floating flag */
+				boolean forceTaskHalo = mPref.getBoolean(Common.KEY_FORCE_OPEN_APP_ABOVE_HALO, Common.DEFAULT_FORCE_OPEN_APP_ABOVE_HALO);
+				if(!mHasHaloFlag && forceTaskHalo){
+					ArrayList<?> taskHistoryList = null;
+					if (Build.VERSION.SDK_INT >= 19) { // KK++
+						taskHistoryList = (ArrayList<?>) /* ArrayList<TaskRecord> */
+							XposedHelpers.getObjectField(activity_stack, "mTaskHistory");
+					} else { // ICS & JB
+						taskHistoryList = (ArrayList<?>) /* ArrayList<ActivityRecord> */
+							XposedHelpers.getObjectField(activity_stack, "mHistory");
+					}
+					if(taskHistoryList!=null && taskHistoryList.size()>0){
+						Object pvRecord = taskHistoryList.get(taskHistoryList.size() - 1);
+						Intent pvIntent = (Intent) XposedHelpers.getObjectField(pvRecord, "intent");
 
-					if (!mPref.getBoolean(Common.KEY_SHOW_APP_IN_RECENTS, Common.DEFAULT_SHOW_APP_IN_RECENTS)) {
-						flags = flags | Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS;
-					} else if (mPref.getBoolean(Common.KEY_FORCE_APP_IN_RECENTS, Common.DEFAULT_FORCE_APP_IN_RECENTS)) {
-						flags &= ~Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS;
+						mHasHaloFlag = !mIsPreviousActivityHome && Util.isFlag(pvIntent.getFlags(), mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW));
 					}
-					intent.setFlags(flags);
-					
-					// Make the current task non-fullscreen so it can be seen through.
-					XposedHelpers.setBooleanField(param.thisObject, "fullscreen", false);
 				}
-				
+
+				if(mHasHaloFlag) intent.addFlags(mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW));
+				if(mHasHaloFlag) XposedHelpers.setBooleanField(param.thisObject, "fullscreen", false);
+
 				mIsPreviousActivityHome = isCurrentActivityHome;
+				
 			}
 		});
 	}
@@ -273,53 +207,54 @@ public class HaloFloating {
 	 * is not null, then pause the app. We are working around it like this.
 	 */
 	private  void injectActivityStack(final LoadPackageParam lpp) throws Throwable {
-		final Class<?> classActivityRecord = findClass("com.android.server.am.ActivityRecord",
-				lpp.classLoader);
+//		final Class<?> classActivityRecord = findClass("com.android.server.am.ActivityRecord",
+//				lpp.classLoader);
+//		XposedBridge.hookAllMethods(hookClass, "resumeTopActivityLocked", new XC_MethodHook() {
+//			Object previous = null;
+//			boolean appPauseEnabled;
+//			boolean isHalo;
+//			protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+//				// Find the first activity that is not finishing.
+//				if (!mHasHaloFlag) return;
+//				if (mIsPreviousActivityHome) return;
+//				
+//				Object nextAR = XposedHelpers.callMethod(param.thisObject, "topRunningActivityLocked",
+//						new Class[] { classActivityRecord }, (Object) null);
+//				Intent nextIntent = (Intent) XposedHelpers.getObjectField(nextAR, "intent");
+//				// TODO Find better whatsapp workaround.
+//				try {
+//					isHalo = (!nextIntent.getPackage().equals("com.whatsapp")) &&
+//							(nextIntent.getFlags() & mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW)) == mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW); //LUCINIAMOD
+//				} catch (NullPointerException e) {
+//					// if getPackage returns null
+//				}
+//				if (!isHalo) return;
+//				
+//				mPref.reload();
+//				appPauseEnabled = mPref.getBoolean(Common.KEY_APP_PAUSE, Common.DEFAULT_APP_PAUSE);
+//				if (appPauseEnabled) return;
+//				
+//				final Object prevActivity = XposedHelpers.getObjectField(param.thisObject, "mResumedActivity");
+//				previous = prevActivity;
+//				XposedHelpers.setObjectField(param.thisObject, "mResumedActivity", null);
+//			}
+//			protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+//				if (!mHasHaloFlag) return;
+//				if (!isHalo) return;
+//				if (mIsPreviousActivityHome) return;
+//				if (appPauseEnabled) return;
+//				if (previous != null) {
+//					XposedHelpers.setObjectField(param.thisObject, "mResumedActivity", previous);
+//					previous = null;
+//				}
+//			}
+//		});
 		final Class<?> hookClass = findClass("com.android.server.am.ActivityStack", lpp.classLoader);
-		XposedBridge.hookAllMethods(hookClass, "resumeTopActivityLocked", new XC_MethodHook() {
-			Object previous = null;
-			boolean appPauseEnabled;
-			boolean isHalo;
-			protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-				// Find the first activity that is not finishing.
-				if (!mHasHaloFlag) return;
-				if (mIsPreviousActivityHome) return;
-				
-				Object nextAR = XposedHelpers.callMethod(param.thisObject, "topRunningActivityLocked",
-						new Class[] { classActivityRecord }, (Object) null);
-				Intent nextIntent = (Intent) XposedHelpers.getObjectField(nextAR, "intent");
-				// TODO Find better whatsapp workaround.
-				try {
-					isHalo = (!nextIntent.getPackage().equals("com.whatsapp")) &&
-							(nextIntent.getFlags() & mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW)) == mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW); //LUCINIAMOD
-				} catch (NullPointerException e) {
-					// if getPackage returns null
-				}
-				if (!isHalo) return;
-				
-				mPref.reload();
-				appPauseEnabled = mPref.getBoolean(Common.KEY_APP_PAUSE, Common.DEFAULT_APP_PAUSE);
-				if (appPauseEnabled) return;
-				
-				final Object prevActivity = XposedHelpers.getObjectField(param.thisObject, "mResumedActivity");
-				previous = prevActivity;
-				XposedHelpers.setObjectField(param.thisObject, "mResumedActivity", null);
-			}
-			protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-				if (!mHasHaloFlag) return;
-				if (!isHalo) return;
-				if (mIsPreviousActivityHome) return;
-				if (appPauseEnabled) return;
-				if (previous != null) {
-					XposedHelpers.setObjectField(param.thisObject, "mResumedActivity", previous);
-					previous = null;
-				}
-			}
-		});
 		
 		/* This is a Kitkat work-around to make sure the background is transparent */
 		XposedBridge.hookAllMethods(hookClass, "startActivityLocked", new XC_MethodHook() {
 			protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+				MovableWindow.DEBUG("HaloFloating startActivityLocked [" + mHasHaloFlag + "]");
 				if (!mHasHaloFlag) return;
 				if (param.args[1] instanceof Intent) return;
 				Object activityRecord = param.args[0];
@@ -360,7 +295,10 @@ public class HaloFloating {
 		Class<?> hookClass = findClass("com.android.server.wm.WindowManagerService", lpp.classLoader);
 		XposedBridge.hookAllMethods(hookClass, "setAppStartingWindow", new XC_MethodHook() {
 			protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+				
 				if (!mHasHaloFlag) return;
+				MovableWindow.DEBUG("HaloFloating setAppStartingWindow");
+				//if (!mHasHaloFlag && (MovableWindow.mWindowHolder==null || !MovableWindow.mWindowHolder.isFloating)) return;
 				if ("android".equals((String) param.args[1])) return;
 				// Change boolean "createIfNeeded" to FALSE
 				if (param.args[param.args.length - 1] instanceof Boolean) {
@@ -383,16 +321,6 @@ public class HaloFloating {
 	 * and the codes undo my layout scaling.
 	 */
 	private  void inject_Activity() throws Throwable {
-		final boolean isMovable = mPref.getBoolean(Common.KEY_MOVABLE_WINDOW, Common.DEFAULT_MOVABLE_WINDOW);
-		final String class_name = isMovable ? "onStart" : "onResume";
-		XposedBridge.hookAllMethods(Activity.class, class_name, new XC_MethodHook() {
-			protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-				Activity thiz = (Activity) param.thisObject;
-				Intent intent = thiz.getIntent();
-				isHoloFloat = (intent.getFlags() & mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW)) == mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW); //LUCINIAMOD
-			}
-		});
-		
 		XposedBridge.hookAllMethods(Activity.class, "onCreate", new XC_MethodHook() {
 			protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
 				Activity thiz = (Activity) param.thisObject;
@@ -433,7 +361,8 @@ public class HaloFloating {
 	
 	private void injectGenerateLayout(final LoadPackageParam lpp)
 			throws Throwable {
-		Class<?> cls = findClass("com.android.internal.policy.impl.PhoneWindow", lpp.classLoader);
+				
+	Class<?> cls = findClass("com.android.internal.policy.impl.PhoneWindow", lpp.classLoader);
 		XposedBridge.hookAllMethods(cls, "generateLayout", new XC_MethodHook() {
 			protected void afterHookedMethod(MethodHookParam param) throws Throwable {
 				if (!isHoloFloat) return;
@@ -442,18 +371,9 @@ public class HaloFloating {
 				if (name.startsWith("com.android.systemui")) return;
 				if (name.equals("android")) return;
 				if(window.isFloating()) return; //MODAL fix
-				
-				if (MovableWindow.layout_moved) {
-					MovableWindow.mWindowHolder.setWindow(window);
-					if(MovableWindow.mRetainStartPosition){
-						MovableWindow.pushLayout();
-						MovableWindow.showTitleBar();
-					}
-					// register the receiver for syncing window position
-					MovableWindow.registerLayoutBroadcastReceiver(null, window);
-				} else {
-					LayoutScaling.appleFloating(mPref, window);
-				}
+				MovableWindow.mWindowHolder.setWindow(window);
+				MovableWindow.pushLayout();
+				MovableWindow.connectService();
 			}
 		});
 	}
@@ -473,8 +393,8 @@ public class HaloFloating {
 	 * is in process and false when we are not resuming to let normal system behavior
 	 * continue as normal.
 	 */
-	boolean mExceptionHook = false;
-	private void fixExceptionWhenResuming(final LoadPackageParam lpp) throws Throwable {
+	//boolean mExceptionHook = false;
+	/*private void fixExceptionWhenResuming(final LoadPackageParam lpp) throws Throwable {
 		Class<?> cls = findClass("android.app.ActivityThread", lpp.classLoader);
 		XposedBridge.hookAllMethods(cls, "performResumeActivity",
 				new XC_MethodHook() {
@@ -491,6 +411,6 @@ public class HaloFloating {
 				return mExceptionHook;
 			}
 		});
-	}
+	}*/
 	
 }

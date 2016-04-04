@@ -35,6 +35,7 @@ public class AeroSnap {
 	boolean mTimeoutDone;
 	boolean mRestorePosition;
 	boolean mChangedPreviousRange;
+	boolean doSync;
 	float[] mPreviousRange = new float[2];
 	
 	/**
@@ -115,14 +116,14 @@ public class AeroSnap {
 			if ((MovableWindow.mAeroSnapChangeTitleBarVisibility)&&(MovableWindow.mOverlayView!=null)) {
 				MovableWindow.mOverlayView.setTitleBarVisibility(false);
 			}
-			MovableWindow.toggleDragger(true);
+			//MovableWindow.toggleDragger(true);
 		} else {
 			MovableWindow.mWindowHolder.updateSnap(0);
-			MovableWindow.toggleDragger(false);
+			//MovableWindow.toggleDragger(false);
 		}
 		refreshLayout();
 		broadcastHide(MovableWindow.mWindowHolder.mActivity);
-		
+		MovableWindow.toggleDragger();
 	}
 	
 	/**
@@ -135,7 +136,20 @@ public class AeroSnap {
 		finishSnap(true);
 	}
 
+	public void forceSnapGravityThisOnly(int sSnapGravity){
+		doSync=false;
+		if(sSnapGravity == 0) {
+			restoreOldPosition();
+			MovableWindow.showTitleBar();
+			MovableWindow.toggleDragger(false);
+			return;
+		}
+		mSnapWindowHolder.SnapGravity = sSnapGravity;
+		forceSnapGravity();
+	}
+		
 	public void forceSnapGravity(int sSnapGravity){
+		doSync=true;
 		if(sSnapGravity == 0) {
 			restoreOldPosition();
 			MovableWindow.showTitleBar();
@@ -185,7 +199,7 @@ public class AeroSnap {
 	private boolean saveOldPosition() {
 		if (mRestorePosition) return true;
 		if(MovableWindow.mWindowHolder.isSnapped) return (MovableWindow.mWindowHolder.SnapGravity == 0) || (mTimeoutRunning);
-		MovableWindow.saveLayout();
+		//MovableWindow.saveLayout();
 		return true;
 	}
 	
@@ -200,7 +214,7 @@ public class AeroSnap {
 	public void restoreOldPositionWithoutRefresh() {
 		if (!MovableWindow.mWindowHolder.isSnapped) return;
 		refreshScreenSize();//this was added to fix wrong layout on orientation changed
-		MovableWindow.restoreLayout();
+		//MovableWindow.restoreLayout();
 		MovableWindow.mWindowHolder.pushToWindow();
 		
 		MovableWindow.mWindowHolder.isSnapped = false;
@@ -238,7 +252,7 @@ public class AeroSnap {
 	// send broadcast to sync the windows
 	private void refreshLayout() {
 		MovableWindow.pullLayout();
-		if(MovableWindow.mRetainStartPosition) MovableWindow.syncLayoutParams();
+		if(MovableWindow.mRetainStartPosition&&doSync) MovableWindow.syncLayoutParams();
 		else MovableWindow.pushLayout();
 	}
 	

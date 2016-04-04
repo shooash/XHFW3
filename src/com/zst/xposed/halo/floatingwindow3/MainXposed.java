@@ -38,8 +38,8 @@ public class MainXposed implements IXposedHookLoadPackage, IXposedHookZygoteInit
 	public ActionBarColorHook hookActionBarColor;
 	
 	/* Window holders */
-	public WindowHolder mWindowHolder;
-	public WindowHolder mWindowHolderCached;
+	//public WindowHolder mWindowHolder;
+	//public WindowHolder mWindowHolderCached;
 	//private XHFWService mXHFWService;
 	
 	
@@ -59,17 +59,17 @@ public class MainXposed implements IXposedHookLoadPackage, IXposedHookZygoteInit
 	@Override
 	public void handleLoadPackage(final LoadPackageParam lpparam) throws Throwable {
 		// XHFW
-		TestingSettingHook.handleLoadPackage(lpparam);
+		//TestingSettingHook.handleLoadPackage(lpparam);
 		
 		// SystemUI Mods
-		if (Build.VERSION.SDK_INT >= 20) { // Lollipop
+		/*if (Build.VERSION.SDK_INT >= 20) { // Lollipop
 			// Lollipop totally revamped SystemUI
 			// TODO: move old SystemUI hooks to new package
 			// TODO: forward port SystemUI hooks
 		} else { // Kitkat and below
 			//NotificationShadeHook.hook(lpparam, mPref);
 			RecentAppsHook.handleLoadPackage(lpparam, mPref);
-		}
+		}*/
 		//StatusbarTaskbar.handleLoadPackage(lpparam, mPref);
 		
 		// SystemUI MultiWindow
@@ -93,8 +93,8 @@ public class MainXposed implements IXposedHookLoadPackage, IXposedHookZygoteInit
 		}*/
 		
 		// App
-		mWindowHolder = null;
-		mWindowHolderCached = null;
+		//mWindowHolder = null;
+		//mWindowHolderCached = null;
 		hookMovableWindow = new MovableWindow(this, lpparam);
 		hookHaloFloating = new HaloFloating(this, lpparam, mPref);
 		hookActionBarColor = new ActionBarColorHook(this, lpparam, mPref);
@@ -116,7 +116,7 @@ public class MainXposed implements IXposedHookLoadPackage, IXposedHookZygoteInit
 		return Integer.parseInt(mPref.getString(Common.KEY_WHITEBLACKLIST_OPTIONS, Common.DEFAULT_WHITEBLACKLIST_OPTIONS));
 	}
 	
-	public void bringToFront(Activity mActivity){
+	/*public void bringToFront(Activity mActivity){
 		ActivityManager mActivityManager = (ActivityManager) mActivity
 			.getSystemService(Context.ACTIVITY_SERVICE);
 		try {
@@ -127,5 +127,5 @@ public class MainXposed implements IXposedHookLoadPackage, IXposedHookZygoteInit
 			//XposedBridge.log(e);
 			//Log.e("test1", Common.LOG_TAG + "Cannot move task to front", e);
 		}
-	}
+	}*/
 }

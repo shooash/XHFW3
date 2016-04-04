@@ -17,6 +17,7 @@ public class WindowHolder{
     public boolean isMaximized = false;
 	public boolean serviceConnected = false;
 	public int SnapGravity = 0; //Gravity flag, eg TOP | LEFT for TopLeft window
+	public float dim;
     public float alpha;
     public int width = -1;
     public int height = -1;
@@ -28,14 +29,16 @@ public class WindowHolder{
     public String packageName;
 	public Activity mActivity;
 	public boolean isSet=false;
+	public boolean mReceiverRegistered = false;
 
     public WindowHolder(Activity sActivity, XSharedPreferences mPref){
 		mActivity = sActivity;
         mPref.reload();
         isFloating=(mActivity.getIntent().getFlags() & mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW))
                 == mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW);
-		isMovable = (isFloating&&(mPref.getBoolean(Common.KEY_MOVABLE_WINDOW,
-										  Common.DEFAULT_MOVABLE_WINDOW)));
+		alpha = mPref.getFloat(Common.KEY_ALPHA, Common.DEFAULT_ALPHA);
+		dim = mPref.getFloat(Common.KEY_DIM, Common.DEFAULT_DIM);
+		isMovable = (isFloating&&(mPref.getBoolean(Common.KEY_MOVABLE_WINDOW, Common.DEFAULT_MOVABLE_WINDOW)));
         cachedOrientation=mActivity.getResources().getConfiguration().orientation;
         cachedRotation = Util.getDisplayRotation(mActivity);
 		/*TODO: Get use of EXTRA_SNAP extras to keep snap gravity*/
@@ -130,8 +133,21 @@ public class WindowHolder{
 		mWParams.alpha = alpha;
 		mWParams.width = width;
 		mWParams.height = height;
-		mWParams.gravity = Gravity.TOP | Gravity.LEFT;
+		mWParams.dimAmount = dim;
+		//mWParams.gravity = Gravity.TOP | Gravity.LEFT;
+		//Util.addPrivateFlagNoMoveAnimationToLayoutParam(mWParams);
 		mWindow.setAttributes(mWParams);
+	}
+	
+	public void pushToWindow(Window sWindow){
+		WindowManager.LayoutParams mWParams = sWindow.getAttributes();
+		mWParams.x = x;
+		mWParams.y = y;
+		mWParams.alpha = alpha;
+		mWParams.width = width;
+		mWParams.height = height;
+		mWParams.gravity = Gravity.TOP | Gravity.LEFT;
+		sWindow.setAttributes(mWParams);
 	}
 	
 	//set current window to saved layout params
