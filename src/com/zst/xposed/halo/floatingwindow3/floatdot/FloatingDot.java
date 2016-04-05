@@ -48,10 +48,6 @@ public class FloatingDot implements Runnable
 
     public FloatingDot(Context sContext) {
 		mContext = sContext;
- 		
-		//putDragger();
-		//showDragger(true);
-		//sendPosition(image);
 	}
 
 	
