@@ -49,7 +49,7 @@ public class WindowHolder{
         isSnapped=(SnapGravity != 0);
         isMaximized=(SnapGravity == Gravity.FILL);
         mWindow = mActivity.getWindow();
-        updateWindow();
+        //updateWindow();
 		packageName = mActivity.getPackageName();
 	}
 	
@@ -127,6 +127,8 @@ public class WindowHolder{
 	
 	//set current window to saved layout params
 	public void pushToWindow(){
+		/*FIX for floating dialogs that shouldn't be treated as movable or halo windows*/
+		if(mWindow.isFloating()) return;
 		WindowManager.LayoutParams mWParams = mWindow.getAttributes();
 		mWParams.x = x;
 		mWParams.y = y;
@@ -140,6 +142,8 @@ public class WindowHolder{
 	}
 	
 	public void pushToWindow(Window sWindow){
+		/*FIX for floating dialogs that shouldn't be treated as movable or halo windows*/
+		if(sWindow==null || sWindow.isFloating()) return;
 		WindowManager.LayoutParams mWParams = sWindow.getAttributes();
 		mWParams.x = x;
 		mWParams.y = y;
@@ -175,6 +179,14 @@ public class WindowHolder{
 		}
 		SnapGravity = newFlag;
 		return newFlag;
+	}
+	
+	public void recheckFloatingFlag(XSharedPreferences mPref){
+		isFloating=(mActivity.getIntent().getFlags() & mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW))
+			== mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW);
+		alpha = mPref.getFloat(Common.KEY_ALPHA, Common.DEFAULT_ALPHA);
+		dim = mPref.getFloat(Common.KEY_DIM, Common.DEFAULT_DIM);
+		isMovable = (isFloating&&(mPref.getBoolean(Common.KEY_MOVABLE_WINDOW, Common.DEFAULT_MOVABLE_WINDOW)));
 	}
 	
 }

@@ -35,7 +35,8 @@ public class HaloFloating {
 	
 	boolean mIsPreviousActivityHome;
 	boolean mHasHaloFlag;
-	boolean isHoloFloat = false; //TODO move to new class
+	 //TODO move to new class
+	boolean isHoloFloat = false;
 	
 	public HaloFloating(MainXposed main, LoadPackageParam lpparam, XSharedPreferences pref) throws Throwable {
 		mMain = main;
@@ -80,12 +81,12 @@ public class HaloFloating {
 			XposedBridge.log(e);
 		}
 		/*********************************************/
-		/*try {
+		try {
 			fixExceptionWhenResuming(l);
 		} catch (Throwable e) {
 			XposedBridge.log(Common.LOG_TAG + "(fixExceptionWhenResuming)");
 			XposedBridge.log(e);
-		}*/
+		}
 		/*********************************************/
 	}
 	
@@ -129,8 +130,7 @@ public class HaloFloating {
 				if (packageName.startsWith("com.android.systemui")) return;
 				if (packageName.equals("android")) return;
 				if (intent == null) return;
-				mHasHaloFlag = (intent.getFlags() & mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW))
-					== mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW);
+				mHasHaloFlag = Util.isFlag(intent.getFlags(), mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW));
 				
 				switch (mMain.getBlackWhiteListOption()) {
 					case 1: /* Always open apps in halo except blacklisted apps */
@@ -154,6 +154,8 @@ public class HaloFloating {
 						break;
 				}
 				
+				if(MovableWindow.mWindowHolder!=null) mHasHaloFlag=true;
+				
 				MovableWindow.DEBUG("HaloFloating actRecord " + packageName + " [" + mHasHaloFlag + "]");
 				
 				/* check if we should inherit the floating flag */
@@ -171,12 +173,15 @@ public class HaloFloating {
 						Object pvRecord = taskHistoryList.get(taskHistoryList.size() - 1);
 						Intent pvIntent = (Intent) XposedHelpers.getObjectField(pvRecord, "intent");
 
-						if(forceTaskHalo || packageName.equals(pvIntent.getPackage())) mHasHaloFlag = !mIsPreviousActivityHome && Util.isFlag(pvIntent.getFlags(), mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW));
+						if((forceTaskHalo || packageName.equals(pvIntent.getPackage())) && !mIsPreviousActivityHome) 
+							mHasHaloFlag =  Util.isFlag(pvIntent.getFlags(), mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW));
 					}
 				}
 
 				if(mHasHaloFlag) intent.addFlags(mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW));
-				if(mHasHaloFlag) XposedHelpers.setBooleanField(param.thisObject, "fullscreen", false);
+				else intent.setFlags(intent.getFlags() & ~mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW));
+				if(mHasHaloFlag) 
+					XposedHelpers.setBooleanField(param.thisObject, "fullscreen", false);
 
 				mIsPreviousActivityHome = isCurrentActivityHome;
 				
@@ -369,7 +374,7 @@ public class HaloFloating {
 				String name = window.getContext().getPackageName();
 				if (name.startsWith("com.android.systemui")) return;
 				if (name.equals("android")) return;
-				if(window.isFloating()) return; //MODAL fix
+				//if(window.isFloating()) return; //MODAL fix
 				if(MovableWindow.mWindowHolder==null) return;
 				MovableWindow.mWindowHolder.setWindow(window);
 				MovableWindow.pushLayout();
@@ -393,8 +398,8 @@ public class HaloFloating {
 	 * is in process and false when we are not resuming to let normal system behavior
 	 * continue as normal.
 	 */
-	//boolean mExceptionHook = false;
-	/*private void fixExceptionWhenResuming(final LoadPackageParam lpp) throws Throwable {
+	boolean mExceptionHook = false;
+	private void fixExceptionWhenResuming(final LoadPackageParam lpp) throws Throwable {
 		Class<?> cls = findClass("android.app.ActivityThread", lpp.classLoader);
 		XposedBridge.hookAllMethods(cls, "performResumeActivity",
 				new XC_MethodHook() {
@@ -411,6 +416,6 @@ public class HaloFloating {
 				return mExceptionHook;
 			}
 		});
-	}*/
+	}
 	
 }
