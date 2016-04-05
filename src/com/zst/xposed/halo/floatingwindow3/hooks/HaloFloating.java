@@ -378,7 +378,7 @@ public class HaloFloating {
 				if(MovableWindow.mWindowHolder==null) return;
 				MovableWindow.mWindowHolder.setWindow(window);
 				MovableWindow.pushLayout();
-				MovableWindow.connectService();
+				//MovableWindow.connectService();
 			}
 		});
 	}

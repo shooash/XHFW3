@@ -128,7 +128,7 @@ public class WindowHolder{
 	//set current window to saved layout params
 	public void pushToWindow(){
 		/*FIX for floating dialogs that shouldn't be treated as movable or halo windows*/
-		if(mWindow.isFloating()) return;
+		//if(mWindow.isFloating()) return;
 		WindowManager.LayoutParams mWParams = mWindow.getAttributes();
 		mWParams.x = x;
 		mWParams.y = y;
@@ -143,7 +143,7 @@ public class WindowHolder{
 	
 	public void pushToWindow(Window sWindow){
 		/*FIX for floating dialogs that shouldn't be treated as movable or halo windows*/
-		if(sWindow==null || sWindow.isFloating()) return;
+		if(mWindow.isFloating()) return;
 		WindowManager.LayoutParams mWParams = sWindow.getAttributes();
 		mWParams.x = x;
 		mWParams.y = y;

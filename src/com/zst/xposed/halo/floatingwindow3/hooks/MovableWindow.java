@@ -143,6 +143,8 @@ public class MovableWindow {
 					if(!initWindow()) return;
 					/* if it is movable - continue and add it to windows array */
 					mWindows.add(mWindowHolder.mWindow);
+					/* reconnect XHFWService if needed */
+					connectService();
 					/* we need to snap from very begining */
 					if((mAeroSnap!=null)&&(mWindowHolder.isSnapped)) mAeroSnap.forceSnapGravity(mWindowHolder.SnapGravity);
 					/* add overlay */
@@ -159,10 +161,10 @@ public class MovableWindow {
 					mActivity = (Activity) param.thisObject;
 					/*  We don't touch floating dialogs  */
 					//if (mActivity.getWindow().isFloating()) return;
-					/* reconnect XHFWService if needed */
-					connectService();
 					/* no need to act if it's not movable */
 					if(!mWindowHolder.isMovable) return;
+					/* reconnect XHFWService if needed */
+					connectService();
 					// Add our overlay view
 					setOverlayView();
 					showTitleBar();
@@ -292,6 +294,8 @@ public class MovableWindow {
 		refreshScreenSize();
 		setInitLayout();
 		pushLayout();
+		/* connect XHFWService if needed */
+		connectService();
 		return true;
 	}
 	
@@ -433,7 +437,11 @@ public class MovableWindow {
 	public static void registerLayoutBroadcastReceiver() {
 		IntentFilter filters = new IntentFilter();
 		filters.addAction(Common.REFRESH_FLOAT_DOT_POSITION);
-		mWindowHolder.mActivity.registerReceiver(mBroadcastReceiver, filters);
+		try{
+			mWindowHolder.mActivity.registerReceiver(mBroadcastReceiver, filters);
+		} catch(IllegalArgumentException e){
+			DEBUG("Check registerLayoutBroadcastReceiver tried to register twice!");
+		}
 		//setTagInternalForView(window.getDecorView(), Common.LAYOUT_RECEIVER_TAG, br);
 	}
 	
@@ -471,8 +479,6 @@ public class MovableWindow {
 	
 	public static void showTitleBar(){
 		DEBUG("showTitleBar");
-		/*FIX for floating dialogs that shouldn't be treated as movable or halo windows*/
-		//if(mWindowHolder.mWindow.isFloating()) return;
 		if(mOverlayView == null) return;
 		toggleDragger(mWindowHolder.isSnapped);
 
@@ -487,10 +493,6 @@ public class MovableWindow {
 	}
 
 	public static void setOverlayView(){
-		/*if(mOverlayView!=null) {
-			putOverlayView();
-			return;
-			}*/
 		/*  We don't touch floating dialogs  */
 		if (mActivity.getWindow().isFloating()) return;
 		FrameLayout decorView = null;
