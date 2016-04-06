@@ -180,12 +180,11 @@ public class MovableWindow {
 					/*  We don't touch floating dialogs  */
 					//if (mActivity.getWindow().isFloating()) return;
 					/* no need to act if it's not movable */
-					if(!mWindowHolder.isMovable) return;		
-					/** update current window **/
-					if(mWindowHolder!=null) //
-						mWindowHolder.setWindow(mActivity);
 					/* check if we need to show or hide floatdot */
 					toggleDragger();
+					if(!mWindowHolder.isMovable) return;		
+					/** update current window **/
+					mWindowHolder.setWindow(mActivity);
 					/* FIX FORCED ORIENTATION ON MOVABLE WINDOWS */
 					mActivity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER);
 					/* reconnect XHFWService if needed */
@@ -389,7 +388,7 @@ public class MovableWindow {
 		if(XHFWInterfaceLink == null){
 			Intent intent = new Intent(Common.FLOAT_DOT_SERVICE_ACTION);
 			intent.setPackage(Common.FLOAT_DOT_PACKAGE);
-			mWindowHolder.mActivity.bindService(intent, XHFWServiceConnection, Service.BIND_AUTO_CREATE);
+			mWindowHolder.mActivity.getApplicationContext().bindService(intent, XHFWServiceConnection, Service.BIND_AUTO_CREATE);
 		}
 	}
 	
@@ -468,7 +467,7 @@ public class MovableWindow {
 	}
 	
 	public static void toggleDragger(){
-		if(mWindowHolder.isSnapped) toggleDragger(true);
+		if(mWindowHolder!=null && mWindowHolder.isSnapped) toggleDragger(true);
 		else toggleDragger(false);
 	}
 	
