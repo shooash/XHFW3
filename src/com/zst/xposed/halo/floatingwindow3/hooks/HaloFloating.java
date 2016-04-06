@@ -119,7 +119,19 @@ public class HaloFloating {
 				ActivityInfo activity_info = null;
 				boolean isCurrentActivityHome = false;
 				
-				if (Build.VERSION.SDK_INT >= 19) { // Android 4.4 onwards
+				if (Build.VERSION.SDK_INT >= 23){ // Android 6.0 and up
+					intent = (Intent) param.args[4];
+					activity_info = (ActivityInfo) param.args[6];
+					try {
+						Object stackSupervisor = param.args[13]; // mStackSupervisor
+						activity_stack = XposedHelpers.callMethod(stackSupervisor, "getFocusedStack");
+					} catch (Exception e) {
+						activity_stack = XposedHelpers.getObjectField(param.args[12], "mFocusedStack");
+					}
+					isCurrentActivityHome = (Boolean) XposedHelpers.callMethod(activity_stack, "isHomeStack");
+					// Check if the previous activity is home
+				}
+				else if (Build.VERSION.SDK_INT >= 19) { // Android 4.4 onwards
 					intent = (Intent) param.args[4];
 					activity_info = (ActivityInfo) param.args[6];
 					try {
@@ -379,8 +391,12 @@ public class HaloFloating {
 	
 	private void injectGenerateLayout(final LoadPackageParam lpp)
 			throws Throwable {
-				
-	Class<?> cls = findClass("com.android.internal.policy.impl.PhoneWindow", lpp.classLoader);
+		Class<?> cls;
+		if (Build.VERSION.SDK_INT >= 23) 
+			cls = findClass("com.android.internal.policy.PhoneWindow", lpp.classLoader);
+		else
+			cls = findClass("com.android.internal.policy.impl.PhoneWindow", lpp.classLoader);
+			
 		XposedBridge.hookAllMethods(cls, "generateLayout", new XC_MethodHook() {
 			protected void afterHookedMethod(MethodHookParam param) throws Throwable {
 				if (!isHoloFloat) return;
