@@ -448,7 +448,11 @@ public class MovableWindow {
 	}
 	
 	private static void unregisterLayoutBroadcastReceiver() {
-		mWindowHolder.mActivity.unregisterReceiver(mBroadcastReceiver);
+		try{
+			mWindowHolder.mActivity.getApplicationContext().unregisterReceiver(mBroadcastReceiver);
+			} catch(Throwable e){
+				XposedBridge.log(mWindowHolder.packageName + " failed to unregister receiver.");
+			}
 	}
 
 	private static void changeFocusApp(Activity a) {

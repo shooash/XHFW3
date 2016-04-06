@@ -45,6 +45,7 @@ public class FloatingDot implements Runnable
 		PixelFormat.TRANSLUCENT);
 	Context mContext;
 	boolean mViewOn = false;
+	int[] coordinates = new int[2];
 
     public FloatingDot(Context sContext) {
 		mContext = sContext;
@@ -135,6 +136,7 @@ public class FloatingDot implements Runnable
 							case MotionEvent.ACTION_MOVE:
 								paramsF.x = initialX + (int) (event.getRawX() - initialTouchX);
 								paramsF.y = initialY + (int) (event.getRawY() - initialTouchY);
+								
 								mWindowManager.updateViewLayout(v, paramsF);
 								checkTime = SystemClock.uptimeMillis();
 								//sendPosition(v);
@@ -156,7 +158,6 @@ public class FloatingDot implements Runnable
 	
 	public int[] getAbsoluteCoordinates(View v){
 		refreshScreenSize();
-		int[] coordinates = new int[2];
 		//{paramsF.x + (mCircleDiameter),paramsF.y + (mCircleDiameter)};
 		v.getLocationOnScreen(coordinates);
 		coordinates[0]+= mCircleDiameter/2;
@@ -165,23 +166,27 @@ public class FloatingDot implements Runnable
 	}
 	
 	public void rotatePosition(int rotation){
-		int[] coordinates = getAbsoluteCoordinates();
-		//coordinates[0] = 100*coordinates[0]/mScreenWidth;
-		//coordinates[1] = 100*coordinates[1]/mScreenHeight;
-		coordinates = new int[]{coordinates[Util.rollInt(0,1,-rotation)], coordinates[Util.rollInt(0,1,-rotation+1)]};
-		paramsF.x = coordinates[0];
-		paramsF.y = coordinates[1];
+		int widthPercent = 100*paramsF.x/mScreenWidth;
+		int heightPercent = 100*paramsF.y/mScreenHeight;
+		refreshScreenSize();
+		paramsF.x = widthPercent*mScreenWidth/100;
+		paramsF.y = heightPercent*mScreenHeight/100;
+		//coordinates = new int[]{coordinates[Util.rollInt(0,1,-rotation)], coordinates[Util.rollInt(0,1,-rotation+1)]};
 		mWindowManager.updateViewLayout(image, paramsF);
 		sendPosition(image);
 	}
 
 	public void sendPosition(View v){
-		
+		sendPosition(getAbsoluteCoordinates(v));
+	}
+	
+	public void sendPosition(int[] coordinates){
+
 		//if(SystemClock.uptimeMillis() - checkBroadcastTime < 250) return;
 		//checkBroadcastTime = SystemClock.uptimeMillis();
 		Intent intent = new Intent(REFRESH_FLOAT_DOT_POSITION);
-		
-		intent.putExtra(INTENT_FLOAT_DOT_EXTRA, getAbsoluteCoordinates(v));
+
+		intent.putExtra(INTENT_FLOAT_DOT_EXTRA, coordinates);
 		// set package so this is broadcasted only to our own package
 		mContext.sendBroadcast(intent);
 	}

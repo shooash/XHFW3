@@ -91,6 +91,19 @@ public class HaloFloating {
 	}
 	
 	private void hookActivityRecord(final LoadPackageParam lpparam)throws Throwable {
+		/*final Class<?> hookRecentsPanelViewClass = findClass("com.android.systemui.recent.RecentsPanelView",
+											 lpparam.classLoader);
+		XposedBridge.hookAllMethods(hookRecentsPanelViewClass, "handleOnClick", new XC_MethodHook() {
+				protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+					final View thiz = (View) param.thisObject;
+					try {
+						XposedHelpers.setObjectField(thiz, "hide", false);
+						} catch (Throwable e){};
+				}
+			});*/
+		
+		
+		
 		Class<?> classActivityRecord = findClass("com.android.server.am.ActivityRecord",
 				lpparam.classLoader);
 		XposedBridge.hookAllConstructors(classActivityRecord,
@@ -211,49 +224,50 @@ public class HaloFloating {
 	 * is not null, then pause the app. We are working around it like this.
 	 */
 	private  void injectActivityStack(final LoadPackageParam lpp) throws Throwable {
-//		final Class<?> classActivityRecord = findClass("com.android.server.am.ActivityRecord",
-//				lpp.classLoader);
-//		XposedBridge.hookAllMethods(hookClass, "resumeTopActivityLocked", new XC_MethodHook() {
-//			Object previous = null;
-//			boolean appPauseEnabled;
-//			boolean isHalo;
-//			protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-//				// Find the first activity that is not finishing.
-//				if (!mHasHaloFlag) return;
-//				if (mIsPreviousActivityHome) return;
-//				
-//				Object nextAR = XposedHelpers.callMethod(param.thisObject, "topRunningActivityLocked",
-//						new Class[] { classActivityRecord }, (Object) null);
-//				Intent nextIntent = (Intent) XposedHelpers.getObjectField(nextAR, "intent");
-//				// TODO Find better whatsapp workaround.
-//				try {
-//					isHalo = (!nextIntent.getPackage().equals("com.whatsapp")) &&
-//							(nextIntent.getFlags() & mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW)) == mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW); //LUCINIAMOD
-//				} catch (NullPointerException e) {
-//					// if getPackage returns null
-//				}
-//				if (!isHalo) return;
-//				
-//				mPref.reload();
-//				appPauseEnabled = mPref.getBoolean(Common.KEY_APP_PAUSE, Common.DEFAULT_APP_PAUSE);
-//				if (appPauseEnabled) return;
-//				
-//				final Object prevActivity = XposedHelpers.getObjectField(param.thisObject, "mResumedActivity");
-//				previous = prevActivity;
-//				XposedHelpers.setObjectField(param.thisObject, "mResumedActivity", null);
-//			}
-//			protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-//				if (!mHasHaloFlag) return;
-//				if (!isHalo) return;
-//				if (mIsPreviousActivityHome) return;
-//				if (appPauseEnabled) return;
-//				if (previous != null) {
-//					XposedHelpers.setObjectField(param.thisObject, "mResumedActivity", previous);
-//					previous = null;
-//				}
-//			}
-//		});
+		final Class<?> classActivityRecord = findClass("com.android.server.am.ActivityRecord",
+				lpp.classLoader);
 		final Class<?> hookClass = findClass("com.android.server.am.ActivityStack", lpp.classLoader);
+		
+		XposedBridge.hookAllMethods(hookClass, "resumeTopActivityLocked", new XC_MethodHook() {
+			Object previous = null;
+			boolean appPauseEnabled;
+			boolean isHalo;
+			protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+				// Find the first activity that is not finishing.
+				if (!mHasHaloFlag) return;
+				if (mIsPreviousActivityHome) return;
+				
+				Object nextAR = XposedHelpers.callMethod(param.thisObject, "topRunningActivityLocked",
+						new Class[] { classActivityRecord }, (Object) null);
+				Intent nextIntent = (Intent) XposedHelpers.getObjectField(nextAR, "intent");
+				// TODO Find better whatsapp workaround.
+				try {
+					isHalo = (!nextIntent.getPackage().equals("com.whatsapp")) &&
+							(nextIntent.getFlags() & mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW)) == mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW); //LUCINIAMOD
+				} catch (NullPointerException e) {
+					// if getPackage returns null
+				}
+				if (!isHalo) return;
+				
+				mPref.reload();
+				appPauseEnabled = mPref.getBoolean(Common.KEY_APP_PAUSE, Common.DEFAULT_APP_PAUSE);
+				if (appPauseEnabled) return;
+				
+				final Object prevActivity = XposedHelpers.getObjectField(param.thisObject, "mResumedActivity");
+				previous = prevActivity;
+				XposedHelpers.setObjectField(param.thisObject, "mResumedActivity", null);
+			}
+			protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+				if (!mHasHaloFlag) return;
+				if (!isHalo) return;
+				if (mIsPreviousActivityHome) return;
+				if (appPauseEnabled) return;
+				if (previous != null) {
+					XposedHelpers.setObjectField(param.thisObject, "mResumedActivity", previous);
+					previous = null;
+				}
+			}
+		});
 		
 		/* This is a Kitkat work-around to make sure the background is transparent */
 		XposedBridge.hookAllMethods(hookClass, "startActivityLocked", new XC_MethodHook() {
