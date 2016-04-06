@@ -59,7 +59,7 @@ public class MainXposed implements IXposedHookLoadPackage, IXposedHookZygoteInit
 	@Override
 	public void handleLoadPackage(final LoadPackageParam lpparam) throws Throwable {
 		// XHFW
-		//TestingSettingHook.handleLoadPackage(lpparam);
+		TestingSettingHook.handleLoadPackage(lpparam);
 		
 		// SystemUI Mods
 		/*if (Build.VERSION.SDK_INT >= 20) { // Lollipop
