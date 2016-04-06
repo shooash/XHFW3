@@ -53,15 +53,15 @@ import com.zst.xposed.halo.floatingwindow3.floatdot.*;
 public class MovableWindow {
 	
 	public static void DEBUG(String tag){
-		XposedBridge.log("CHECK " + tag + " mWindows size: " + mWindows.size() + " at " + (mWindowHolder==null? " NULL " : mWindowHolder.packageName));
-		if(mWindowHolder!=null){
-			XposedBridge.log("Check " + tag + " mWH: " + mWindowHolder.packageName + " Snap: " + mWindowHolder.SnapGravity + " " + mWindowHolder.isSnapped + " gravity " + mWindowHolder.width + ":" + mWindowHolder.height + " at " + mWindowHolder.x + ":" + mWindowHolder.y);
-			XposedBridge.log("     flags " + mWindowHolder.mWindow.getAttributes().flags + "  type: " + mWindowHolder.mWindow.getAttributes().type + " for " + mWindowHolder.packageName);
-			}
-		else
-		{XposedBridge.log("Check " + tag + "mWindowHolder is NULL!!!");
-		
-		}
+//		XposedBridge.log("CHECK " + tag + " mWindows size: " + mWindows.size() + " at " + (mWindowHolder==null? " NULL " : mWindowHolder.packageName));
+//		if(mWindowHolder!=null){
+//			XposedBridge.log("Check " + tag + " mWH: " + mWindowHolder.packageName + " Snap: " + mWindowHolder.SnapGravity + " " + mWindowHolder.isSnapped + " gravity " + mWindowHolder.width + ":" + mWindowHolder.height + " at " + mWindowHolder.x + ":" + mWindowHolder.y);
+//			XposedBridge.log("     flags " + mWindowHolder.mWindow.getAttributes().flags + "  type: " + mWindowHolder.mWindow.getAttributes().type + " for " + mWindowHolder.packageName);
+//			}
+//		else
+//		{XposedBridge.log("Check " + tag + "mWindowHolder is NULL!!!");
+//		
+//		}
 //		if(mWindowHolderCached!=null)
 //		{
 //			//mWindowHolderCached.pullFromWindow();
@@ -434,15 +434,17 @@ public class MovableWindow {
 		}
 	};
 	
-	public static void registerLayoutBroadcastReceiver() {
+	public static boolean registerLayoutBroadcastReceiver() {
 		IntentFilter filters = new IntentFilter();
 		filters.addAction(Common.REFRESH_FLOAT_DOT_POSITION);
 		try{
-			mWindowHolder.mActivity.registerReceiver(mBroadcastReceiver, filters);
-		} catch(IllegalArgumentException e){
-			DEBUG("Check registerLayoutBroadcastReceiver tried to register twice!");
+			mWindowHolder.mActivity.getApplicationContext().registerReceiver(mBroadcastReceiver, filters);
+		} catch(Throwable e){
+			DEBUG("Check registerLayoutBroadcastReceiver error");
+			return false;
 		}
 		//setTagInternalForView(window.getDecorView(), Common.LAYOUT_RECEIVER_TAG, br);
+		return true;
 	}
 	
 	private static void unregisterLayoutBroadcastReceiver() {
