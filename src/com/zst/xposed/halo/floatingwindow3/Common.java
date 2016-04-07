@@ -103,7 +103,7 @@ public class Common {
 	public static final int DEFAULT_KEYBOARD_MODE = 1;
 	public static final int DEFAULT_GRAVITY = Gravity.CENTER;
 	public static final boolean DEFAULT_APP_PAUSE = true;
-	public static final boolean DEFAULT_MOVABLE_WINDOW = false;
+	public static final boolean DEFAULT_MOVABLE_WINDOW = true;
 	public static final boolean DEFAULT_NOTIFICATION_LONGPRESS_OPTION = false;
 	public static final boolean DEFAULT_NOTIFICATION_SINGLE_CLICK_HALO = false;
 	public static final boolean DEFAULT_SYSTEM_PREVENT_HOME_TO_FRONT = false;
