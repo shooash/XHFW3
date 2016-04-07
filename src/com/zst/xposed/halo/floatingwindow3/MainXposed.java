@@ -5,12 +5,11 @@ import com.zst.xposed.halo.floatingwindow3.hooks.HaloFloating;
 import com.zst.xposed.halo.floatingwindow3.hooks.MovableWindow;
 //import com.zst.xposed.halo.floatingwindow3.hooks.NotificationShadeHook;
 import com.zst.xposed.halo.floatingwindow3.hooks.RecentAppsHook;
-//import com.zst.xposed.halo.floatingwindow3.hooks.StatusbarTaskbar;
+import com.zst.xposed.halo.floatingwindow3.hooks.StatusbarTaskbar;
 import com.zst.xposed.halo.floatingwindow3.hooks.SystemMods;
-//import com.zst.xposed.halo.floatingwindow3.hooks.SystemUIMultiWindow;
 import com.zst.xposed.halo.floatingwindow3.hooks.SystemUIOutliner;
 import com.zst.xposed.halo.floatingwindow3.hooks.TestingSettingHook;
-//import com.zst.xposed.halo.floatingwindow3.hooks.ipc.XHFWService;
+
 
 import android.content.res.XModuleResources;
 import android.os.Build;
