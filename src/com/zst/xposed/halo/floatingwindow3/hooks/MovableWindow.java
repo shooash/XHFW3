@@ -161,7 +161,7 @@ public class MovableWindow {
 					else /* restore layout */
 						pushLayout();
 					/* bring overlay to front */
-					putOverlayView();
+					setOverlayView();
 					showTitleBar();
 					/* make all windows of the activity to keep layout - they loose it constantly! */
 					syncLayoutParams();
@@ -177,7 +177,7 @@ public class MovableWindow {
 					/*  We don't touch floating dialogs  */
 					//if (mActivity.getWindow().isFloating()) return;
 					/* no need to act if it's not movable */
-					if(!mWindowHolder.isMovable) return;
+					if(mWindowHolder==null||!mWindowHolder.isMovable) return;
 					int curRotation = Util.getDisplayRotation(mActivity);
 //					mFloatDotCoordinates = new int[]{mFloatDotCoordinates[Util.rollInt(0,1,mWindowHolder.cachedRotation-curRotation)], mFloatDotCoordinates[Util.rollInt(0,1,mWindowHolder.cachedRotation-curRotation+1)]};
 //					
@@ -467,7 +467,8 @@ public class MovableWindow {
 
 	public static void setOverlayView(){
 		/*  We don't touch floating dialogs  */
-		if (mActivity.getWindow().isFloating()) return;
+		//if (mActivity.getWindow().isFloating()) return;
+		if(mActivity.getWindow().isFloating()) DEBUG("   Window is floating, flags: " + mActivity.getWindow().getAttributes().flags + " type: " + mActivity.getWindow().getAttributes().type);
 		FrameLayout decorView = null;
 		try{
 		//decorView = (FrameLayout) mWindowHolder.mActivity.getWindow().peekDecorView().getRootView();
