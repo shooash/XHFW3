@@ -178,7 +178,8 @@
     <!-- Screen 7: StatusBar Taskbar -->
      <PreferenceScreen
          android:title="@string/pref_statusbar_taskbar_top_title"
-         android:summary="@string/pref_statusbar_taskbar_top_summary" >
+         android:summary="@string/pref_statusbar_taskbar_top_summary" 
+		 android:enabled="false" >
          
          <SwitchPreference
              android:defaultValue="false"
