@@ -1,53 +1,20 @@
 package com.zst.xposed.halo.floatingwindow3.hooks;
 
-import com.zst.xposed.halo.floatingwindow3.Common;
-import com.zst.xposed.halo.floatingwindow3.MainXposed;
-import com.zst.xposed.halo.floatingwindow3.R;
-import com.zst.xposed.halo.floatingwindow3.helpers.AeroSnap;
-import com.zst.xposed.halo.floatingwindow3.helpers.MovableOverlayView;
-import com.zst.xposed.halo.floatingwindow3.helpers.Util;
-import com.zst.xposed.halo.floatingwindow3.floatdot.XHFWInterface;
-import android.annotation.SuppressLint;
-import android.app.ActionBar;
-import android.app.Activity;
-import android.app.Notification;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
-import android.content.pm.ApplicationInfo;
-import android.content.res.Configuration;
-import android.content.res.Resources;
-import android.graphics.Color;
-import android.os.Build;
-import android.os.IBinder;
-import android.os.RemoteException;
-import android.view.Display;
-import android.view.Gravity;
-import android.view.MotionEvent;
-import android.view.View;
-import android.view.ViewGroup;
-import android.view.Window;
-import android.view.WindowManager;
-import android.widget.FrameLayout;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-
-import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XSharedPreferences;
-import de.robv.android.xposed.XposedBridge;
-import de.robv.android.xposed.XposedHelpers;
-import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam;
-import com.zst.xposed.halo.floatingwindow3.helpers.*;
-import android.content.pm.*;
-import de.robv.android.xposed.*;
+import android.annotation.*;
 import android.app.*;
 import android.content.*;
+import android.content.pm.*;
+import android.content.res.*;
+import android.os.*;
 import android.util.*;
-import com.zst.xposed.halo.floatingwindow3.floatdot.*; 
+import android.view.*;
+import android.widget.*;
+import com.zst.xposed.halo.floatingwindow3.*;
+import com.zst.xposed.halo.floatingwindow3.floatdot.*;
+import com.zst.xposed.halo.floatingwindow3.helpers.*;
+import de.robv.android.xposed.*;
+import de.robv.android.xposed.callbacks.XC_LoadPackage.*;
+import java.util.*; 
 
 
 public class MovableWindow {

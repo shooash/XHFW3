@@ -1,33 +1,19 @@
 package com.zst.xposed.halo.floatingwindow3.hooks;
 
-import static de.robv.android.xposed.XposedHelpers.findClass;
-
-import java.util.ArrayList;
-
-import android.annotation.SuppressLint;
-import android.app.Activity;
-import android.content.Intent;
-import android.content.pm.ActivityInfo;
-import android.os.Build;
-import android.view.Window;
-
-import com.zst.xposed.halo.floatingwindow3.Common;
-import com.zst.xposed.halo.floatingwindow3.MainXposed;
-import com.zst.xposed.halo.floatingwindow3.helpers.AeroSnap;
-
-import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XC_MethodReplacement;
-import de.robv.android.xposed.XSharedPreferences;
-import de.robv.android.xposed.XposedBridge;
-import de.robv.android.xposed.XposedHelpers;
-import de.robv.android.xposed.callbacks.XCallback;
-import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam;
-import com.zst.xposed.halo.floatingwindow3.helpers.*;
-import com.zst.xposed.halo.floatingwindow3.helpers.Compatibility;
-import de.robv.android.xposed.*;
-import android.util.*;
-import android.view.*;
+import android.annotation.*;
+import android.app.*;
 import android.content.*;
+import android.content.pm.*;
+import android.os.*;
+import android.view.*;
+import com.zst.xposed.halo.floatingwindow3.*;
+import com.zst.xposed.halo.floatingwindow3.helpers.*;
+import de.robv.android.xposed.*;
+import de.robv.android.xposed.callbacks.*;
+import de.robv.android.xposed.callbacks.XC_LoadPackage.*;
+import java.util.*;
+
+import static de.robv.android.xposed.XposedHelpers.findClass;
 
 public class HaloFloating {
 	MainXposed mMain;
