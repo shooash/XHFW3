@@ -389,7 +389,7 @@ public class MovableWindow {
 				int[] coordinates = intent.getIntArrayExtra(Common.INTENT_FLOAT_DOT_EXTRA);
 				if(coordinates == null) return;
 				mFloatDotCoordinates=coordinates;
-				if(!mWindowHolder.isSnapped) return;
+				if(mWindowHolder==null||!mWindowHolder.isSnapped) return;
 				if(mWindowHolder.SnapGravity==0) mWindowHolder.restoreSnap();
 				if(mAeroSnap!=null){
 					mAeroSnap.forceSnapGravity(mWindowHolder.SnapGravity);
@@ -414,6 +414,7 @@ public class MovableWindow {
 	}
 	
 	private static void unregisterLayoutBroadcastReceiver() {
+		if(mWindowHolder==null) return;
 		try{
 			mWindowHolder.mActivity.getApplicationContext().unregisterReceiver(mBroadcastReceiver);
 			} catch(Throwable e){
@@ -451,7 +452,7 @@ public class MovableWindow {
 	
 	public static void showTitleBar(){
 		DEBUG("showTitleBar");
-		if(mOverlayView == null) return;
+		if(mOverlayView == null || mWindowHolder==null) return;
 		toggleDragger(mWindowHolder.isSnapped);
 
 		boolean is_maximized = 
@@ -498,12 +499,14 @@ public class MovableWindow {
 			decorView.addView(mOverlayView, -1, MovableOverlayView.getParams());
 			setTagInternalForView(decorView, Common.LAYOUT_OVERLAY_TAG, mOverlayView);
 		}
+		//mMainXposed.hookActionBarColor.setTitleBar(mOverlayView);
 	}
 	
 	private static void putOverlayView(){
 		FrameLayout decor_view = (FrameLayout) mActivity.getWindow().peekDecorView().getRootView();
 		mOverlayView = (MovableOverlayView) decor_view.getTag(Common.LAYOUT_OVERLAY_TAG);
 		decor_view.bringChildToFront(mOverlayView);
+		//mMainXposed.hookActionBarColor.setTitleBar(mOverlayView);
 	}
 	
 	public static void getFloatingDotCoordinates(){

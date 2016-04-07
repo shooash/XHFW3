@@ -1,9 +1,36 @@
 package com.zst.xposed.halo.floatingwindow3.helpers;
 import android.view.*;
 import java.util.*;
+import android.os.*;
 
 public class Compatibility
 {
+	
+	
+	public class HookedMethods {
+		public String ACTION_BAR_HOOK_CLASS = "com.android.internal.app.WindowDecorActionBar";
+
+		public HookedMethods(){
+			switch(Build.VERSION.SDK_INT){
+				case 19:
+					ACTION_BAR_HOOK_CLASS="com.android.internal.app.ActionBarImpl";
+					break;
+				case 20:
+				case 21:
+				case 22:
+				case 23:
+				default:
+					ACTION_BAR_HOOK_CLASS="com.android.internal.app.WindowDecorActionBar";
+			}
+		}
+	}
+	
+	public static HookedMethods getHookedMethods(){
+		return (new Compatibility()).new HookedMethods();
+	}
+	
+	public static HookedMethods hooked_methods =  (new Compatibility()).new HookedMethods();
+	
 	public class AeroSnap{
 		public final static int SNAP_NONE = 0;
 		public final static int SNAP_LEFT = 1;
@@ -17,7 +44,8 @@ public class Compatibility
 		public final static int SNAP_BOTTOMRIGHT = 43;
 	}
 	
-	public final static int AeroSnapNone = 0;
+	//public final static int AeroSnapNone = 0;
+	
 	final static ArrayList<Integer> snapSideReplaceTable = new ArrayList<Integer>(Arrays.asList(AeroSnap.SNAP_TOPLEFT, AeroSnap.SNAP_TOP, AeroSnap.SNAP_TOPRIGHT,
 										AeroSnap.SNAP_RIGHT,
 										AeroSnap.SNAP_BOTTOMRIGHT, AeroSnap.SNAP_BOTTOM, AeroSnap.SNAP_BOTTOMLEFT,
@@ -39,3 +67,5 @@ public class Compatibility
 		else return 0;
 	}
 }
+
+

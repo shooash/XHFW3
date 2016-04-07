@@ -29,6 +29,10 @@ import de.robv.android.xposed.XSharedPreferences;
 import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.XposedHelpers.ClassNotFoundError;
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam;
+import de.robv.android.xposed.*;
+import android.os.*;
+import com.zst.xposed.halo.floatingwindow3.helpers.*;
+import com.zst.xposed.halo.floatingwindow3.helpers.Compatibility;
 
 public class ActionBarColorHook {
 	
@@ -68,13 +72,14 @@ public class ActionBarColorHook {
 	public ActionBarColorHook(MainXposed main, LoadPackageParam llpp, XSharedPreferences pref) {
 		mMainXposed = main;
 		mPref = pref;
-		mPref.reload();
+		//mPref.reload();
 		
 		if (!mPref.getBoolean(Common.KEY_TINTED_TITLEBAR_ENABLED,
 				Common.DEFAULT_TINTED_TITLEBAR_ENABLED)) return;
 		
 		try {
-			final Class<?> ActionBarImpl = findClass("com.android.internal.app.ActionBarImpl", llpp.classLoader);
+			
+			final Class<?> ActionBarImpl = findClass(mMainXposed.mHookedMethods.ACTION_BAR_HOOK_CLASS, llpp.classLoader);
 			final Class<?> ActivityClass = XposedHelpers.findClass("android.app.Activity", llpp.classLoader);
 			
 			findAndHookMethod(ActionBarImpl, "setBackgroundDrawable", Drawable.class,
@@ -123,22 +128,33 @@ public class ActionBarColorHook {
 				}
 			});
 		} catch (ClassNotFoundError e) {
+			XposedBridge.log("Tinted titlebar hook failed. Class not found." + mMainXposed.mHookedMethods.ACTION_BAR_HOOK_CLASS);
+			XposedBridge.log(e);
 		} catch (NoSuchMethodError e) {
+			XposedBridge.log("Tinted titlebar hook failed. No such method");
+			XposedBridge.log(e);
+		} catch (Throwable e){
+			XposedBridge.log("Tinted titlebar hook failed. Other error");
+			XposedBridge.log(e);
 		}
 	}
 	
 	private void changeColorFromActionBarObject(ActionBar actionBar){
 		Object actionBarContainer = getObjectField(actionBar, "mContainerView");
 		int actionBarTextColor = -2;
+		MovableWindow.DEBUG("ActionBar changeColorFromActionBarObject");
 		try {
 			TextView mTitleView = (TextView) getObjectField(
 					getObjectField(actionBarContainer, "mActionBarView"), "mTitleView");
+			MovableWindow.DEBUG("ActionBar changeColorFromActionBarObject " + (mTitleView==null?"[null]":"["+mTitleView.getVisibility()+"]"));
 			if (mTitleView != null) {
 				if (mTitleView.getVisibility() == View.VISIBLE) {
 					actionBarTextColor = mTitleView.getCurrentTextColor();
 				}
 			}
 		} catch (Throwable t) {
+			XposedBridge.log("changeColorFromActionBarObject crash");
+			XposedBridge.log(t);
 		}
 		
 		Drawable drawable = (Drawable) getObjectField(actionBarContainer, "mBackground");
@@ -170,6 +186,7 @@ public class ActionBarColorHook {
 		mMoreButton = overlayView.mTitleBarMore;
 		mTriangle = overlayView.mTriangle;
 		mQuadrant = overlayView.mQuadrant;
+		MovableWindow.DEBUG("ActionBar setTitlebar mheader isset #" + (mHeader!=null));
 	}
 	
 	public void setBorderThickness(int thickness) {
@@ -177,6 +194,7 @@ public class ActionBarColorHook {
 	}
 	
 	private void changeTitleBarColor(int bg_color, int icon_color) {
+		MovableWindow.DEBUG("ActionBar changeTitleBarColor [" + bg_color + ", " + icon_color + "]");
 		try {
 			mHeader.setBackgroundColor(bg_color);
 			mAppTitle.setTextColor(icon_color);
@@ -199,7 +217,7 @@ public class ActionBarColorHook {
 			}
 		}
 		
-		if (mPref.getBoolean(Common.KEY_TINTED_TITLEBAR_CORNER_TINT,
+		/*if (mPref.getBoolean(Common.KEY_TINTED_TITLEBAR_CORNER_TINT,
 				Common.DEFAULT_TINTED_TITLEBAR_CORNER_TINT)) {
 			try {
 				Drawable triangle_background = mTriangle.getBackground();
@@ -211,7 +229,7 @@ public class ActionBarColorHook {
 			} catch (NullPointerException e) {
 				Log.d("test1", Common.LOG_TAG + "ActionBarColorHook.java - changeTitleBarColor2 - NPE", e);
 			}
-		}
+		}*/
 		// if border is zero, the method will take care of it.
 	}
 	
@@ -229,6 +247,7 @@ public class ActionBarColorHook {
 	
 	private int getMainColorFromActionBarDrawable(Drawable drawable) {
 		if (drawable == null) {
+			MovableWindow.DEBUG("ActionBar getMainColorFromActionBarDrawable drawable is null");
 			return Color.BLACK;
 		}
 		/*
@@ -249,6 +268,7 @@ public class ActionBarColorHook {
 				pixel = bitmap.getPixel(0, 5);
 			}
 		} catch (IllegalArgumentException e) {
+			MovableWindow.DEBUG("ActionBar getMainColorFromActionBarDrawable IllegalArgumentException");
 			pixel = Color.BLACK;
 		}
 		int red = Color.red(pixel);
@@ -270,6 +290,8 @@ public class ActionBarColorHook {
 			drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
 			drawable.draw(canvas);
 		} catch (IllegalArgumentException e) {
+			XposedBridge.log("ActonBarColorHook drawableToBitmap crash");
+			XposedBridge.log(e);
 			return null;
 		}
 		

@@ -35,8 +35,8 @@ public class MainXposed implements IXposedHookLoadPackage, IXposedHookZygoteInit
 	/* Hook References */
 	public MovableWindow hookMovableWindow;
 	public HaloFloating hookHaloFloating;
-	public ActionBarColorHook hookActionBarColor;
-	
+	//public ActionBarColorHook hookActionBarColor;
+	public Compatibility.HookedMethods mHookedMethods;
 	/* Window holders */
 	//public WindowHolder mWindowHolder;
 	//public WindowHolder mWindowHolderCached;
@@ -60,7 +60,8 @@ public class MainXposed implements IXposedHookLoadPackage, IXposedHookZygoteInit
 	public void handleLoadPackage(final LoadPackageParam lpparam) throws Throwable {
 		// XHFW
 		TestingSettingHook.handleLoadPackage(lpparam);
-		
+		// Compatibility settings
+		mHookedMethods = Compatibility.getHookedMethods();
 		// SystemUI Mods
 		/*if (Build.VERSION.SDK_INT >= 20) { // Lollipop
 			// Lollipop totally revamped SystemUI
@@ -97,7 +98,7 @@ public class MainXposed implements IXposedHookLoadPackage, IXposedHookZygoteInit
 		//mWindowHolderCached = null;
 		hookMovableWindow = new MovableWindow(this, lpparam);
 		hookHaloFloating = new HaloFloating(this, lpparam, mPref);
-		hookActionBarColor = new ActionBarColorHook(this, lpparam, mPref);
+		//hookActionBarColor = new ActionBarColorHook(this, lpparam, mPref);
 	
 	}
 

@@ -296,7 +296,7 @@ public class MovableOverlayView extends RelativeLayout {
 			final int thickness = mPref.getInt(Common.KEY_WINDOW_BORDER_THICKNESS,
 					Common.DEFAULT_WINDOW_BORDER_THICKNESS);
 			setWindowBorder(color, thickness);
-			mMainXposed.hookActionBarColor.setBorderThickness(thickness);
+			//mMainXposed.hookActionBarColor.setBorderThickness(thickness);
 		}
 		
 		initTitleBar();

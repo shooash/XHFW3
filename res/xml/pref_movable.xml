@@ -260,10 +260,11 @@
 
         <PreferenceCategory android:title="@string/pref_movable_others_tinted_title_enable_title" >
             <SwitchPreference
-                android:defaultValue="true"
+                android:defaultValue="false"
                 android:key="window_tinted_title_enabled"
                 android:summary="@string/pref_movable_others_tinted_title_enable_summary"
-                android:title="@string/pref_movable_others_tinted_title_enable_title" />
+                android:title="@string/pref_movable_others_tinted_title_enable_title" 
+				android:enabled="false"/>
 
             <com.zst.xposed.halo.floatingwindow3.preferences.WidgetFloatPercentage
                 defaultValue="0.9"

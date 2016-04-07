@@ -145,7 +145,7 @@ public class Common {
 	public static final boolean DEFAULT_WINDOW_BORDER_ENABLED = true;
 	public static final String DEFAULT_WINDOW_BORDER_COLOR = "000000";
 	public static final int DEFAULT_WINDOW_BORDER_THICKNESS = 0;
-	public static final boolean DEFAULT_TINTED_TITLEBAR_ENABLED = true;
+	public static final boolean DEFAULT_TINTED_TITLEBAR_ENABLED = false;
 	public static final float DEFAULT_TINTED_TITLEBAR_HSV = 0.9f;
 	public static final boolean DEFAULT_TINTED_TITLEBAR_BORDER_TINT = true;
 	public static final boolean DEFAULT_TINTED_TITLEBAR_CORNER_TINT = true;
