@@ -250,7 +250,7 @@ public class MovableWindow {
 		if(!mWindowHolder.isMovable) return false;
 		mPref.reload();
 		/* we should set proper halo flags */
-		setIntentFlags();
+		//setIntentFlags();
 		/* FIX focus other windows not working on some apps */
 		mWindowHolder.mWindow.addFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL);
 		/* Fix Chrome dim */
