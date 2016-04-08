@@ -3,8 +3,6 @@ package com.zst.xposed.halo.floatingwindow3;
 import com.zst.xposed.halo.floatingwindow3.hooks.ActionBarColorHook;
 import com.zst.xposed.halo.floatingwindow3.hooks.HaloFloating;
 import com.zst.xposed.halo.floatingwindow3.hooks.MovableWindow;
-//import com.zst.xposed.halo.floatingwindow3.hooks.NotificationShadeHook;
-import com.zst.xposed.halo.floatingwindow3.hooks.RecentAppsHook;
 import com.zst.xposed.halo.floatingwindow3.hooks.StatusbarTaskbar;
 import com.zst.xposed.halo.floatingwindow3.hooks.SystemMods;
 import com.zst.xposed.halo.floatingwindow3.hooks.SystemUIOutliner;
@@ -44,11 +42,6 @@ public class MainXposed implements IXposedHookLoadPackage, IXposedHookZygoteInit
 		mBlacklist = new XSharedPreferences(Common.THIS_MOD_PACKAGE_NAME, Common.PREFERENCE_BLACKLIST_FILE);
 		mWhitelist = new XSharedPreferences(Common.THIS_MOD_PACKAGE_NAME, Common.PREFERENCE_WHITELIST_FILE);
 		sModRes = XModuleResources.createInstance(startupParam.modulePath, null);
-		
-		//SystemUI
-		//NotificationShadeHook.zygote(sModRes);
-		
-		RecentAppsHook.initZygote(sModRes);
 	}
 	
 	@Override
