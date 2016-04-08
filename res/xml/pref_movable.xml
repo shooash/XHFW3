@@ -3,7 +3,7 @@
     android:title="@string/pref_movable_top_title" >
 
     <SwitchPreference
-        android:defaultValue="false"
+        android:defaultValue="true"
         android:key="window_movable"
         android:title="@string/pref_movable_top_title" />
 
