@@ -9,6 +9,8 @@ import com.zst.xposed.halo.floatingwindow3.Common;
 import de.robv.android.xposed.XSharedPreferences;
 import android.view.*;
 import android.content.*;
+import com.zst.xposed.halo.floatingwindow3.hooks.*;
+import de.robv.android.xposed.*;
 
 public class WindowHolder{
     public boolean isFloating = false;
@@ -90,7 +92,7 @@ public class WindowHolder{
 	
 	public void setWindow (Window sWindow){
 		mWindow = sWindow;
-		//mWindow.addFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL);
+		mWindow.addFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL);
 	}
 
 	public void setMaximized(){
@@ -128,7 +130,7 @@ public class WindowHolder{
 	//set current window to saved layout params
 	public void pushToWindow(){
 		/*FIX for floating dialogs that shouldn't be treated as movable or halo windows*/
-		//if(mWindow.isFloating()) return;
+		if(mActivity.getWindow().isFloating()) return;
 		WindowManager.LayoutParams mWParams = mWindow.getAttributes();
 		mWParams.x = x;
 		mWParams.y = y;
@@ -143,7 +145,7 @@ public class WindowHolder{
 	
 	public void pushToWindow(Window sWindow){
 		/*FIX for floating dialogs that shouldn't be treated as movable or halo windows*/
-		//if(mWindow.isFloating()) return;
+		if(sWindow.isFloating()) return;
 		WindowManager.LayoutParams mWParams = sWindow.getAttributes();
 		mWParams.x = x;
 		mWParams.y = y;
@@ -154,7 +156,7 @@ public class WindowHolder{
 		sWindow.setAttributes(mWParams);
 	}
 	
-	//set current window to saved layout params
+	//get current window layout params
 	public void pullFromWindow(){
 		WindowManager.LayoutParams mWParams = mWindow.getAttributes();
 		x = mWParams.x;

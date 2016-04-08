@@ -395,6 +395,7 @@ public class HaloFloating {
 				if (name.equals("android")) return;
 				//if(window.isFloating()) return; //MODAL fix
 				if(MovableWindow.mWindowHolder==null) return;
+				MovableWindow.DEBUG("GenerateLayout");
 				MovableWindow.mWindowHolder.setWindow(window);
 				MovableWindow.pushLayout();
 				//MovableWindow.connectService();

@@ -57,7 +57,7 @@ public class MovableWindow {
 	static boolean mMinimizeToStatusbar;
 	public static WindowHolder mWindowHolder = null;
 	public static WindowHolder mWindowHolderCached = null;
-	private static ArrayList<Window> mWindows = new ArrayList<Window>();
+	public static ArrayList<Window> mWindows = new ArrayList<Window>();
 	
 	
 	public static boolean mRetainStartPosition;
@@ -116,7 +116,7 @@ public class MovableWindow {
 					if((mAeroSnap!=null)&&(mWindowHolder.isSnapped)) mAeroSnap.forceSnapGravity(mWindowHolder.SnapGravity);
 					/* add overlay */
 					setOverlayView();
-					showTitleBar();
+					//showTitleBar();
 					DEBUG("onCreate");
 				}
 			});
@@ -130,6 +130,9 @@ public class MovableWindow {
 					//if (mActivity.getWindow().isFloating()) return;
 					/* no need to act if it's not movable */
 					if(!mWindowHolder.isMovable) return;
+					/** update current window **/
+					mWindowHolder.setWindow(mActivity);
+					
 					/* reconnect XHFWService if needed */
 					connectService();
 					// Add our overlay view
@@ -161,7 +164,7 @@ public class MovableWindow {
 					else /* restore layout */
 						pushLayout();
 					/* bring overlay to front */
-					setOverlayView();
+					putOverlayView();
 					showTitleBar();
 					/* make all windows of the activity to keep layout - they loose it constantly! */
 					syncLayoutParams();
@@ -180,7 +183,6 @@ public class MovableWindow {
 					if(mWindowHolder==null||!mWindowHolder.isMovable) return;
 					int curRotation = Util.getDisplayRotation(mActivity);
 //					mFloatDotCoordinates = new int[]{mFloatDotCoordinates[Util.rollInt(0,1,mWindowHolder.cachedRotation-curRotation)], mFloatDotCoordinates[Util.rollInt(0,1,mWindowHolder.cachedRotation-curRotation+1)]};
-//					
 //					mAeroSnap.forceSnapGravity(mWindowHolder.SnapGravity);
 					mWindowHolder.cachedRotation = curRotation;
 					connectService();
@@ -196,7 +198,7 @@ public class MovableWindow {
 					/*  We don't touch floating dialogs  */
 					//if (mActivity.getWindow().isFloating()) return;
 					/* no need to act if it's not movable */
-					if(!mWindowHolder.isMovable) return;		
+					if(mWindowHolder==null||!mWindowHolder.isMovable) return;		
 					/* disable dragger */
 					toggleDragger(false);
 					return;
@@ -216,10 +218,12 @@ public class MovableWindow {
 					if(mWindows.size()<1) {
 						mWindowHolder = null;
 					}
+					/* disable dragger */
+					toggleDragger(false);
 					// hide the resizing outline
 					((Activity)param.thisObject).sendBroadcast(new Intent(Common.SHOW_OUTLINE));
 					//TODO TEST
-					showTitleBar();
+					//showTitleBar();
 					return;
 				}
 			});
@@ -244,13 +248,9 @@ public class MovableWindow {
 		mAeroSnap = mAeroSnapEnabled ? new AeroSnap(mAeroSnapDelay) : null;
 		/* set current window */
 		mWindowHolder.setWindow(mActivity);
-		/* check white and blacklists */
-		//mWindowHolder.isMovable = blackWhiteListed();
 		/* no need to go on if is not movable */
 		if(!mWindowHolder.isMovable) return false;
 		mPref.reload();
-		/* we should set proper halo flags */
-		//setIntentFlags();
 		/* FIX focus other windows not working on some apps */
 		mWindowHolder.mWindow.addFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL);
 		/* Fix Chrome dim */
@@ -279,22 +279,6 @@ public class MovableWindow {
 		mAeroSnapSwipeApp = mPref.getBoolean(Common.KEY_WINDOW_RESIZING_AERO_SNAP_SWIPE_APP, Common.DEFAULT_WINDOW_RESIZING_AERO_SNAP_SWIPE_APP);
 		mAeroSnapChangeTitleBarVisibility = mPref.getBoolean(Common.KEY_WINDOW_RESIZING_AERO_SNAP_TITLEBAR_HIDE, Common.DEFAULT_WINDOW_RESIZING_AERO_SNAP_TITLEBAR_HIDE);
 		mMaximizeChangeTitleBarVisibility = mPref.getBoolean(Common.KEY_WINDOW_TITLEBAR_MAXIMIZE_HIDE, Common.DEFAULT_WINDOW_TITLEBAR_MAXIMIZE_HIDE);
-	}
-	
-	private static void setIntentFlags(){
-		Intent mIntent = mWindowHolder.mActivity.getIntent();
-		int flags = mIntent.getFlags();
-		flags = flags | mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW);
-		flags = flags | Intent.FLAG_ACTIVITY_NO_USER_ACTION;
-		flags &= ~Intent.FLAG_ACTIVITY_TASK_ON_HOME;
-
-		if (!mPref.getBoolean(Common.KEY_SHOW_APP_IN_RECENTS, Common.DEFAULT_SHOW_APP_IN_RECENTS)) {
-			flags = flags | Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS;
-		} else if (mPref.getBoolean(Common.KEY_FORCE_APP_IN_RECENTS, Common.DEFAULT_FORCE_APP_IN_RECENTS)) {
-			flags &= ~Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS;
-		}
-		mIntent.setFlags(flags);
-		mWindowHolder.mActivity.setIntent(mIntent);
 	}
 	
 	private static void setInitLayout(){
@@ -464,18 +448,12 @@ public class MovableWindow {
 		}
 		else mOverlayView.setTitleBarVisibility(true);
 	}
-
-	public static void setOverlayView(){
+	
+	private static void setOverlayView(){
+		DEBUG("setOverlayView");
 		/*  We don't touch floating dialogs  */
-		//if (mActivity.getWindow().isFloating()) return;
-		if(mActivity.getWindow().isFloating()) DEBUG("   Window is floating, flags: " + mActivity.getWindow().getAttributes().flags + " type: " + mActivity.getWindow().getAttributes().type);
-		FrameLayout decorView = null;
-		try{
-		//decorView = (FrameLayout) mWindowHolder.mActivity.getWindow().peekDecorView().getRootView();
-			decorView = (FrameLayout) mWindowHolder.mWindow.peekDecorView().getRootView();
-		} catch (NullPointerException e){
-			//decorView = (FrameLayout) mWindowHolder.mWindow.peekDecorView().getRootView();
-		}
+		if (mWindowHolder==null || mWindowHolder.mWindow.isFloating()) return;	
+		FrameLayout decorView = (FrameLayout) mWindowHolder.mWindow.peekDecorView().getRootView();
 		if (decorView == null) return;
 		// make sure the titlebar/drag-to-move-bar is not behind the statusbar
 		decorView.setFitsSystemWindows(true);
@@ -495,16 +473,18 @@ public class MovableWindow {
 				break;
 			}
 		}
+
 		if (mOverlayView == null) {
-			mOverlayView = new MovableOverlayView(mMainXposed, mActivity, mModRes, mPref, mAeroSnap);
+			mOverlayView = new MovableOverlayView(mMainXposed, mWindowHolder.mActivity, mModRes, mPref, mAeroSnap);
 			decorView.addView(mOverlayView, -1, MovableOverlayView.getParams());
 			setTagInternalForView(decorView, Common.LAYOUT_OVERLAY_TAG, mOverlayView);
 		}
-		//mMainXposed.hookActionBarColor.setTitleBar(mOverlayView);
 	}
 	
 	private static void putOverlayView(){
-		FrameLayout decor_view = (FrameLayout) mActivity.getWindow().peekDecorView().getRootView();
+		/*  We don't touch floating dialogs  */
+		if (mWindowHolder==null || mWindowHolder.mWindow.isFloating()) return;	
+		FrameLayout decor_view = (FrameLayout) mWindowHolder.mWindow.peekDecorView().getRootView();
 		mOverlayView = (MovableOverlayView) decor_view.getTag(Common.LAYOUT_OVERLAY_TAG);
 		decor_view.bringChildToFront(mOverlayView);
 		//mMainXposed.hookActionBarColor.setTitleBar(mOverlayView);
@@ -539,8 +519,6 @@ public class MovableWindow {
 	}
 
 	public static void pushLayout(){
-		/*FIX for floating dialogs that shouldn't be treated as movable or halo windows*/
-		//if(mWindowHolder.mWindow.isFloating()) return;
 		DEBUG("pushLayout");
 		mWindowHolder.pushToWindow();
 	}
@@ -571,6 +549,7 @@ public class MovableWindow {
 		for(Window w : mWindows){
 			mWindowHolder.pushToWindow(w);
 		}
+		//mWindowHolder.setWindow(lastWindow);
 	}
 	
 	/***********************************************************/
@@ -715,10 +694,13 @@ public class MovableWindow {
 	}
 
 	private static void updateView(Window mWindow, float x, float y) {
-		WindowManager.LayoutParams params = mWindow.getAttributes();
+		mWindowHolder.x = (int) x;
+		mWindowHolder.y = (int) y;
+		pushLayout();
+		/*WindowManager.LayoutParams params = mWindow.getAttributes();
 		params.x = (int) x;
 		params.y = (int) y;
-		mWindow.setAttributes(params);
+		mWindow.setAttributes(params);*/
 	}
 	
 	private static void setTagInternalForView(View view, int key, Object object) {
