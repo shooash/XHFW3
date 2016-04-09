@@ -199,7 +199,7 @@ public class AeroSnap {
 	private boolean saveOldPosition() {
 		if (mRestorePosition) return true;
 		if(MovableWindow.mWindowHolder.isSnapped) return (MovableWindow.mWindowHolder.SnapGravity == 0) || (mTimeoutRunning);
-		//MovableWindow.saveLayout();
+		MovableWindow.saveLayout();
 		return true;
 	}
 	
@@ -214,8 +214,8 @@ public class AeroSnap {
 	public void restoreOldPositionWithoutRefresh() {
 		if (!MovableWindow.mWindowHolder.isSnapped) return;
 		refreshScreenSize();//this was added to fix wrong layout on orientation changed
-		//MovableWindow.restoreLayout();
-		MovableWindow.mWindowHolder.pushToWindow();
+		MovableWindow.restoreLayout();
+		//MovableWindow.mWindowHolder.pushToWindow();
 		
 		MovableWindow.mWindowHolder.isSnapped = false;
 		MovableWindow.showTitleBar();
