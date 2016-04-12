@@ -17,7 +17,7 @@ import static de.robv.android.xposed.XposedHelpers.findClass;
 
 public class HaloFloating {
 	MainXposed mMain;
-	XSharedPreferences mPref;
+	static XSharedPreferences mPref;
 	
 	boolean mIsPreviousActivityHome;
 	boolean mHasHaloFlag;
@@ -189,10 +189,13 @@ public class HaloFloating {
 					}
 				}
 
-				if(mHasHaloFlag) intent.addFlags(mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW));
-				else intent.setFlags(intent.getFlags() & ~mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW));
-				if(mHasHaloFlag) 
+				if(mHasHaloFlag) {
+					intent.addFlags(mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW));
+					setIntentFlags(intent);
 					XposedHelpers.setBooleanField(param.thisObject, "fullscreen", false);
+					}
+				else intent.setFlags(intent.getFlags() & ~mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW));
+				
 
 				mIsPreviousActivityHome = isCurrentActivityHome;
 				
@@ -392,6 +395,7 @@ public class HaloFloating {
 				if (name.equals("android")) return;
 				//if(window.isFloating()) return; //MODAL fix
 				if(MovableWindow.mWindowHolder==null) return;
+				MovableWindow.DEBUG("GenerateLayout");
 				MovableWindow.mWindowHolder.setWindow(window);
 				MovableWindow.pushLayout();
 				//MovableWindow.connectService();
@@ -432,6 +436,21 @@ public class HaloFloating {
 				return mExceptionHook;
 			}
 		});
+	}
+	
+	private static Intent setIntentFlags(Intent mIntent){
+		int flags = mIntent.getFlags();
+		flags = flags | mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW);
+		flags = flags | Intent.FLAG_ACTIVITY_NO_USER_ACTION;
+		flags &= ~Intent.FLAG_ACTIVITY_TASK_ON_HOME;
+
+		if (!mPref.getBoolean(Common.KEY_SHOW_APP_IN_RECENTS, Common.DEFAULT_SHOW_APP_IN_RECENTS)) {
+			flags = flags | Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS;
+		} else if (mPref.getBoolean(Common.KEY_FORCE_APP_IN_RECENTS, Common.DEFAULT_FORCE_APP_IN_RECENTS)) {
+			flags &= ~Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS;
+		}
+		mIntent.setFlags(flags);
+		return mIntent;
 	}
 	
 }
