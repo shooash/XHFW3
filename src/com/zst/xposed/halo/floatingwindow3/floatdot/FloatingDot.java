@@ -49,6 +49,7 @@ public class FloatingDot implements Runnable
 
     public FloatingDot(Context sContext) {
 		mContext = sContext;
+		mCircleDiameter = Util.realDp(24, mContext);
 	}
 
 	
