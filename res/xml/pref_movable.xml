@@ -117,7 +117,7 @@
             android:title="@string/pref_movable_triangle_color_title" />
 
         <com.zst.xposed.halo.floatingwindow3.preferences.WidgetFloatPercentage
-            defaultValue="1"
+            defaultValue="0.5"
             maximum="1"
             minimum="0"
             android:dependency="window_triangle_enabled"
@@ -184,7 +184,7 @@
             android:title="@string/pref_movable_quadrant_color_title" />
 
         <com.zst.xposed.halo.floatingwindow3.preferences.WidgetFloatPercentage
-            defaultValue="1"
+            defaultValue="0.5"
             maximum="1"
             minimum="0"
             android:dependency="window_quadrant_enabled"
@@ -264,7 +264,7 @@
                 android:key="window_tinted_title_enabled"
                 android:summary="@string/pref_movable_others_tinted_title_enable_summary"
                 android:title="@string/pref_movable_others_tinted_title_enable_title" 
-				android:enabled="false"/>
+				android:enabled="true"/>
 
             <com.zst.xposed.halo.floatingwindow3.preferences.WidgetFloatPercentage
                 defaultValue="0.9"
@@ -273,7 +273,8 @@
                 android:dependency="window_tinted_title_enabled"
                 android:key="window_tinted_title_hsv"
                 android:summary="@string/pref_movable_others_tinted_title_hsv_summary"
-                android:title="@string/pref_movable_others_tinted_title_hsv_title" />
+                android:title="@string/pref_movable_others_tinted_title_hsv_title"
+				android:enabled="false"/>
 
             <CheckBoxPreference
                 android:defaultValue="true"
