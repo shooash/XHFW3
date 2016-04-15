@@ -14,7 +14,8 @@ import com.zst.xposed.halo.floatingwindow3.floatdot.*;
 import com.zst.xposed.halo.floatingwindow3.helpers.*;
 import de.robv.android.xposed.*;
 import de.robv.android.xposed.callbacks.XC_LoadPackage.*;
-import java.util.*; 
+import java.util.*;
+import android.widget.RelativeLayout.*; 
 
 
 public class MovableWindow {
@@ -449,11 +450,16 @@ public class MovableWindow {
 		else mOverlayView.setTitleBarVisibility(true);
 	}
 	
-	private static void setOverlayView(){
+	public static void setOverlayView(){
 		DEBUG("setOverlayView");
 		/*  We don't touch floating dialogs  */
 		if (mWindowHolder==null || mWindowHolder.mWindow.isFloating()) return;	
-		FrameLayout decorView = (FrameLayout) mWindowHolder.mWindow.peekDecorView().getRootView();
+		FrameLayout decorView = null;
+		try{
+			decorView = (FrameLayout) mWindowHolder.mWindow.peekDecorView().getRootView();
+			} catch(Throwable t){
+				decorView=null;
+			}
 		if (decorView == null) return;
 		// make sure the titlebar/drag-to-move-bar is not behind the statusbar
 		decorView.setFitsSystemWindows(true);
@@ -481,7 +487,7 @@ public class MovableWindow {
 		}
 	}
 	
-	private static void putOverlayView(){
+	public static void putOverlayView(){
 		/*  We don't touch floating dialogs  */
 		if (mWindowHolder==null || mWindowHolder.mWindow.isFloating()) return;	
 		FrameLayout decor_view = (FrameLayout) mWindowHolder.mWindow.peekDecorView().getRootView();
