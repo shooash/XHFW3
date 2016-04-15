@@ -74,8 +74,8 @@
     <string name="pref_whiteblacklist_summary">Выберите предпочтения для использования черного и белого списков</string>
 	
     <!-- 4rd Preference Screen -->
-    <string name="pref_movable_top_title">Перемещение и изменение размеров</string>
-    <string name="pref_movable_top_summary">Настройки мультизадачности .</string>
+    <string name="pref_movable_top_title">Перемещение и изм. размеров</string>
+    <string name="pref_movable_top_summary">Настройки мультизадачности</string>
     <string name="pref_movable_sub_titlebar_title">Настройки панели заголовка</string>
     <string name="pref_movable_sub_titlebar_summary">Изменение верхней панели с заголовком всплывающего окна</string>
     <string name="pref_movable_sub_moving_title">Настройки перемещения</string>
@@ -178,6 +178,7 @@
     <!-- 5th Preference Screen -->
     <string name="pref_systemui_top_title">Моды SystemUI</string>
     <string name="pref_systemui_top_summary">Коллекция модификаций SystemUI</string>
+    <string name="pref_systemui_top_summary_not_supported_lollipop">Не поддерживается в Lollipop.</string>
     <string name="pref_notif_warning">Это моды для AOSP-based прошивок и непроверены на других прошивках. Если SystemUI постоянно закрывается с ошибкой, немедленно отключите их.</string>
     <string name="pref_notif_long_click_title">Длинное нажатие в уведомлениях</string>
     <string name="pref_notif_long_click_summary">Добавить опцию \"Открыть в окне\" при длинном нажатии в уведомлениях.</string>
@@ -234,7 +235,26 @@
     <string name="option_gravity_7">Нижний левый угол</string>
     <string name="option_gravity_8">Внизу по центру</string>
     <string name="option_gravity_9">Нижний правый угол</string>
-	
+    
+    <!-- Title Bar Icon Chooser -->
+    <string name="tbic_theme">Темы</string>
+    <string name="tbic_theme_none_t">Отсутствует</string>
+    <string name="tbic_theme_none_s">Заголовок полностью скрыт</string>
+    <string name="tbic_theme_original_t">Оригинальные иконки</string>
+    <string name="tbic_theme_original_s">Иконки из первых версий приложения</string>
+    <string name="tbic_theme_clearer_t">Четкие иконки</string>
+    <string name="tbic_theme_clearer_s">Иконки, созданные BachMinuetInG с XDA</string>
+    
+    <!-- Title Bar Functionality -->
+    <string name="tbic_functionality">Функционал</string>
+    <string name="tbic_other_settings">@string/pref_movable_sub_other_title</string>
+    <string name="pref_movable_titlebar_single_window_title">Считать все окна одним приложением</string>
+    <string name="pref_movable_titlebar_single_window_summary">Когда активно, кнопка закрытия окна завершит приложение целиком, вместо закрытия одиночного окна.\n(Требуется Android 4.1 или выше)</string>
+    <string name="pref_movable_resizing_aero_snap_titlebar_hide_title">Hide TitleBar when snapped</string>
+    <string name="pref_movable_resizing_aero_snap_titlebar_hide_summary">Hides the titlebar when snapping and show it again when unsnapping or resizing.\n(Requires Snap-in Windows to be enabled)</string>
+    <string name="pref_movable_titlebar_max_hide_title">Скрывать заголовок при максимизации окна</string>
+    <string name="pref_movable_titlebar_max_hide_summary">Скрывает заголовок при максимизации и возвращает обратно при изменении размера.</string>
+    
     <!-- ColorPicker -->
     <string name="apply">Применить</string>
     <string name="arrow_symbol">➙</string>
