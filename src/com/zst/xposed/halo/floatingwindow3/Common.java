@@ -128,7 +128,7 @@ public class Common {
 	public static final boolean DEFAULT_WINDOW_ACTIONBAR_DRAGGING_ENABLED = true;
 	public static final boolean DEFAULT_WINDOW_TRIANGLE_ENABLE = true;
 	public static final String DEFAULT_WINDOW_TRIANGLE_COLOR = "FFFFFF";
-	public static final float DEFAULT_WINDOW_TRIANGLE_ALPHA = 1f;
+	public static final float DEFAULT_WINDOW_TRIANGLE_ALPHA = 0.5f;
 	public static final int DEFAULT_WINDOW_TRIANGLE_SIZE = 36;
 	public static final String DEFAULT_WINDOW_TRIANGLE_CLICK_ACTION = "0";
 	public static final String DEFAULT_WINDOW_TRIANGLE_LONGPRESS_ACTION = "1";
@@ -136,7 +136,7 @@ public class Common {
 	public static final boolean DEFAULT_WINDOW_TRIANGLE_DRAGGING_ENABLED = false;
 	public static final boolean DEFAULT_WINDOW_QUADRANT_ENABLE = false;
 	public static final String DEFAULT_WINDOW_QUADRANT_COLOR = "FFFFFF";
-	public static final float DEFAULT_WINDOW_QUADRANT_ALPHA = 1f;
+	public static final float DEFAULT_WINDOW_QUADRANT_ALPHA = 0.5f;
 	public static final int DEFAULT_WINDOW_QUADRANT_SIZE = 36;
 	public static final String DEFAULT_WINDOW_QUADRANT_CLICK_ACTION = "0";
 	public static final String DEFAULT_WINDOW_QUADRANT_LONGPRESS_ACTION = "0";

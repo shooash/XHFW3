@@ -33,6 +33,9 @@ import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.view.*;
+import android.util.*;
+import android.graphics.*;
+import android.graphics.drawable.*;
 
 @SuppressLint("ViewConstructor")
 // We only create this view programatically, so the default
@@ -75,6 +78,8 @@ public class MovableOverlayView extends RelativeLayout {
 	private final int mTitleBarDivider;
 	private final int mTitleBarIconType;
 	private final boolean mLiveResizing;
+	private int mTitleBarColor = Color.BLACK;
+	private boolean mTintedTitlebar;
 	
 	/**
 	 * Create the overlay view for Movable and Resizable feature
@@ -93,7 +98,8 @@ public class MovableOverlayView extends RelativeLayout {
 		mResource = resources;
 		mPref = pref;
 		mAeroSnap = aerosnap;
-		
+		mTintedTitlebar = mPref.getBoolean(Common.KEY_TINTED_TITLEBAR_ENABLED, Common.DEFAULT_TINTED_TITLEBAR_ENABLED);
+		if(mTintedTitlebar) mTitleBarColor = getPrimaryDarkColor();
 		/* get the layout from our module. we cannot just use the R reference
 		 * since the layout is from the module, not the current app we are
 		 * modifying. thus, we use a parser */
@@ -176,18 +182,24 @@ public class MovableOverlayView extends RelativeLayout {
 		Drawable triangle_background = mResource.getDrawable(R.drawable.movable_corner);
 		Drawable quadrant_background = mResource.getDrawable(R.drawable.movable_quadrant);
 		
-		String color_triangle = mPref.getString(Common.KEY_WINDOW_TRIANGLE_COLOR,
-				Common.DEFAULT_WINDOW_TRIANGLE_COLOR);
-		if (!color_triangle.equals(Common.DEFAULT_WINDOW_TRIANGLE_COLOR)) { 
-			triangle_background.setColorFilter(Color.parseColor("#" + color_triangle),
-					Mode.MULTIPLY);
+		if(mTintedTitlebar && mPref.getBoolean(Common.KEY_TINTED_TITLEBAR_CORNER_TINT, Common.DEFAULT_TINTED_TITLEBAR_CORNER_TINT)){
+			triangle_background.setColorFilter(mTitleBarColor, Mode.MULTIPLY);
+			quadrant_background.setColorFilter(mTitleBarColor, Mode.MULTIPLY);
 		}
-		
-		String color_quadrant = mPref.getString(Common.KEY_WINDOW_QUADRANT_COLOR,
-				Common.DEFAULT_WINDOW_QUADRANT_COLOR);
-		if (!color_quadrant.equals(Common.DEFAULT_WINDOW_QUADRANT_COLOR)) {
-			quadrant_background.setColorFilter(Color.parseColor("#" + color_quadrant),
-					Mode.MULTIPLY);
+		else{
+			String color_triangle = mPref.getString(Common.KEY_WINDOW_TRIANGLE_COLOR,
+					Common.DEFAULT_WINDOW_TRIANGLE_COLOR);
+			if (!color_triangle.equals(Common.DEFAULT_WINDOW_TRIANGLE_COLOR)) { 
+				triangle_background.setColorFilter(Color.parseColor("#" + color_triangle),
+						Mode.MULTIPLY);
+			}
+			
+			String color_quadrant = mPref.getString(Common.KEY_WINDOW_QUADRANT_COLOR,
+					Common.DEFAULT_WINDOW_QUADRANT_COLOR);
+			if (!color_quadrant.equals(Common.DEFAULT_WINDOW_QUADRANT_COLOR)) {
+				quadrant_background.setColorFilter(Color.parseColor("#" + color_quadrant),
+						Mode.MULTIPLY);
+			}
 		}
 		
 		float triangle_alpha = mPref.getFloat(Common.KEY_WINDOW_TRIANGLE_ALPHA,
@@ -473,6 +485,8 @@ public class MovableOverlayView extends RelativeLayout {
 		more_button.setOnClickListener(click);
 		header.setOnTouchListener(new Movable(mActivity.getWindow(), mAeroSnap, true));
 		
+		if(mTintedTitlebar) header.setBackgroundColor(mTitleBarColor);
+		
 		mTitleBarHeader = header;
 		mTitleBarTitle = app_title;
 		mTitleBarClose = close_button;
@@ -482,6 +496,65 @@ public class MovableOverlayView extends RelativeLayout {
 		
 		setTitleBarVisibility(true);
 	}
+	
+	//use Primary dark color for
+	private int getPrimaryDarkColor(){
+		int DEFAULT_TITLEBAR_COLOR = Color.BLACK;
+		
+		TypedValue a = new TypedValue();
+		if(!mActivity.getTheme().resolveAttribute(android.R.attr.colorPrimaryDark, a, true))
+			return DEFAULT_TITLEBAR_COLOR;	
+		if (a.type >= TypedValue.TYPE_FIRST_COLOR_INT && a.type <= TypedValue.TYPE_LAST_COLOR_INT) {
+		// it is a color
+		return a.data;
+		}
+		return DEFAULT_TITLEBAR_COLOR;
+	}
+	
+	/*private int getActionBarColor(){
+		View v = mActivity.getActionBar().getCustomView();
+		if(v!=null) return getDrawableColor(v.getBackground());
+		return Color.RED;
+	}
+	
+	private int getDrawableColor(Drawable mDrawable){
+		if(mDrawable==null) return Color.BLUE;
+		Bitmap mBitmap = drawableToBitmap(mDrawable);
+		if(mBitmap==null) return Color.BLUE;
+		int pixel;
+		try{
+			if (mBitmap.getHeight() <= 5) {
+				pixel = mBitmap.getPixel(0, 0);
+			} else {
+				pixel = mBitmap.getPixel(0, 5);
+			}
+			} catch(Throwable t){
+				pixel = 10;
+			}
+		return Color.argb(Color.alpha(pixel), Color.red(pixel), Color.green(pixel), Color.blue(pixel));
+	}
+	
+	public static Bitmap drawableToBitmap (Drawable drawable) {
+		Bitmap bitmap = null;
+
+		if (drawable instanceof BitmapDrawable) {
+			BitmapDrawable bitmapDrawable = (BitmapDrawable) drawable;
+			if(bitmapDrawable.getBitmap() != null) {
+				return bitmapDrawable.getBitmap();
+			}
+		}
+
+		if(drawable.getIntrinsicWidth() <= 0 || drawable.getIntrinsicHeight() <= 0) {
+			bitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888); // Single color bitmap will be created of 1x1 pixel
+		} else {
+			bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
+		}
+
+		Canvas canvas = new Canvas(bitmap);
+		drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
+		drawable.draw(canvas);
+		return bitmap;
+	}*/
 	
 	// Create the drag-to-move bar
 	private void initDragToMoveBar() {
@@ -642,6 +715,8 @@ public class MovableOverlayView extends RelativeLayout {
 	}
 	
 	public void setWindowBorder(int color, int thickness) {
+		if(mTintedTitlebar && mPref.getBoolean(Common.KEY_TINTED_TITLEBAR_BORDER_TINT, Common.DEFAULT_TINTED_TITLEBAR_BORDER_TINT))
+			color = mTitleBarColor;
 		if (thickness == 0) {
 			mBorderOutline.setBackgroundResource(0);
 		} else {
