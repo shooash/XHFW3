@@ -12,6 +12,7 @@ import android.view.WindowManager;
 
 import com.zst.xposed.halo.floatingwindow3.Common;
 import com.zst.xposed.halo.floatingwindow3.hooks.MovableWindow;
+import de.robv.android.xposed.*;
 
 public class AeroSnap {
 	
@@ -305,7 +306,8 @@ public class AeroSnap {
 	}
 	
 	private void broadcastHide(Context ctx) {
-		ctx.sendBroadcast(new Intent(Common.SHOW_OUTLINE));
+		XposedHelpers.callMethod(ctx, "sendBroadcast", new Intent(Common.SHOW_OUTLINE));
+		//ctx.sendBroadcast(new Intent(Common.SHOW_OUTLINE));
 	}
 
 }

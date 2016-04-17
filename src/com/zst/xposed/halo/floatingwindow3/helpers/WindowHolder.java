@@ -34,23 +34,27 @@ public class WindowHolder{
 	public boolean mReceiverRegistered = false;
 
     public WindowHolder(Activity sActivity, XSharedPreferences mPref){
+		if(sActivity==null) return;
 		mActivity = sActivity;
+		Intent mIntent = (Intent) XposedHelpers.callMethod(mActivity, "getIntent");
+		if(mIntent==null) return;
         mPref.reload();
-        isFloating=(mActivity.getIntent().getFlags() & mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW))
-                == mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW);
 		alpha = mPref.getFloat(Common.KEY_ALPHA, Common.DEFAULT_ALPHA);
 		dim = mPref.getFloat(Common.KEY_DIM, Common.DEFAULT_DIM);
+        isFloating=(mIntent.getFlags() & mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW))
+                == mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW);	
 		isMovable = (isFloating&&(mPref.getBoolean(Common.KEY_MOVABLE_WINDOW, Common.DEFAULT_MOVABLE_WINDOW)));
         cachedOrientation=mActivity.getResources().getConfiguration().orientation;
         cachedRotation = Util.getDisplayRotation(mActivity);
 		/*TODO: Get use of EXTRA_SNAP extras to keep snap gravity*/
 		/*if(mActivity.getIntent().hasExtra(Common.EXTRA_SNAP)) SnapGravity = mActivity.getIntent().getIntExtra(Common.EXTRA_SNAP, 0);
 			else */
-		SnapGravity = Compatibility.snapSideToGravity(mActivity.getIntent().getIntExtra(Common.EXTRA_SNAP_SIDE, Compatibility.AeroSnap.SNAP_NONE));
+		SnapGravity = Compatibility.snapSideToGravity(mIntent.getIntExtra(Common.EXTRA_SNAP_SIDE, Compatibility.AeroSnap.SNAP_NONE));
 		//mActivity.getIntent().getIntExtra(Common.EXTRA_SNAP, 0);
         isSnapped=(SnapGravity != 0);
         isMaximized=(SnapGravity == Gravity.FILL);
-        mWindow = mActivity.getWindow();
+		mWindow = (Window) XposedHelpers.callMethod(mActivity, "getWindow");
+        //mWindow = mActivity.getWindow();
         //updateWindow();
 		packageName = mActivity.getPackageName();
 	}
@@ -59,7 +63,7 @@ public class WindowHolder{
 		SnapGravity = newSnap;
 	}
 	
-	public boolean updateSnap(Activity sActivity){
+	/*public boolean updateSnap(Activity sActivity){
 		int newSnap = sActivity.getIntent().getIntExtra(Common.EXTRA_SNAP, 0);
 		if(newSnap == 0) return false;
 		if(SnapGravity == newSnap) return false;
@@ -67,7 +71,7 @@ public class WindowHolder{
 		isSnapped=(SnapGravity != 0);
         isMaximized=(SnapGravity == Gravity.FILL);
 		return true;
-	}
+	}*/
 	
 	public void updateWindow(Window sWindow){
 		mWindow = sWindow;
@@ -84,8 +88,11 @@ public class WindowHolder{
 	}
 	
 	public void setWindow (Activity sActivity){
+		if(sActivity==null) return;
 		mActivity = sActivity;
-		mWindow = sActivity.getWindow();
+		mWindow = (Window) XposedHelpers.callMethod(sActivity, "getWindow");
+		if(mWindow==null) return;
+		//mWindow = sActivity.getWindow();
 		/*FIX focus other windows not working on some apps*/
 		mWindow.addFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL);
 	}
@@ -152,7 +159,10 @@ public class WindowHolder{
 		mWParams.alpha = alpha;
 		mWParams.width = width;
 		mWParams.height = height;
+		mWParams.dimAmount = dim;
 		mWParams.gravity = Gravity.TOP | Gravity.LEFT;
+		/*TODO TEST FIX */
+		sWindow.getCallback().onWindowAttributesChanged(mWParams);
 		sWindow.setAttributes(mWParams);
 	}
 	

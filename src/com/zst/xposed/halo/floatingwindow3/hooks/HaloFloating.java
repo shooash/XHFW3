@@ -225,8 +225,8 @@ public class HaloFloating {
 	 * is not null, then pause the app. We are working around it like this.
 	 */
 	private  void injectActivityStack(final LoadPackageParam lpp) throws Throwable {
-		final Class<?> classActivityRecord = findClass("com.android.server.am.ActivityRecord",
-				lpp.classLoader);
+//		final Class<?> classActivityRecord = findClass("com.android.server.am.ActivityRecord",
+//				lpp.classLoader);
 		final Class<?> hookClass = findClass("com.android.server.am.ActivityStack", lpp.classLoader);
 		
 		XposedBridge.hookAllMethods(hookClass, "resumeTopActivityLocked", new XC_MethodHook() {
@@ -238,16 +238,19 @@ public class HaloFloating {
 				if (!mHasHaloFlag) return;
 				if (mIsPreviousActivityHome) return;
 				
-				Object nextAR = XposedHelpers.callMethod(param.thisObject, "topRunningActivityLocked",
-						new Class[] { classActivityRecord }, (Object) null);
-				Intent nextIntent = (Intent) XposedHelpers.getObjectField(nextAR, "intent");
-				// TODO Find better whatsapp workaround.
-				try {
-					isHalo = (!nextIntent.getPackage().equals("com.whatsapp")) &&
-							(nextIntent.getFlags() & mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW)) == mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW); //LUCINIAMOD
-				} catch (NullPointerException e) {
-					// if getPackage returns null
-				}
+//				Object nextAR = XposedHelpers.callMethod(param.thisObject, "topRunningActivityLocked",
+//						new Class[] { classActivityRecord }, (Object) null);
+//				
+//				if(nextAR!=null){
+//					Intent nextIntent = (Intent) XposedHelpers.getObjectField(nextAR, "intent");
+//					// TODO Find better whatsapp workaround.
+//					try {
+//						isHalo = (!nextIntent.getPackage().equals("com.whatsapp")) &&
+//							(nextIntent.getFlags() & mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW)) == mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW); //LUCINIAMOD
+//					} catch (NullPointerException e) {
+//						// if getPackage returns null
+//					}
+//				}
 				if (!isHalo) return;
 				
 				mPref.reload();
@@ -449,7 +452,8 @@ public class HaloFloating {
 		} else if (mPref.getBoolean(Common.KEY_FORCE_APP_IN_RECENTS, Common.DEFAULT_FORCE_APP_IN_RECENTS)) {
 			flags &= ~Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS;
 		}
-		mIntent.setFlags(flags);
+		XposedHelpers.callMethod(mIntent, "setFlags", flags);
+		////mIntent.setFlags(flags);
 		return mIntent;
 	}
 	

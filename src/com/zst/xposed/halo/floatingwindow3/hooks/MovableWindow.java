@@ -214,13 +214,13 @@ public class MovableWindow {
 					//if (((Activity)param.thisObject).getWindow().isFloating()) return;
 					/* no need to act if it's not movable */
 					if(mWindowHolder==null||!mWindowHolder.isMovable) return;			
+					/* disable dragger */
+					toggleDragger(false);
 					/* remove from window stack */
 					mWindows.remove(((Activity)param.thisObject).getWindow());
 					if(mWindows.size()<1) {
 						mWindowHolder = null;
 					}
-					/* disable dragger */
-					toggleDragger(false);
 					// hide the resizing outline
 					((Activity)param.thisObject).sendBroadcast(new Intent(Common.SHOW_OUTLINE));
 					//TODO TEST
@@ -425,9 +425,11 @@ public class MovableWindow {
 	}
 	
 	public static void toggleDragger(boolean show){
+		if(mWindowHolder==null||mWindowHolder.mActivity==null) return;
 		Intent intent = new Intent(Common.SHOW_MULTIWINDOW_DRAGGER);
 		intent.putExtra(Common.INTENT_FLOAT_DOT_BOOL, show);
-		mWindowHolder.mActivity.sendBroadcast(intent);
+		//mWindowHolder.mActivity.sendBroadcast(intent);
+		XposedHelpers.callMethod(mWindowHolder.mActivity, "sendBroadcast", intent);
 	}
 	
 	/***********************************************************/
