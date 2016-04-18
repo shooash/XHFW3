@@ -664,7 +664,7 @@ public class MovableWindow {
 		XposedBridge.hookAllMethods(Activity.class, "dispatchTouchEvent", new XC_MethodHook() {
 			@Override
 			protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-				if(!mWindowHolder.isMovable) return;
+				if(mWindowHolder==null || !mWindowHolder.isMovable) return;
 
 				Activity a = (Activity) param.thisObject;
 				mWindowHolder.setWindow(a);

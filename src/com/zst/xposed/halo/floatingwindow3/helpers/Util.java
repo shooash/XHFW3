@@ -82,7 +82,10 @@ public class Util {
 		//ShapeDrawable shape = new ShapeDrawable(new OvalShape());
 		LayerDrawable result = new LayerDrawable(new Drawable[]{makeCircle(colorouter,diameterouter), makeCircle(colorinner,diameterinner)});
 		//(makeCircle(colorouter, diameterouter).g);
-		result.setLayerGravity(result.getNumberOfLayers()-1, Gravity.CENTER);
+		if(Build.VERSION.SDK_INT>=23)
+			result.setLayerGravity(result.getNumberOfLayers()-1, Gravity.CENTER);
+		else
+			result.setLayerInset(result.getNumberOfLayers()-1, (diameterouter-diameterinner)/2,  (diameterouter-diameterinner)/2, (diameterouter-diameterinner)/2, (diameterouter-diameterinner)/2);
 		return result;
 	}
 	
