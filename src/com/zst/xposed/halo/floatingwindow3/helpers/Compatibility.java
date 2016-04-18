@@ -7,7 +7,7 @@ public class Compatibility
 {
 	
 	
-	public class HookedMethods {
+/*public class HookedMethods {
 		public String ACTION_BAR_HOOK_CLASS = "com.android.internal.app.WindowDecorActionBar";
 
 		public HookedMethods(){
@@ -29,7 +29,7 @@ public class Compatibility
 		return (new Compatibility()).new HookedMethods();
 	}
 	
-	public static HookedMethods hooked_methods =  (new Compatibility()).new HookedMethods();
+	public static HookedMethods hooked_methods =  (new Compatibility()).new HookedMethods();*/
 	
 	public class AeroSnap{
 		public final static int SNAP_NONE = 0;

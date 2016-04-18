@@ -111,18 +111,19 @@ public class AeroSnap {
 				mRestorePosition = true;
 			}
 			MovableWindow.mWindowHolder.restore(mSnapWindowHolder);
-			MovableWindow.mWindowHolder.pushToWindow();
-			MovableWindow.mWindowHolder.isSnapped = true;
+			//MovableWindow.mWindowHolder.pushToWindow();
+			MovableWindow.syncLayoutParams();
+			//MovableWindow.mWindowHolder.isSnapped = true;
 
 			if ((MovableWindow.mAeroSnapChangeTitleBarVisibility)&&(MovableWindow.mOverlayView!=null)) {
 				MovableWindow.mOverlayView.setTitleBarVisibility(false);
 			}
 			//MovableWindow.toggleDragger(true);
 		} else {
-			MovableWindow.mWindowHolder.updateSnap(0);
+			restoreOldPosition();
 			//MovableWindow.toggleDragger(false);
 		}
-		refreshLayout();
+		//refreshLayout();
 		broadcastHide(MovableWindow.mWindowHolder.mActivity);
 		MovableWindow.toggleDragger();
 	}
@@ -208,7 +209,7 @@ public class AeroSnap {
 	public boolean restoreOldPosition() {
 		if (!MovableWindow.mWindowHolder.isSnapped) return false;
 		restoreOldPositionWithoutRefresh();
-		refreshLayout();
+		//refreshLayout();
 		return true;
 	}
 	
@@ -217,8 +218,8 @@ public class AeroSnap {
 		refreshScreenSize();//this was added to fix wrong layout on orientation changed
 		MovableWindow.restoreLayout();
 		//MovableWindow.mWindowHolder.pushToWindow();
-		
-		MovableWindow.mWindowHolder.isSnapped = false;
+		MovableWindow.mWindowHolder.updateSnap(0);
+		//MovableWindow.mWindowHolder.isSnapped = false;
 		MovableWindow.showTitleBar();
 		mRestorePosition = false;
 		if (MovableWindow.mAeroSnapChangeTitleBarVisibility) {
@@ -233,8 +234,8 @@ public class AeroSnap {
 			mSnapWindowHolder.isSnapped = false;
 			return;
 			}
-		mSnapWindowHolder.height = ViewGroup.LayoutParams.MATCH_PARENT;//mScreenHeight;
-		mSnapWindowHolder.width = ViewGroup.LayoutParams.MATCH_PARENT;// mScreenWidth;
+		mSnapWindowHolder.height = ViewGroup.LayoutParams.MATCH_PARENT;//*/mScreenHeight;
+		mSnapWindowHolder.width = ViewGroup.LayoutParams.MATCH_PARENT;// */mScreenWidth;
 		
 		if(Util.isFlag(mSnapWindowHolder.SnapGravity, Gravity.TOP))
 			mSnapWindowHolder.height = MovableWindow.mFloatDotCoordinates[1] + 1;
@@ -251,11 +252,11 @@ public class AeroSnap {
 	}
 	
 	// send broadcast to sync the windows
-	private void refreshLayout() {
+	/*private void refreshLayout() {
 		MovableWindow.pullLayout();
 		if(MovableWindow.mRetainStartPosition) MovableWindow.syncLayoutParams();
 		else MovableWindow.pushLayout();
-	}
+	}*/
 	
 	// stop the handler from continuing
 	private void discardTimeout() {

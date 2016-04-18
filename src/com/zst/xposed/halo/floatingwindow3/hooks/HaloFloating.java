@@ -21,7 +21,6 @@ public class HaloFloating {
 	
 	boolean mIsPreviousActivityHome;
 	boolean mHasHaloFlag;
-	 //TODO move to new class
 	boolean isHoloFloat = false;
 	
 	public HaloFloating(MainXposed main, LoadPackageParam lpparam, XSharedPreferences pref) throws Throwable {
@@ -32,13 +31,18 @@ public class HaloFloating {
 		if (lpparam.packageName.equals("android")) {
 			hookActivityRecord(lpparam);
 			removeAppStartingWindow(lpparam);
+			try{
 			kitkatMoveHomeStackHook(lpparam);
-			try {
+			} catch (Throwable e){
+				XposedBridge.log("kitkatMoveHomeStackHook failure");
+				XposedBridge.log(e);
+			}
+			/*try {
 				injectActivityStack(lpparam);
 			} catch (Throwable e) {
 				XposedBridge.log(Common.LOG_TAG + "(ActivityStack)");
 				XposedBridge.log(e);
-			}
+			}*/
 		}
 		
 		initHooks(lpparam);
@@ -53,12 +57,12 @@ public class HaloFloating {
 			XposedBridge.log(e);
 		}
 		/*********************************************/
-		try {
+		/*try {
 			injectPerformStop();
 		} catch (Throwable e) {
 			XposedBridge.log(Common.LOG_TAG + "(injectPerformStop)");
 			XposedBridge.log(e);
-		}
+		}*/
 		/*********************************************/
 		try {
 			injectGenerateLayout(l);
@@ -67,12 +71,12 @@ public class HaloFloating {
 			XposedBridge.log(e);
 		}
 		/*********************************************/
-		try {
+		/*try {
 			fixExceptionWhenResuming(l);
 		} catch (Throwable e) {
 			XposedBridge.log(Common.LOG_TAG + "(fixExceptionWhenResuming)");
 			XposedBridge.log(e);
-		}
+		}*/
 		/*********************************************/
 	}
 	
@@ -444,7 +448,7 @@ public class HaloFloating {
 	private static Intent setIntentFlags(Intent mIntent){
 		int flags = mIntent.getFlags();
 		flags = flags | mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW);
-		flags = flags | Intent.FLAG_ACTIVITY_NO_USER_ACTION;
+		//flags = flags | Intent.FLAG_ACTIVITY_NO_USER_ACTION;
 		flags &= ~Intent.FLAG_ACTIVITY_TASK_ON_HOME;
 
 		if (!mPref.getBoolean(Common.KEY_SHOW_APP_IN_RECENTS, Common.DEFAULT_SHOW_APP_IN_RECENTS)) {

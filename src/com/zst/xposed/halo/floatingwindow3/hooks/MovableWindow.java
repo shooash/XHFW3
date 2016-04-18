@@ -61,7 +61,7 @@ public class MovableWindow {
 	public static ArrayList<Window> mWindows = new ArrayList<Window>();
 	
 	
-	public static boolean mRetainStartPosition;
+	//public static boolean mRetainStartPosition;
 	public static boolean mConstantMovePosition;
 	static int mPreviousOrientation;
 	static int mPreviousRotation;
@@ -106,11 +106,14 @@ public class MovableWindow {
 				protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
 					mActivity = (Activity) param.thisObject;
 					/*  We don't touch floating dialogs  */
-					//if (mActivity.getWindow().isFloating()) return;
+					if (mActivity.getWindow().isFloating()) return;
 					/* Setup window holder */
 					if(!initWindow()) return;
 					/* if it is movable - continue and add it to windows array */
-					mWindows.add(mWindowHolder.mWindow);
+					/*if(!mWindows.contains(mWindowHolder.mWindow))
+							mWindows.add(mWindowHolder.mWindow);*/
+					/*TODO TEST set gravity only once on creation */
+					mWindowHolder.mWindow.setGravity(Gravity.TOP | Gravity.LEFT);
 					/* reconnect XHFWService if needed */
 					connectService();
 					/* we need to snap from very begining */
@@ -128,17 +131,19 @@ public class MovableWindow {
 					DEBUG("onStartSTART");
 					mActivity = (Activity) param.thisObject;
 					/*  We don't touch floating dialogs  */
-					//if (mActivity.getWindow().isFloating()) return;
+					if (mActivity.getWindow().isFloating()) return;
 					/* no need to act if it's not movable */
 					if(!mWindowHolder.isMovable) return;
 					/** update current window **/
 					mWindowHolder.setWindow(mActivity);
-					
+					if(!mWindows.contains(mWindowHolder.mWindow))
+						mWindows.add(mWindowHolder.mWindow);
 					/* reconnect XHFWService if needed */
 					connectService();
 					// Add our overlay view
 					setOverlayView();
 					showTitleBar();
+					toggleDragger();
 					DEBUG("onStartEND");
 				}
 			});
@@ -214,12 +219,12 @@ public class MovableWindow {
 					//if (((Activity)param.thisObject).getWindow().isFloating()) return;
 					/* no need to act if it's not movable */
 					if(mWindowHolder==null||!mWindowHolder.isMovable) return;			
-					/* disable dragger */
-					toggleDragger(false);
 					/* remove from window stack */
 					mWindows.remove(((Activity)param.thisObject).getWindow());
 					if(mWindows.size()<1) {
 						mWindowHolder = null;
+						/* disable dragger */
+						toggleDragger(false);
 					}
 					// hide the resizing outline
 					((Activity)param.thisObject).sendBroadcast(new Intent(Common.SHOW_OUTLINE));
@@ -269,7 +274,7 @@ public class MovableWindow {
 	private static void loadPrefs(){
 		mPref.reload();
 		mActionBarDraggable = mPref.getBoolean(Common.KEY_WINDOW_ACTIONBAR_DRAGGING_ENABLED, Common.DEFAULT_WINDOW_ACTIONBAR_DRAGGING_ENABLED);
-		mRetainStartPosition = mPref.getBoolean(Common.KEY_WINDOW_MOVING_RETAIN_START_POSITION, Common.DEFAULT_WINDOW_MOVING_RETAIN_START_POSITION);
+		//mRetainStartPosition = mPref.getBoolean(Common.KEY_WINDOW_MOVING_RETAIN_START_POSITION, Common.DEFAULT_WINDOW_MOVING_RETAIN_START_POSITION);
 		mConstantMovePosition = mPref.getBoolean(Common.KEY_WINDOW_MOVING_CONSTANT_POSITION, Common.DEFAULT_WINDOW_MOVING_CONSTANT_POSITION);
 
 		mPreviousOrientation = mActivity.getResources().getConfiguration().orientation;
@@ -284,12 +289,14 @@ public class MovableWindow {
 	
 	private static void setInitLayout(){
 		//if(mWindowHolder.mWindow.isFloating()) return;
-		mWindowHolder.mWindow.setGravity(mPref.getInt(Common.KEY_GRAVITY, Common.DEFAULT_GRAVITY));
-		WindowManager.LayoutParams params = mWindowHolder.mWindow.getAttributes();
-		Util.addPrivateFlagNoMoveAnimationToLayoutParam(params);
-		mWindowHolder.mWindow.setAttributes(params);
+		/*TODO TEST DON'T TOUCH GRAVITY */
+		//mWindowHolder.mWindow.setGravity(mPref.getInt(Common.KEY_GRAVITY, Common.DEFAULT_GRAVITY));
+		//mWindowHolder.mWindow.setGravity(Gravity.TOP | Gravity.LEFT);
+		//WindowManager.LayoutParams params = mWindowHolder.mWindow.getAttributes();
+		//Util.addPrivateFlagNoMoveAnimationToLayoutParam(params);
+		//mWindowHolder.mWindow.setAttributes(params);
 		mWindowHolder.mWindow.addFlags(WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
-		mWindowHolder.mWindow.setWindowAnimations(android.R.style.Animation_Dialog);
+		//mWindowHolder.mWindow.setWindowAnimations(android.R.style.Animation_Dialog);
 		mWindowHolder.mWindow.clearFlags(WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER);
 		switch(mPref.getInt(Common.KEY_KEYBOARD_MODE, Common.DEFAULT_KEYBOARD_MODE)){
 			case 2:
@@ -368,7 +375,8 @@ public class MovableWindow {
 			 }
 			 return;
 			 }*/
-
+			 //TODO TEST
+			
 			if (intent.getAction().equals(Common.REFRESH_FLOAT_DOT_POSITION)){
 				DEBUG( "REFRESH_FLOATDOT_POSITION");
 				int[] coordinates = intent.getIntArrayExtra(Common.INTENT_FLOAT_DOT_EXTRA);
@@ -378,7 +386,9 @@ public class MovableWindow {
 				if(mWindowHolder.SnapGravity==0) mWindowHolder.restoreSnap();
 				if(mAeroSnap!=null){
 					mAeroSnap.forceSnapGravity(mWindowHolder.SnapGravity);
+					//mWindowHolder.mActivity.recreate();
 				}
+				
 				//syncLayoutParams();
 				//toggleDragger(true);
 			}
@@ -388,12 +398,14 @@ public class MovableWindow {
 	public static boolean registerLayoutBroadcastReceiver() {
 		IntentFilter filters = new IntentFilter();
 		filters.addAction(Common.REFRESH_FLOAT_DOT_POSITION);
+		
 		try{
 			mWindowHolder.mActivity.getApplicationContext().registerReceiver(mBroadcastReceiver, filters);
 		} catch(Throwable e){
 			DEBUG("Check registerLayoutBroadcastReceiver error");
 			return false;
 		}
+		
 		//setTagInternalForView(window.getDecorView(), Common.LAYOUT_RECEIVER_TAG, br);
 		return true;
 	}
@@ -545,20 +557,22 @@ public class MovableWindow {
 	}
 	
 	public static boolean pullAndSyncLayoutParams() {
-		if (!mRetainStartPosition) return false;
+		//if (!mRetainStartPosition) return false;
 		//pushLayout();
 		pullLayout();
 		syncLayoutParams();
 		return true;
 	}
 
-	public static void syncLayoutParams() {
-		if (!mRetainStartPosition) return;
+	public static void syncLayoutParams() {	
+		//if (!mRetainStartPosition) return;
 		for(Window w : mWindows){
 			mWindowHolder.pushToWindow(w);
 		}
 		//mWindowHolder.setWindow(lastWindow);
 	}
+	
+
 	
 	/***********************************************************/
 	/********************* ALIA ********************************/

@@ -61,6 +61,7 @@ public class WindowHolder{
 	
 	public void updateSnap(int newSnap){
 		SnapGravity = newSnap;
+		isSnapped = (SnapGravity!=0);
 	}
 	
 	/*public boolean updateSnap(Activity sActivity){
@@ -90,11 +91,10 @@ public class WindowHolder{
 	public void setWindow (Activity sActivity){
 		if(sActivity==null) return;
 		mActivity = sActivity;
-		mWindow = (Window) XposedHelpers.callMethod(sActivity, "getWindow");
-		if(mWindow==null) return;
+		Window sWindow = (Window) XposedHelpers.callMethod(sActivity, "getWindow");
+		if(sWindow==null) return;
+		setWindow(sWindow);
 		//mWindow = sActivity.getWindow();
-		/*FIX focus other windows not working on some apps*/
-		mWindow.addFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL);
 	}
 	
 	public void setWindow (Window sWindow){
@@ -102,14 +102,14 @@ public class WindowHolder{
 		mWindow.addFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL);
 	}
 
-	public void setMaximized(){
+	/*public void setMaximized(){
 		width = ViewGroup.LayoutParams.MATCH_PARENT;
 		height = ViewGroup.LayoutParams.MATCH_PARENT;
 		x=0;
 		y=0;
 		SnapGravity=Gravity.FILL;
 		isMaximized=true;
-	}
+	}*/
 	
 	//restore/copy precached data
 	public void restore(WindowHolder sWindowHolder){
@@ -137,6 +137,7 @@ public class WindowHolder{
 	//set current window to saved layout params
 	public void pushToWindow(){
 		/*FIX for floating dialogs that shouldn't be treated as movable or halo windows*/
+		//tjis needs to be changed
 		if(mActivity.getWindow().isFloating()) return;
 		WindowManager.LayoutParams mWParams = mWindow.getAttributes();
 		mWParams.x = x;
@@ -145,9 +146,16 @@ public class WindowHolder{
 		mWParams.width = width;
 		mWParams.height = height;
 		mWParams.dimAmount = dim;
-		mWParams.gravity = Gravity.TOP | Gravity.LEFT;
+		/* TODO TEST DON'T TOUCH GRAVITY*/
+		//mWParams.gravity = Gravity.TOP | Gravity.LEFT;
 		//Util.addPrivateFlagNoMoveAnimationToLayoutParam(mWParams);
+		/*TODO TEST FIX */
+		mWindow.getCallback().onWindowAttributesChanged(mWParams);
+		/*TEST 3*/
+		//mWindow.getDecorView().findViewById(android.R.id.content).invalidate();
 		mWindow.setAttributes(mWParams);
+		/*TODO TEST2*/
+		//mWindow.setLayout(width, height);
 	}
 	
 	public void pushToWindow(Window sWindow){
@@ -160,10 +168,13 @@ public class WindowHolder{
 		mWParams.width = width;
 		mWParams.height = height;
 		mWParams.dimAmount = dim;
-		mWParams.gravity = Gravity.TOP | Gravity.LEFT;
+		/* TODO TEST DON'T TOUCH GRAVITY*/
+		//mWParams.gravity = Gravity.TOP | Gravity.LEFT;
 		/*TODO TEST FIX */
 		sWindow.getCallback().onWindowAttributesChanged(mWParams);
 		sWindow.setAttributes(mWParams);
+		/*TODO TEST2*/
+		//mWindow.setLayout(width, height);
 	}
 	
 	//get current window layout params
@@ -174,6 +185,7 @@ public class WindowHolder{
 		alpha = mWParams.alpha;
 		width = mWParams.width;
 		height = mWParams.height;
+		dim = mWParams.dimAmount;
 		cachedOrientation = Util.getScreenOrientation(mActivity);
 	}
 	

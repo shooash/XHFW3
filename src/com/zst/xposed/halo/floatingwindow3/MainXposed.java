@@ -1,9 +1,7 @@
 package com.zst.xposed.halo.floatingwindow3;
 
-import com.zst.xposed.halo.floatingwindow3.hooks.ActionBarColorHook;
 import com.zst.xposed.halo.floatingwindow3.hooks.HaloFloating;
 import com.zst.xposed.halo.floatingwindow3.hooks.MovableWindow;
-import com.zst.xposed.halo.floatingwindow3.hooks.StatusbarTaskbar;
 import com.zst.xposed.halo.floatingwindow3.hooks.SystemMods;
 import com.zst.xposed.halo.floatingwindow3.hooks.SystemUIOutliner;
 import com.zst.xposed.halo.floatingwindow3.hooks.TestingSettingHook;
@@ -33,7 +31,7 @@ public class MainXposed implements IXposedHookLoadPackage, IXposedHookZygoteInit
 	public MovableWindow hookMovableWindow;
 	public HaloFloating hookHaloFloating;
 	//public ActionBarColorHook hookActionBarColor;
-	public Compatibility.HookedMethods mHookedMethods;
+	//public Compatibility.HookedMethods mHookedMethods;
 	
 	
 	@Override
@@ -49,7 +47,7 @@ public class MainXposed implements IXposedHookLoadPackage, IXposedHookZygoteInit
 		// XHFW
 		TestingSettingHook.handleLoadPackage(lpparam);
 		// Compatibility settings
-		mHookedMethods = Compatibility.getHookedMethods();
+		//mHookedMethods = Compatibility.getHookedMethods();
 		
 		//StatusbarTaskbar.handleLoadPackage(lpparam, mPref);
 		

@@ -26,10 +26,10 @@ public class FloatingDot implements Runnable
     private ImageView image;
 	private int mScreenWidth;
 	private int mScreenHeight;
-	private int mCircleDiameter = 42;
-	private boolean secondTouch = false;
-	private long checkTime;
-	private long checkBroadcastTime;
+	private int mCircleDiameter = 26;
+	//private boolean secondTouch = false;
+	//private long checkTime;
+	//private long checkBroadcastTime;
 
 	/*Float dot commons*/
 
@@ -37,31 +37,34 @@ public class FloatingDot implements Runnable
 	public static final String INTENT_FLOAT_DOT_EXTRA = Common.INTENT_FLOAT_DOT_EXTRA;
 
 	final WindowManager.LayoutParams paramsF = new WindowManager.LayoutParams(
-		WindowManager.LayoutParams.WRAP_CONTENT,
-		WindowManager.LayoutParams.WRAP_CONTENT,
+		mCircleDiameter,
+		mCircleDiameter,
 		WindowManager.LayoutParams.TYPE_PHONE,
 		WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE |
+		WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM |
+		WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL |
+		WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH |
 		WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
 		PixelFormat.TRANSLUCENT);
 	Context mContext;
+	int mColor = Color.BLACK;
 	boolean mViewOn = false;
 	int[] coordinates = new int[2];
 
     public FloatingDot(Context sContext) {
 		mContext = sContext;
-		mCircleDiameter = Util.realDp(32, mContext);
+		mCircleDiameter = Util.realDp(mCircleDiameter, mContext);
 	}
 
 	
 	private void setLayout(){
 		refreshScreenSize();
 		int[] coordinates = new int[] {(mScreenWidth / 2) - (mCircleDiameter / 2),(mScreenHeight / 2) - (mCircleDiameter / 2)};
-		//.getLocationInWindow(coordinates);
-		
 		paramsF.x = coordinates[0];
 		paramsF.y = coordinates[1];
 		paramsF.width = mCircleDiameter;
 		paramsF.height = mCircleDiameter;
+		paramsF.alpha = 0.5f;
 	}
 	
 	public void showDragger(boolean show){
@@ -75,14 +78,16 @@ public class FloatingDot implements Runnable
 		//if(mViewOn) return;
 		image = new ImageView(mContext);
        // image.setImageResource(R.drawable.multiwindow_dragger_press_ud);
-		image.setBackgroundResource(R.drawable.multiwindow_dragger_press_ud);
+		//image.setBackgroundResource(R.drawable.multiwindow_dragger_press_ud);
+		//image.setImageDrawable(Util.makeCircle(mColor, mCircleDiameter));
+		image.setImageDrawable(Util.makeDoubleCircle(mColor, Color.RED, mCircleDiameter, mCircleDiameter/3));
+		
 		image.setVisibility(View.INVISIBLE);
         mWindowManager = (WindowManager)mContext.getSystemService(Context.WINDOW_SERVICE);
 
         paramsF.gravity = Gravity.TOP | Gravity.LEFT;
+		paramsF.windowAnimations = android.R.style.Animation_Translucent;
 		setLayout();
-        /*paramsF.x=0;
-		 paramsF.y=100;*/
 		registerListener();
 		
 		mWindowManager.addView(image, paramsF);
@@ -117,17 +122,17 @@ public class FloatingDot implements Runnable
 								initialY = paramsF.y;
 								initialTouchX = event.getRawX();
 								initialTouchY = event.getRawY();
-								checkTime = SystemClock.uptimeMillis();
+								//checkTime = SystemClock.uptimeMillis();
 								break;
 							case MotionEvent.ACTION_UP:
 								//if(!secondTouch) secondTouch = true;
 								//else {
 								//mWindowManager.removeView(v);
 								sendPosition(v);
-								if(SystemClock.uptimeMillis()-checkTime>3000){
-									hideDragger(v);
-									return false;
-								}
+//								if(SystemClock.uptimeMillis()-checkTime>3000){
+//									hideDragger(v);
+//									return false;
+//								}
 								//setLayout();
 								//putDragger();
 								//secondTouch = false;
@@ -139,7 +144,7 @@ public class FloatingDot implements Runnable
 								paramsF.y = initialY + (int) (event.getRawY() - initialTouchY);
 								
 								mWindowManager.updateViewLayout(v, paramsF);
-								checkTime = SystemClock.uptimeMillis();
+								//checkTime = SystemClock.uptimeMillis();
 								//sendPosition(v);
 								break;
 						}
@@ -159,7 +164,6 @@ public class FloatingDot implements Runnable
 	
 	public int[] getAbsoluteCoordinates(View v){
 		refreshScreenSize();
-		//{paramsF.x + (mCircleDiameter),paramsF.y + (mCircleDiameter)};
 		v.getLocationOnScreen(coordinates);
 		coordinates[0]+= mCircleDiameter/2;
 		coordinates[1]+= mCircleDiameter/2;

@@ -77,6 +77,15 @@ public class Util {
 		return shape;
 	}
 	
+	public static LayerDrawable makeDoubleCircle(int colorouter, int colorinner, int diameterouter, int diameterinner)
+	{
+		//ShapeDrawable shape = new ShapeDrawable(new OvalShape());
+		LayerDrawable result = new LayerDrawable(new Drawable[]{makeCircle(colorouter,diameterouter), makeCircle(colorinner,diameterinner)});
+		//(makeCircle(colorouter, diameterouter).g);
+		result.setLayerGravity(result.getNumberOfLayers()-1, Gravity.CENTER);
+		return result;
+	}
+	
 	/* Rotate a drawable given an angle */
 	public static Drawable getRotateDrawable(final Drawable d, final float angle) {
 		final Drawable[] array = { d };
