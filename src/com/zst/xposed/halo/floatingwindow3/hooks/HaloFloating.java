@@ -29,10 +29,20 @@ public class HaloFloating {
 		mPref.reload();
 		
 		if (lpparam.packageName.equals("android")) {
-			hookActivityRecord(lpparam);
-			removeAppStartingWindow(lpparam);
 			try{
-			kitkatMoveHomeStackHook(lpparam);
+				hookActivityRecord(lpparam);
+				} catch(Throwable e){
+					XposedBridge.log("hookActivityRecord failure");
+					XposedBridge.log(e);
+				}
+			try{
+				removeAppStartingWindow(lpparam);
+				} catch (Throwable e){
+					XposedBridge.log("removeAppStartingWindow failure");
+					XposedBridge.log(e);
+				}
+			try{
+				kitkatMoveHomeStackHook(lpparam);
 			} catch (Throwable e){
 				XposedBridge.log("kitkatMoveHomeStackHook failure");
 				XposedBridge.log(e);

@@ -99,7 +99,7 @@ public class AeroSnap {
 		if (mSnapWindowHolder.isSnapped) {
 			broadcastShowWithTimeout();
 		} else {
-			broadcastHide(MovableWindow.mWindowHolder.mActivity);
+			broadcastHide(MovableWindow.mWindowHolder.mActivity.getApplicationContext());
 		}
 		
 	}
@@ -307,7 +307,9 @@ public class AeroSnap {
 	}
 	
 	private void broadcastHide(Context ctx) {
-		XposedHelpers.callMethod(ctx, "sendBroadcast", new Intent(Common.SHOW_OUTLINE));
+		try{
+			XposedHelpers.callMethod(ctx, "sendBroadcast", new Intent(Common.SHOW_OUTLINE));
+			} catch (Throwable t){}
 		//ctx.sendBroadcast(new Intent(Common.SHOW_OUTLINE));
 	}
 

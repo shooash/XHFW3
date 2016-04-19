@@ -91,7 +91,12 @@ public class WindowHolder{
 	public void setWindow (Activity sActivity){
 		if(sActivity==null) return;
 		mActivity = sActivity;
-		Window sWindow = (Window) XposedHelpers.callMethod(sActivity, "getWindow");
+		Window sWindow;
+		try{
+			sWindow = (Window) XposedHelpers.callMethod(sActivity, "getWindow");
+		} catch(Throwable t){
+			return;
+		}
 		if(sWindow==null) return;
 		setWindow(sWindow);
 		//mWindow = sActivity.getWindow();
@@ -147,7 +152,7 @@ public class WindowHolder{
 		mWParams.height = height;
 		mWParams.dimAmount = dim;
 		/* TODO TEST DON'T TOUCH GRAVITY*/
-		//mWParams.gravity = Gravity.TOP | Gravity.LEFT;
+		mWParams.gravity = Gravity.TOP | Gravity.LEFT;
 		//Util.addPrivateFlagNoMoveAnimationToLayoutParam(mWParams);
 		/*TODO TEST FIX */
 		mWindow.getCallback().onWindowAttributesChanged(mWParams);

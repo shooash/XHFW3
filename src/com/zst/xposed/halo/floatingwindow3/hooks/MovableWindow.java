@@ -88,10 +88,14 @@ public class MovableWindow {
 
 	@SuppressWarnings("static-access")
 	public MovableWindow(MainXposed main, LoadPackageParam lpparam) throws Throwable {
+		/* TODO TEST DEBUG BOOTLOOP */
+		XposedBridge.log("XHFW3 boot test package: " + lpparam.packageName + " process: " + lpparam.processName);
 		mMainXposed = main;
 		mModRes = main.sModRes;
 		mPref = main.mPref;
 		
+		if (lpparam.packageName.equals("android") || lpparam.packageName.startsWith("com.android.systemui")) 
+			return;
 		hook_activity();
 		inject_dispatchTouchEvent();
 
@@ -131,9 +135,9 @@ public class MovableWindow {
 					DEBUG("onStartSTART");
 					mActivity = (Activity) param.thisObject;
 					/*  We don't touch floating dialogs  */
-					if (mActivity.getWindow().isFloating()) return;
+					//if (mActivity.getWindow().isFloating()) return;
 					/* no need to act if it's not movable */
-					if(!mWindowHolder.isMovable) return;
+					if(mWindowHolder==null || !mWindowHolder.isMovable) return;
 					/** update current window **/
 					mWindowHolder.setWindow(mActivity);
 					if(!mWindows.contains(mWindowHolder.mWindow))
@@ -158,7 +162,7 @@ public class MovableWindow {
 					/* no need to act if it's not movable */
 					/* check if we need to show or hide floatdot */
 					toggleDragger();
-					if(!mWindowHolder.isMovable) return;		
+					if(mWindowHolder==null || mWindowHolder.isMovable) return;		
 					/** update current window **/
 					mWindowHolder.setWindow(mActivity);
 					/* FIX FORCED ORIENTATION ON MOVABLE WINDOWS */
@@ -441,7 +445,7 @@ public class MovableWindow {
 		Intent intent = new Intent(Common.SHOW_MULTIWINDOW_DRAGGER);
 		intent.putExtra(Common.INTENT_FLOAT_DOT_BOOL, show);
 		//mWindowHolder.mActivity.sendBroadcast(intent);
-		XposedHelpers.callMethod(mWindowHolder.mActivity, "sendBroadcast", intent);
+		XposedHelpers.callMethod(mWindowHolder.mActivity.getApplicationContext(), "sendBroadcast", intent);
 	}
 	
 	/***********************************************************/
@@ -452,7 +456,7 @@ public class MovableWindow {
 	public static void showTitleBar(){
 		DEBUG("showTitleBar");
 		if(mOverlayView == null || mWindowHolder==null) return;
-		toggleDragger(mWindowHolder.isSnapped);
+		//toggleDragger(mWindowHolder.isSnapped);
 
 		boolean is_maximized = 
 			mWindowHolder.mWindow.getAttributes().width  == ViewGroup.LayoutParams.MATCH_PARENT &&
