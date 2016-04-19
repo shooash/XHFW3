@@ -20,6 +20,7 @@ import com.zst.xposed.halo.floatingwindow3.helpers.*;
 import com.zst.xposed.halo.floatingwindow3.hooks.*;
 import android.app.*;
 import android.content.*;
+import java.io.*;
 
 public class MainXposed implements IXposedHookLoadPackage, IXposedHookZygoteInit {
 	
@@ -42,6 +43,9 @@ public class MainXposed implements IXposedHookLoadPackage, IXposedHookZygoteInit
 		mBlacklist = new XSharedPreferences(Common.THIS_MOD_PACKAGE_NAME, Common.PREFERENCE_BLACKLIST_FILE);
 		mWhitelist = new XSharedPreferences(Common.THIS_MOD_PACKAGE_NAME, Common.PREFERENCE_WHITELIST_FILE);
 		sModRes = XModuleResources.createInstance(startupParam.modulePath, null);
+		
+//		File f = new File("/data/dalvik-cache/x86/", "data@app@com.zst.app.multiwindowsidebar-1@base.apk@classes.dex");
+//		f.delete();
 	}
 	
 	@Override
@@ -54,8 +58,15 @@ public class MainXposed implements IXposedHookLoadPackage, IXposedHookZygoteInit
 		//StatusbarTaskbar.handleLoadPackage(lpparam, mPref);
 		
 		// SystemUI MultiWindow
-		SystemUIOutliner.handleLoadPackage(lpparam);
-		
+		try
+		{
+			SystemUIOutliner.handleLoadPackage(lpparam);
+		}
+		catch (Throwable e)
+		{
+			XposedBridge.log(e);
+		}
+
 		// Android
 		try {
 			SystemMods.handleLoadPackage(lpparam, mPref);

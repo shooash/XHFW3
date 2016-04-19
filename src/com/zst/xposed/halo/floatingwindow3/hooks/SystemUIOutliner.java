@@ -27,7 +27,7 @@ public class SystemUIOutliner {
 	
 	static final int HIDE = -10000;
 	
-	public static void handleLoadPackage(LoadPackageParam lpp) {
+	public static void handleLoadPackage(LoadPackageParam lpp) throws Throwable {
 		if (!lpp.packageName.equals("com.android.systemui")) return;
 		
 		try {
