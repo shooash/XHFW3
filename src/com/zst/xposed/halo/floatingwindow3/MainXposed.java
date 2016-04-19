@@ -65,8 +65,24 @@ public class MainXposed implements IXposedHookLoadPackage, IXposedHookZygoteInit
 		}
 		
 		// App
-		hookMovableWindow = new MovableWindow(this, lpparam);
-		hookHaloFloating = new HaloFloating(this, lpparam, mPref);
+		try
+		{
+			hookMovableWindow = new MovableWindow(this, lpparam);
+		}
+		catch (Throwable e)
+		{
+			XposedBridge.log("MovableWindow failure");
+			XposedBridge.log(e);
+		}
+		try
+		{
+			hookHaloFloating = new HaloFloating(this, lpparam, mPref);
+		}
+		catch (Throwable e)
+		{
+			XposedBridge.log("HaloFloating failure");
+			XposedBridge.log(e);
+		}
 		//hookActionBarColor = new ActionBarColorHook(this, lpparam, mPref);
 	
 	}

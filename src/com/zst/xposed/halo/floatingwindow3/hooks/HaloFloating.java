@@ -393,7 +393,7 @@ public class HaloFloating {
 				String name = window.getContext().getPackageName();
 				if (name.startsWith("com.android.systemui")) return;
 				if (name.equals("android")) return;
-				//if(window.isFloating()) return; //MODAL fix
+				if(window.isFloating()) return; //MODAL fix
 				if(MovableWindow.mWindowHolder==null) return;
 				MovableWindow.DEBUG("GenerateLayout");
 				MovableWindow.mWindowHolder.setWindow(window);

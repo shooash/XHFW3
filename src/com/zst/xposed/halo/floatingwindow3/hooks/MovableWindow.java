@@ -91,22 +91,39 @@ public class MovableWindow {
 		mMainXposed = main;
 		mModRes = main.sModRes;
 		mPref = main.mPref;
-		
-		hook_activity();
-		inject_dispatchTouchEvent();
+		if (lpparam.packageName.startsWith("com.android.systemui")) return;
+		if (lpparam.packageName.equals("android")) return;
+		try
+		{
+			hook_activity();
+		}
+		catch (Throwable e)
+		{
+			XposedBridge.log("hook_activity failure");
+			XposedBridge.log(e);
+		}
+		try
+		{
+			inject_dispatchTouchEvent();
+		}
+		catch (Throwable e)
+		{
+			XposedBridge.log("inject_dispatchTouchEvent failure");
+			XposedBridge.log(e);
+		}
 
 	}
 	/***********************************************************/
 	/*********** ACTIVITY HOOKS ********************************/
 	/***********************************************************/
 	
-	private void hook_activity(){
+	private void hook_activity() throws Throwable {
 		XposedBridge.hookAllMethods(Activity.class, "onCreate", new XC_MethodHook() {
 				@Override
 				protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
 					mActivity = (Activity) param.thisObject;
 					/*  We don't touch floating dialogs  */
-					//if (mActivity.getWindow().isFloating()) return;
+					if (mActivity.getWindow().isFloating()) return;
 					/* Setup window holder */
 					if(!initWindow()) return;
 					/* if it is movable - continue and add it to windows array */
@@ -130,7 +147,7 @@ public class MovableWindow {
 					/*  We don't touch floating dialogs  */
 					//if (mActivity.getWindow().isFloating()) return;
 					/* no need to act if it's not movable */
-					if(!mWindowHolder.isMovable) return;
+					if(mWindowHolder==null || !mWindowHolder.isMovable) return;
 					/** update current window **/
 					mWindowHolder.setWindow(mActivity);
 					
@@ -149,13 +166,13 @@ public class MovableWindow {
 					DEBUG("onResumeSTART");
 					mActivity = (Activity) param.thisObject;
 					/*  We don't touch floating dialogs  */
-					//if (mActivity.getWindow().isFloating()) return;
+					if (mActivity.getWindow().isFloating()) return;
 					/* no need to act if it's not movable */
-					/* check if we need to show or hide floatdot */
-					toggleDragger();
-					if(!mWindowHolder.isMovable) return;		
+					if(mWindowHolder==null || !mWindowHolder.isMovable) return;		
 					/** update current window **/
 					mWindowHolder.setWindow(mActivity);
+					/* check if we need to show or hide floatdot */
+					toggleDragger();
 					/* FIX FORCED ORIENTATION ON MOVABLE WINDOWS */
 					mActivity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER);
 					/* reconnect XHFWService if needed */
@@ -648,7 +665,7 @@ public class MovableWindow {
 		XposedBridge.hookAllMethods(Activity.class, "dispatchTouchEvent", new XC_MethodHook() {
 			@Override
 			protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-				if(!mWindowHolder.isMovable) return;
+				if(mWindowHolder==null || !mWindowHolder.isMovable) return;
 
 				Activity a = (Activity) param.thisObject;
 				mWindowHolder.setWindow(a);

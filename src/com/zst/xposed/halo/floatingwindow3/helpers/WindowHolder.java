@@ -38,10 +38,11 @@ public class WindowHolder{
         mPref.reload();
         isFloating=(mActivity.getIntent().getFlags() & mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW))
                 == mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW);
+		isMovable = (isFloating&&(mPref.getBoolean(Common.KEY_MOVABLE_WINDOW, Common.DEFAULT_MOVABLE_WINDOW)));
+        if(!isMovable) return;
 		alpha = mPref.getFloat(Common.KEY_ALPHA, Common.DEFAULT_ALPHA);
 		dim = mPref.getFloat(Common.KEY_DIM, Common.DEFAULT_DIM);
-		isMovable = (isFloating&&(mPref.getBoolean(Common.KEY_MOVABLE_WINDOW, Common.DEFAULT_MOVABLE_WINDOW)));
-        cachedOrientation=mActivity.getResources().getConfiguration().orientation;
+		cachedOrientation=mActivity.getResources().getConfiguration().orientation;
         cachedRotation = Util.getDisplayRotation(mActivity);
 		/*TODO: Get use of EXTRA_SNAP extras to keep snap gravity*/
 		/*if(mActivity.getIntent().hasExtra(Common.EXTRA_SNAP)) SnapGravity = mActivity.getIntent().getIntExtra(Common.EXTRA_SNAP, 0);
