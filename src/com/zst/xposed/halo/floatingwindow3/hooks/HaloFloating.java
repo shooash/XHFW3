@@ -30,21 +30,46 @@ public class HaloFloating {
 		mPref.reload();
 		
 		if (lpparam.packageName.equals("android")) {
-			hookActivityRecord(lpparam);
-			removeAppStartingWindow(lpparam);
-			kitkatMoveHomeStackHook(lpparam);
-			try {
+			try
+			{
+				hookActivityRecord(lpparam);
+			}
+			catch (Throwable e)
+			{
+				XposedBridge.log(Common.LOG_TAG + "(hookActivityRecord)");
+				XposedBridge.log(e);
+			}
+			try
+			{
+				removeAppStartingWindow(lpparam);
+			}
+			catch (Throwable e)
+			{
+				XposedBridge.log(Common.LOG_TAG + "(removeAppStartingWindow)");
+				XposedBridge.log(e);
+			}
+			try
+			{
+				kitkatMoveHomeStackHook(lpparam);
+			}
+			catch (Throwable e)
+			{
+				XposedBridge.log(Common.LOG_TAG + "(kitkatMoveHomeStackHook)");
+				XposedBridge.log(e);
+			}
+			try 
+			{
 				injectActivityStack(lpparam);
 			} catch (Throwable e) {
 				XposedBridge.log(Common.LOG_TAG + "(ActivityStack)");
 				XposedBridge.log(e);
 			}
 		}
-		
-		initHooks(lpparam);
+		else initHooks(lpparam);
 	}
 	
 	private void initHooks(LoadPackageParam l) {
+		if(l.packageName.equals("com.android.systemui")) return;
 		/*********************************************/
 		try {
 			inject_Activity();
@@ -53,12 +78,12 @@ public class HaloFloating {
 			XposedBridge.log(e);
 		}
 		/*********************************************/
-		try {
-			injectPerformStop();
-		} catch (Throwable e) {
-			XposedBridge.log(Common.LOG_TAG + "(injectPerformStop)");
-			XposedBridge.log(e);
-		}
+//		try {
+//			injectPerformStop();
+//		} catch (Throwable e) {
+//			XposedBridge.log(Common.LOG_TAG + "(injectPerformStop)");
+//			XposedBridge.log(e);
+//		}
 		/*********************************************/
 		try {
 			injectGenerateLayout(l);
@@ -67,12 +92,12 @@ public class HaloFloating {
 			XposedBridge.log(e);
 		}
 		/*********************************************/
-		try {
-			fixExceptionWhenResuming(l);
-		} catch (Throwable e) {
-			XposedBridge.log(Common.LOG_TAG + "(fixExceptionWhenResuming)");
-			XposedBridge.log(e);
-		}
+//		try {
+//			fixExceptionWhenResuming(l);
+//		} catch (Throwable e) {
+//			XposedBridge.log(Common.LOG_TAG + "(fixExceptionWhenResuming)");
+//			XposedBridge.log(e);
+//		}
 		/*********************************************/
 	}
 	

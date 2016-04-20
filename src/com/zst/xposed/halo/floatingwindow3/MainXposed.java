@@ -68,12 +68,12 @@ public class MainXposed implements IXposedHookLoadPackage, IXposedHookZygoteInit
 		}
 
 		// Android
-		try {
+		/*try {
 			SystemMods.handleLoadPackage(lpparam, mPref);
 		} catch (Throwable e) {
 			XposedBridge.log(Common.LOG_TAG + "(MainXposed // SystemMods)");
 			XposedBridge.log(e);
-		}
+		}*/
 		
 		// App
 		try
