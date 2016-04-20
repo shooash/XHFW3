@@ -1,6 +1,5 @@
 package com.zst.xposed.halo.floatingwindow3;
 
-import com.zst.xposed.halo.floatingwindow3.hooks.ActionBarColorHook;
 import com.zst.xposed.halo.floatingwindow3.hooks.HaloFloating;
 import com.zst.xposed.halo.floatingwindow3.hooks.MovableWindow;
 import com.zst.xposed.halo.floatingwindow3.hooks.StatusbarTaskbar;
@@ -53,9 +52,7 @@ public class MainXposed implements IXposedHookLoadPackage, IXposedHookZygoteInit
 		// XHFW
 		TestingSettingHook.handleLoadPackage(lpparam);
 		// Compatibility settings
-		mHookedMethods = Compatibility.getHookedMethods();
-		
-		//StatusbarTaskbar.handleLoadPackage(lpparam, mPref);
+		//mHookedMethods = Compatibility.getHookedMethods();
 		
 		// SystemUI MultiWindow
 		try
@@ -68,12 +65,12 @@ public class MainXposed implements IXposedHookLoadPackage, IXposedHookZygoteInit
 		}
 
 		// Android
-		/*try {
+		try {
 			SystemMods.handleLoadPackage(lpparam, mPref);
 		} catch (Throwable e) {
 			XposedBridge.log(Common.LOG_TAG + "(MainXposed // SystemMods)");
 			XposedBridge.log(e);
-		}*/
+		}
 		
 		// App
 		try
@@ -94,8 +91,6 @@ public class MainXposed implements IXposedHookLoadPackage, IXposedHookZygoteInit
 			XposedBridge.log("HaloFloating failure");
 			XposedBridge.log(e);
 		}
-		//hookActionBarColor = new ActionBarColorHook(this, lpparam, mPref);
-	
 	}
 
 	public boolean isBlacklisted(String pkg) {
