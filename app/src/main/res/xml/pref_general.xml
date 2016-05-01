@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" android:summary=""
+    android:title="XHaloFloatingWindow settings">
+	<!-- Screen 1: Popup Window -->
+    <PreferenceCategory android:title="Base options">
+        android:summary="@string/pref_window_top_summary"
+        android:title="@string/pref_window_top_title" >
+	<SwitchPreference
+        android:defaultValue="true"
+        android:key="window_movable"
+        android:title="Enable movable windows"
+        android:enabled="true"/>
+		<com.zst.xposed.halo.floatingwindow3.prefs.IntListPreference
+        android:defaultValue="8193"
+        android:entries="@array/option_floating_flags"
+        android:entryValues="@array/option_floating_flags_values"
+        android:key="floating_flag"
+        android:summary="@string/floating_flags_summary"
+        android:title="@string/floating_flags" />
+	</PreferenceCategory>
+
+    <PreferenceCategory android:title="General window settings">
+        <com.zst.xposed.halo.floatingwindow3.prefs.WidgetWindowAlphaPicker
+            defaultValue="1"
+            maximum="1"
+            minimum="0.25"
+            android:key="window_alpha"
+            android:summary="@string/pref_alpha_summary"
+            android:title="@string/pref_alpha_title" />
+        <com.zst.xposed.halo.floatingwindow3.prefs.WidgetBackgroundDimPicker
+            defaultValue="0.25"
+            maximum="1"
+            minimum="0"
+            android:key="window_dim"
+            android:summary="@string/pref_dim_summary"
+            android:title="@string/pref_dim_title" />
+        <com.zst.xposed.halo.floatingwindow3.prefs.WidgetGravityChooser
+            android:key="window_gravity"
+            android:summary="@string/pref_gravity_summary"
+            android:title="@string/pref_gravity_title" />
+        <com.zst.xposed.halo.floatingwindow3.prefs.WidgetFloatPercentage
+            defaultValue="0.95"
+            maximum="1"
+            minimum="0.1"
+            android:key="window_portrait_width"
+            android:summary="@string/pref_width_portrait_summary"
+            android:title="@string/pref_width_portrait_title" />
+        <com.zst.xposed.halo.floatingwindow3.prefs.WidgetFloatPercentage
+            defaultValue="0.7"
+            maximum="1"
+            minimum="0.1"
+            android:key="window_portrait_height"
+            android:summary="@string/pref_height_portrait_summary"
+            android:title="@string/pref_height_portrait_title" />
+        <com.zst.xposed.halo.floatingwindow3.prefs.WidgetFloatPercentage
+            defaultValue="0.7"
+            maximum="1"
+            minimum="0.1"
+            android:key="window_landscape_width"
+            android:summary="@string/pref_width_landscape_summary"
+            android:title="@string/pref_width_landscape_title" />
+        <com.zst.xposed.halo.floatingwindow3.prefs.WidgetFloatPercentage
+            defaultValue="0.85"
+            maximum="1"
+            minimum="0.1"
+            android:key="window_landscape_height"
+            android:summary="@string/pref_height_landscape_summary"
+            android:title="@string/pref_height_landscape_title" />
+    </PreferenceCategory>
+    
+</PreferenceScreen>
