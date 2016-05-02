@@ -26,6 +26,7 @@ public class FloatingDot implements Runnable
 	private int mScreenWidth;
 	private int mScreenHeight;
 	private int mCircleDiameter = 26;
+	private int lastOrientation;
 	//private boolean secondTouch = false;
 	//private long checkTime;
 	//private long checkBroadcastTime;
@@ -58,12 +59,13 @@ public class FloatingDot implements Runnable
 
 	private void setLayout(){
 		refreshScreenSize();
-		int[] coordinates = new int[] {(mScreenWidth / 2) - (mCircleDiameter / 2),(mScreenHeight / 2) - (mCircleDiameter / 2)};
+		coordinates = new int[] {(mScreenWidth / 2) - (mCircleDiameter / 2),(mScreenHeight / 2) - (mCircleDiameter / 2)};
 		paramsF.x = coordinates[0];
 		paramsF.y = coordinates[1];
 		paramsF.width = mCircleDiameter;
 		paramsF.height = mCircleDiameter;
 		paramsF.alpha = 0.5f;
+		lastOrientation = Util.getScreenOrientation(mContext);
 	}
 
 	public void showDragger(boolean show){
@@ -141,7 +143,8 @@ public class FloatingDot implements Runnable
 							case MotionEvent.ACTION_MOVE:
 								paramsF.x = initialX + (int) (event.getRawX() - initialTouchX);
 								paramsF.y = initialY + (int) (event.getRawY() - initialTouchY);
-
+								coordinates[0] = paramsF.x;
+								coordinates[1] = paramsF.y;
 								mWindowManager.updateViewLayout(v, paramsF);
 								//checkTime = SystemClock.uptimeMillis();
 								//sendPosition(v);
@@ -179,6 +182,24 @@ public class FloatingDot implements Runnable
 		//coordinates = new int[]{coordinates[Util.rollInt(0,1,-rotation)], coordinates[Util.rollInt(0,1,-rotation+1)]};
 		mWindowManager.updateViewLayout(image, paramsF);
 		sendPosition(image);
+	}
+	
+	public void rotatePositionByOrientation(){
+		int newOrientation = Util.getScreenOrientation(mContext);
+		if(newOrientation==lastOrientation) return;
+		lastOrientation = newOrientation;
+		//if(View.GONE == image.getVisibility()) return;
+//		int newx = coordinates[1]; // paramsF.y;
+//		int newy = coordinates[0]; // paramsF.x;
+		WindowManager.LayoutParams lp = (WindowManager.LayoutParams)image.getLayoutParams();
+		int newx = lp.y; // paramsF.y;
+		int newy = lp.x; // paramsF
+		lp.x = newx;
+		lp.y = newy;
+		coordinates[0] = newx;
+		coordinates[1] = newy;
+		mWindowManager.updateViewLayout(image, lp);
+		sendPosition(coordinates);
 	}
 	
 //	public void sendPosition(){

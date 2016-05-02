@@ -23,15 +23,15 @@ public class MovableWindow
 {
 
     public static void DEBUG(String tag){
-        XposedBridge.log(tag + " Package:[" + (mWindowHolder==null?"null":mWindowHolder.packageName + "] isSnapped: [" + mWindowHolder.isSnapped 
-						 + "] isMaximized: [" + mWindowHolder.isMaximized + "]")
-							+ "] isMovable:[" + isMovable );
-		if(mWindowHolder!=null) 
-			XposedBridge.log("      window:[" + mWindowHolder.width + ":" + mWindowHolder.height
-				+ "] at [" + mWindowHolder.x + ":" + mWindowHolder.y + "]");
-		if(mWindowHolderCached!=null) 
-			XposedBridge.log("      window:[" + mWindowHolderCached.width + ":" + mWindowHolderCached.height
-							 + "] at [" + mWindowHolderCached.x + ":" + mWindowHolderCached.y + "]");
+//        XposedBridge.log(tag + " Package:[" + (mWindowHolder==null?"null":mWindowHolder.packageName + "] isSnapped: [" + mWindowHolder.isSnapped 
+//						 + "] isMaximized: [" + mWindowHolder.isMaximized + "]")
+//							+ "] isMovable:[" + isMovable );
+//		if(mWindowHolder!=null) 
+//			XposedBridge.log("      window:[" + mWindowHolder.width + ":" + mWindowHolder.height
+//				+ "] at [" + mWindowHolder.x + ":" + mWindowHolder.y + "]");
+//		if(mWindowHolderCached!=null) 
+//			XposedBridge.log("      window:[" + mWindowHolderCached.width + ":" + mWindowHolderCached.height
+//							 + "] at [" + mWindowHolderCached.x + ":" + mWindowHolderCached.y + "]");
 		
     }
 
@@ -182,23 +182,23 @@ public class MovableWindow
 				}
 			});
 			
-//		XposedBridge.hookAllMethods(Activity.class, "onConfigurationChanged", new XC_MethodHook() {
-//				@Override
-//				protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-//					//mActivity = (Activity) param.thisObject;
-//					DEBUG("ACTION_CONFIGURATION_CHANGED");
-//					/*  We don't touch floating dialogs  */
-//					//if (mActivity.getWindow().isFloating()) return;
-//					/* no need to act if it's not movable */
-//					//if(mWindowHolder==null||!mWindowHolder.isMovable) return;
-//					//int curRotation = Util.getDisplayRotation(mActivity);
-////					mFloatDotCoordinates = new int[]{mFloatDotCoordinates[Util.rollInt(0,1,mWindowHolder.cachedRotation-curRotation)], mFloatDotCoordinates[Util.rollInt(0,1,mWindowHolder.cachedRotation-curRotation+1)]};
-////					mAeroSnap.forceSnapGravity(mWindowHolder.SnapGravity);
-//					//mWindowHolder.cachedRotation = curRotation;
-//					//connectService();
-//					return;
-//				}
-//			});
+		XposedBridge.hookAllMethods(Activity.class, "onConfigurationChanged", new XC_MethodHook() {
+				@Override
+				protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+					if(!isMovable||mWindowHolder==null) return;
+					//mActivity = (Activity) param.thisObject;
+					DEBUG("ACTION_CONFIGURATION_CHANGED");
+					int curOrientation = Util.getScreenOrientation(mWindowHolder.mActivity.getApplicationContext());
+					if(curOrientation!=mWindowHolder.cachedOrientation) {
+						mWindowHolder.toggleXY();
+						mWindowHolder.syncLayout();
+						toggleDragger();
+						}
+					mWindowHolder.cachedOrientation=curOrientation;
+					
+					return;
+				}
+			});
 		
 			
 		XposedBridge.hookAllMethods(Activity.class, "dispatchTouchEvent", new XC_MethodHook() {
@@ -291,6 +291,40 @@ public class MovableWindow
 			});
 	}
 	
+	/*
+	 * This is to fix "resuming" apps that have not been paused.
+	 * Some apps (eg. BoatBrowser) will throw exceptions and we
+	 * fix it using this hook.
+	 * 
+	 * According to the AOSP sources for Instrumentation.java:
+	 * 
+	 * 		To allow normal system exception process to occur, return false.
+	 *		If true is returned, the system will proceed as if the exception
+	 *		didn't happen.
+	 *
+	 * Therefore, to remove the exception, we return true if the resume activity
+	 * is in process and false when we are not resuming to let normal system behavior
+	 * continue as normal.
+	 */
+	static boolean mExceptionHook = false;
+	public static void fixExceptionWhenResuming(final Class<?> cls) throws Throwable {
+		
+		XposedBridge.hookAllMethods(cls, "performResumeActivity",
+			new XC_MethodHook() {
+				protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+					mExceptionHook = true;
+				}
+				protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+					mExceptionHook = false;
+				}
+			});
+		XposedBridge.hookAllMethods(android.app.Instrumentation.class, "onException",
+			new XC_MethodReplacement() {
+				protected Object replaceHookedMethod(MethodHookParam param) throws Throwable {
+					return mExceptionHook;
+				}
+			});
+	}
 
     /***********************************************************/
     /********************* INIT ********************************/

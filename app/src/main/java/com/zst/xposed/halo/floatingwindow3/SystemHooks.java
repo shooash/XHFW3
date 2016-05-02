@@ -11,6 +11,7 @@ import android.view.*;
 public class SystemHooks
 {
 	static boolean isMovable = false;
+	static boolean mForcedFlag = false;
 	//static ArrayList<String> mListPackages = new ArrayList<String>();
 	static Map<String, Integer> mTasksList = new HashMap<String, Integer>();
 	
@@ -29,6 +30,7 @@ public class SystemHooks
 												 (MainXposed.mCompatibility.ActivityRecord_ActivityStack==-1)? 
 												 MainXposed.mCompatibility.getActivityRecord_ActivityStack(param.args[MainXposed.mCompatibility.ActivityRecord_StackSupervisor]) 
 												 : param.args[MainXposed.mCompatibility.ActivityRecord_ActivityStack], mIntent);
+					if(mForcedFlag&&!isMovable) return;
 					isMovable = isMovable || Util.isFlag(mIntent.getFlags(), MainXposed.mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW));
 					isMovable = isMovable || mTasksList.containsKey(packageName);
 					isMovable = checkBlackWhiteList(isMovable, packageName);
@@ -161,6 +163,7 @@ public class SystemHooks
 	
 	private static boolean checkInheritFloatingFlag(String packageName, Object activityStack, final Intent mIntent){
 		ArrayList<?> taskHistory = (ArrayList<?>) XposedHelpers.getObjectField(activityStack, MainXposed.mCompatibility.ActivityRecord_TaskHistory);
+		mForcedFlag=false;
 		if(taskHistory==null || taskHistory.size()==0) return false;
 		Object lastRecord = taskHistory.get(taskHistory.size() - 1);
 		Intent lastIntent = (Intent) XposedHelpers.getObjectField(lastRecord, "intent");
@@ -176,6 +179,7 @@ public class SystemHooks
 			{
 				XposedBridge.log("Unable to set snap gravity to intent " + mIntent.getPackage() + " Snapside=" + sGravity);
 			}
+			mForcedFlag = true;
 			return Util.isFlag(lastIntent.getFlags(), MainXposed.mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW));
 			}
 		if(MainXposed.mPref.getBoolean(Common.KEY_FORCE_OPEN_APP_ABOVE_HALO, Common.DEFAULT_FORCE_OPEN_APP_ABOVE_HALO)){
@@ -252,14 +256,6 @@ public class SystemHooks
 					MovableWindow.DEBUG("startActivityLocked [" + isMovable + "]");
 				}
 			});
-//		XposedBridge.hookAllMethods(hookClass, "finishActivityLocked", new XC_MethodHook() {
-//				protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-//						Object mActivityRecord = param.args[0];
-//						String mPackageName = (String) XposedHelpers.getObjectField(mActivityRecord, "packageName");
-//						XposedBridge.log("REMOVEDACTIVITY: " + (mPackageName==null?"null":mPackageName));
-//						mList.remove(mPackageName);
-//					}
-//		});
 
 		if (Build.VERSION.SDK_INT < 19) {
 			/*
@@ -283,5 +279,4 @@ public class SystemHooks
 				});
 			}//for SDK_INT 19 only
 	}
-	
 }

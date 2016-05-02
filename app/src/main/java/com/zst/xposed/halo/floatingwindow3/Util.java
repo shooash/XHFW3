@@ -106,7 +106,7 @@ public class Util
     }
 	
 	
-	public static int getScreenOrientation(Activity mActivity)
+	public static int getScreenOrientation(Context mActivity)
 	{
 		Point screenSize = new Point();
 		((WindowManager) mActivity.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay().getSize(screenSize);

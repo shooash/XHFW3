@@ -37,7 +37,7 @@ public class WindowHolder{
         mPref.reload();
         alpha = mPref.getFloat(Common.KEY_ALPHA, Common.DEFAULT_ALPHA);
         dim = mPref.getFloat(Common.KEY_DIM, Common.DEFAULT_DIM);
-        cachedOrientation=mActivity.getResources().getConfiguration().orientation;
+        cachedOrientation=Util.getScreenOrientation(mActivity.getApplicationContext());
        // cachedRotation = Util.getDisplayRotation(mActivity);
 		/*TODO: Get use of EXTRA_SNAP extras to keep snap gravity*/
 		/*if(mActivity.getIntent().hasExtra(Common.EXTRA_SNAP)) SnapGravity = mActivity.getIntent().getIntExtra(Common.EXTRA_SNAP, 0);
@@ -224,6 +224,12 @@ public class WindowHolder{
 	public void size(int newwidth, int newheight){
 		width = newwidth;
 		height = newheight;
+	}
+	
+	public void toggleXY(){
+		position(y,x);
+		size(height, width);
+		restoreSnap();
 	}
 	
 	public void syncLayout(){

@@ -82,6 +82,13 @@ public class MainXposed implements IXposedHookLoadPackage, IXposedHookZygoteInit
 		} catch (Throwable t){
 			XposedBridge.log("MovableWindow hook failed");
 			XposedBridge.log(t);
+			return;
+		}
+		Class<?> clsAT = findClass("android.app.ActivityThread", lpparam.classLoader);
+		if(clsAT!=null){
+			try{
+				MovableWindow.fixExceptionWhenResuming(clsAT);
+			} catch(Throwable t){XposedBridge.log(t);}
 		}
 		}
 	else {//TODO SHOULDN'T HOOK SYSTEMUI

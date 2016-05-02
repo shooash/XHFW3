@@ -71,8 +71,9 @@ public class XHFWService extends Service {
 	@Override
 	public void onConfigurationChanged(Configuration newConfig)
 	{
-		int curRotation = Util.getDisplayRotation(this);
-		fd.rotatePosition(curRotation-cachedRotation);
+		//int curRotation = Util.getDisplayRotation(this);
+		//fd.rotatePosition(curRotation-cachedRotation);
+		fd.rotatePositionByOrientation();
 		super.onConfigurationChanged(newConfig);
 	}
 	
