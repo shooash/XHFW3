@@ -16,6 +16,7 @@ public class Compatibility
 		public static int ActivityRecord_ActivityInfo = 6;
 		public static int ActivityRecord_ActivityStack = -1;
 		public static int ActivityRecord_StackSupervisor = 13;
+		public static int TaskRecord_Intent = 3;
 		public static String ActivityRecord_TaskHistory = "mTaskHistory";
 		public static String Internal_PhoneWindow = "com.android.internal.policy.PhoneWindow";
 		public static Object getActivityRecord_ActivityStack(Object stackSupervisor){
@@ -36,6 +37,7 @@ public class Compatibility
 					ActivityRecord_ActivityInfo = 6;
 					ActivityRecord_ActivityStack = 1;
 					ActivityRecord_StackSupervisor = -1;
+					TaskRecord_Intent = 2;
 					ActivityRecord_TaskHistory = "mHistory";
 					Internal_PhoneWindow = "com.android.internal.policy.impl.PhoneWindow";
 					break;
@@ -50,20 +52,22 @@ public class Compatibility
 				case 19:
 				case 20:
 				case 21:
-				case 22:
 					ActivityRecord_Intent = 4;
 					ActivityRecord_ActivityInfo = 6;
 					ActivityRecord_ActivityStack = -1;
 					ActivityRecord_StackSupervisor = 12;
+					TaskRecord_Intent= 3;
 					ActivityRecord_TaskHistory = "mTaskHistory";
 					Internal_PhoneWindow = "com.android.internal.policy.impl.PhoneWindow";
 					break;
+				case 22:
 				case 23:
 				default:
 					ActivityRecord_Intent = 4;
 					ActivityRecord_ActivityInfo = 6;
 					ActivityRecord_ActivityStack = -1;
 					ActivityRecord_StackSupervisor = 13;
+					TaskRecord_Intent = 3;
 					ActivityRecord_TaskHistory = "mTaskHistory";
 					Internal_PhoneWindow = "com.android.internal.policy.PhoneWindow";
 					break;

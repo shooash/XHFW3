@@ -74,8 +74,8 @@ public class SystemHooks
 				@Override
 				protected void afterHookedMethod(MethodHookParam param) throws Throwable {
 					MovableWindow.DEBUG("TaskRecord start");
-					if(!(param.args[3] instanceof Intent)) return;
-					Intent mIntent = (Intent) param.args[3];
+					if(!(param.args[MainXposed.mCompatibility.TaskRecord_Intent] instanceof Intent)) return;
+					Intent mIntent = (Intent) param.args[MainXposed.mCompatibility.TaskRecord_Intent];
 					String packageName = (String) XposedHelpers.getObjectField(param.thisObject, "affinity");
 					isMovable = false;
 					if ((packageName.startsWith("com.android.systemui"))||(packageName.equals("android"))) return;
