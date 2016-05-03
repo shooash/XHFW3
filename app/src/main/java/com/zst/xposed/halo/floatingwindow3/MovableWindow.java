@@ -168,8 +168,8 @@ public class MovableWindow
 					mWindowHolder.mWindows.remove(((Activity)param.thisObject).getWindow());
 					if(mWindowHolder.mWindows.size()<1) {
 						//mMainXposed.mMovablePackages.remove(mWindowHolder.packageName);
-						//mWindowHolder = null;
-						//isMovable=false;
+						mWindowHolder = null;
+						isMovable=false;
 					}
 					//else showTitleBar();
 					/* disable dragger */

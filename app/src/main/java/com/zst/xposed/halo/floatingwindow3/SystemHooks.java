@@ -11,9 +11,9 @@ import android.view.*;
 public class SystemHooks
 {
 	static boolean isMovable = false;
-	static boolean mForcedFlag = false;
 	//static ArrayList<String> mListPackages = new ArrayList<String>();
 	static Map<String, Integer> mTasksList = new HashMap<String, Integer>();
+	static Map<String, Integer> mNoMovableTasksList = new HashMap<String, Integer>();
 	
 	public static void hookActivityRecord(Class<?> classActivityRecord) throws Throwable {
 
@@ -26,16 +26,20 @@ public class SystemHooks
 					isMovable = false;
 					if ((packageName.startsWith("com.android.systemui"))||(packageName.equals("android"))) return;
 					Intent mIntent = (Intent) param.args[MainXposed.mCompatibility.ActivityRecord_Intent];
+					if(mNoMovableTasksList.containsKey(packageName)) {
+						removeFloatingFlag(mIntent);
+						return;
+					}
 					isMovable = checkInheritFloatingFlag(packageName,
 												 (MainXposed.mCompatibility.ActivityRecord_ActivityStack==-1)? 
 												 MainXposed.mCompatibility.getActivityRecord_ActivityStack(param.args[MainXposed.mCompatibility.ActivityRecord_StackSupervisor]) 
 												 : param.args[MainXposed.mCompatibility.ActivityRecord_ActivityStack], mIntent);
-					if(mForcedFlag&&!isMovable) return;
+					
 					isMovable = isMovable || Util.isFlag(mIntent.getFlags(), MainXposed.mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW));
 					isMovable = isMovable || mTasksList.containsKey(packageName);
 					isMovable = checkBlackWhiteList(isMovable, packageName);
 					if(!isMovable) return;
-					MovableWindow.DEBUG(packageName + " hookActivityRecord.isMovable:[" + isMovable + "]");
+					MovableWindow.DEBUG(packageName + " hookActivityRecord.isMovable:[" + isMovable + "] is multiple tasks:[" + Util.isFlag(mIntent.getFlags(), Intent.FLAG_ACTIVITY_MULTIPLE_TASK) +"]");
 					//if(!mTasksList.containsKey(packageName)) mTasksList.put(packageName, 0);
 					XposedHelpers.setBooleanField(param.thisObject, "fullscreen", false);
 					setIntentFlags(mIntent);
@@ -57,6 +61,16 @@ public class SystemHooks
 					}
 					String packageName = (String) XposedHelpers.getObjectField(taskRecord, "affinity");
 					XposedBridge.log("ActivityManagerService REMOVETASK affinity: "+packageName);
+					
+					if(mNoMovableTasksList.containsKey(packageName)){
+						Integer nmTaskNum = mNoMovableTasksList.get(packageName) - 1;
+						if(nmTaskNum<1)
+							mNoMovableTasksList.remove(packageName);
+						else
+							mNoMovableTasksList.put(packageName, nmTaskNum);
+						return;
+					}
+					
 					if(!mTasksList.containsKey(packageName))return;
 					
 					Integer tasksNum = mTasksList.get(packageName)-1;
@@ -83,7 +97,13 @@ public class SystemHooks
 					if ((packageName.startsWith("com.android.systemui"))||(packageName.equals("android"))) return;
 					isMovable = Util.isFlag(mIntent.getFlags(), MainXposed.mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW))
 						|| mTasksList.containsKey(packageName);
-					if(!isMovable) return;
+					if(!isMovable) {
+						if(mNoMovableTasksList.containsKey(packageName)) 
+							mNoMovableTasksList.put(packageName, mTasksList.get(packageName)+1);
+						else
+							mNoMovableTasksList.put(packageName, 1);
+						return;
+						}
 					//if(!mListPackages.contains(packageName)){
 					//	mListPackages.add(packageName);
 					//}
@@ -91,7 +111,8 @@ public class SystemHooks
 						mTasksList.put(packageName, mTasksList.get(packageName)+1);
 					else
 						mTasksList.put(packageName, 1);
-					MovableWindow.DEBUG("TaskRecord for movable " + packageName + " tasks in stack:" + mTasksList.get(packageName) + " isMovable:" + isMovable);
+					MovableWindow.DEBUG("TaskRecord for movable " + packageName + " tasks in stack:" + mTasksList.get(packageName) 
+						+ " isMovable:[" + isMovable + "] is multiple tasks:[" + Util.isFlag(mIntent.getFlags(), Intent.FLAG_ACTIVITY_MULTIPLE_TASK) +"]");
 					}
 				});
 	}
@@ -110,6 +131,12 @@ public class SystemHooks
 
 		mIntent.setFlags(flags);
 		return mIntent;
+	}
+	
+	private static void removeFloatingFlag(Intent mIntent){
+		int flags = mIntent.getFlags();
+		flags &= ~MainXposed.mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW);
+		mIntent.setFlags(flags);
 	}
 	
 	private static void setIntentGravity(Intent mIntent, int sGravity, boolean alternative) throws Throwable{
@@ -163,7 +190,6 @@ public class SystemHooks
 	
 	private static boolean checkInheritFloatingFlag(String packageName, Object activityStack, final Intent mIntent){
 		ArrayList<?> taskHistory = (ArrayList<?>) XposedHelpers.getObjectField(activityStack, MainXposed.mCompatibility.ActivityRecord_TaskHistory);
-		mForcedFlag=false;
 		if(taskHistory==null || taskHistory.size()==0) return false;
 		Object lastRecord = taskHistory.get(taskHistory.size() - 1);
 		Intent lastIntent = (Intent) XposedHelpers.getObjectField(lastRecord, "intent");
@@ -179,7 +205,6 @@ public class SystemHooks
 			{
 				XposedBridge.log("Unable to set snap gravity to intent " + mIntent.getPackage() + " Snapside=" + sGravity);
 			}
-			mForcedFlag = true;
 			return Util.isFlag(lastIntent.getFlags(), MainXposed.mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW));
 			}
 		if(MainXposed.mPref.getBoolean(Common.KEY_FORCE_OPEN_APP_ABOVE_HALO, Common.DEFAULT_FORCE_OPEN_APP_ABOVE_HALO)){
