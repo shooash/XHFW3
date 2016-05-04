@@ -22,10 +22,12 @@ public class SystemHooks
 				@Override
 				protected void afterHookedMethod(MethodHookParam param) throws Throwable {
 					ActivityInfo mActivityInfo = (ActivityInfo) param.args[MainXposed.mCompatibility.ActivityRecord_ActivityInfo];
+					if(mActivityInfo==null) return;
 					String packageName = mActivityInfo.applicationInfo.packageName;
 					isMovable = false;
-					if ((packageName.startsWith("com.android.systemui"))||(packageName.equals("android"))) return;
+					if (packageName==null || packageName.startsWith("com.android.systemui")|| packageName.equals("android")) return;
 					Intent mIntent = (Intent) param.args[MainXposed.mCompatibility.ActivityRecord_Intent];
+					if(mIntent==null) return;
 					Object mStackSupervisor = (MainXposed.mCompatibility.ActivityRecord_StackSupervisor==-1)?null : param.args[MainXposed.mCompatibility.ActivityRecord_StackSupervisor];
 					if(mStackSupervisor==null)
 						try{
@@ -54,11 +56,11 @@ public class SystemHooks
 			
 	}
 	
-	public static void hookAMS(Class<?> AMS)
+	public static void hookAMS(Class<?> AMS) throws Throwable
 	{
 		XposedBridge.hookAllMethods(AMS, "removeTask", new XC_MethodHook() {
 				protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-
+					if(param.args[0] == null) return;
 					int taskId=param.args[0];
 					Object taskRecord = XposedHelpers.callMethod(param.thisObject, "recentTaskForIdLocked", taskId);
 					if(taskRecord==null) {
@@ -66,11 +68,11 @@ public class SystemHooks
 						return;
 					}
 					String packageName = (String) XposedHelpers.getObjectField(taskRecord, "affinity");
+					if(packageName==null) return;
 					XposedBridge.log("ActivityManagerService REMOVETASK affinity: "+packageName);
 					
 					if(mNoMovableTasksList.containsKey(packageName)){
-						Integer nmTaskNum = mNoMovableTasksList.get(packageName) - 1;
-						if(nmTaskNum==null) nmTaskNum=0;
+						int nmTaskNum = mNoMovableTasksList.get(packageName) - 1;
 						if(nmTaskNum<1)
 							mNoMovableTasksList.remove(packageName);
 						else
@@ -80,7 +82,7 @@ public class SystemHooks
 					
 					if(!mTasksList.containsKey(packageName))return;
 					
-					Integer tasksNum = mTasksList.get(packageName)-1;
+					int tasksNum = mTasksList.get(packageName)-1;
 					if(tasksNum<1){
 						mTasksList.remove(packageName);
 						//mListPackages.remove(packageName);
@@ -91,7 +93,7 @@ public class SystemHooks
 			});
 	}
 	
-	public static void hookTaskRecord(Class<?> classTaskRecord){
+	public static void hookTaskRecord(Class<?> classTaskRecord) throws Throwable {
 		XposedBridge.hookAllConstructors(classTaskRecord, 
 			new XC_MethodHook(XCallback.PRIORITY_HIGHEST) {
 				@Override
@@ -100,6 +102,7 @@ public class SystemHooks
 					if(!(param.args[MainXposed.mCompatibility.TaskRecord_Intent] instanceof Intent)) return;
 					Intent mIntent = (Intent) param.args[MainXposed.mCompatibility.TaskRecord_Intent];
 					String packageName = (String) XposedHelpers.getObjectField(param.thisObject, "affinity");
+					if(packageName==null) return;
 					isMovable = false;
 					if ((packageName.startsWith("com.android.systemui"))||(packageName.equals("android"))) return;
 					isMovable = Util.isFlag(mIntent.getFlags(), MainXposed.mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW))
@@ -195,11 +198,12 @@ public class SystemHooks
 		return sGravity;
 	}
 	
-	private static boolean checkInheritFloatingFlag(String packageName, Object activityStack, final Intent mIntent){
+	private static boolean checkInheritFloatingFlag(String packageName, Object activityStack, final Intent mIntent) throws Throwable {
 		if(activityStack==null) return false;
 		ArrayList<?> taskHistory = (ArrayList<?>) XposedHelpers.getObjectField(activityStack, MainXposed.mCompatibility.ActivityRecord_TaskHistory);
 		if(taskHistory==null || taskHistory.size()==0) return false;
 		Object lastRecord = taskHistory.get(taskHistory.size() - 1);
+		if(lastRecord==null) return false;
 		Intent lastIntent = (Intent) XposedHelpers.getObjectField(lastRecord, "intent");
 		int sGravity;
 		if(lastIntent==null) return false;
@@ -278,13 +282,14 @@ public class SystemHooks
 			});
 		}
 	
-	public static void hookActivityStack(Class<?> hookClass){
+	public static void hookActivityStack(Class<?> hookClass) throws Throwable {
 		/* This is a Kitkat work-around to make sure the background is transparent */
 		XposedBridge.hookAllMethods(hookClass, "startActivityLocked", new XC_MethodHook() {
 				protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
 					if (!isMovable&&!MovableWindow.isMovable) return;
-					//if (param.args[1] instanceof Intent) return;
+					if (param.args[1] instanceof Intent) return;
 					Object activityRecord = param.args[0];
+					if(activityRecord==null) return;
 					XposedHelpers.setBooleanField(activityRecord, "fullscreen", false);
 					MovableWindow.DEBUG("startActivityLocked [" + isMovable + "]");
 				}

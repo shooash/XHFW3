@@ -36,13 +36,14 @@ public class MainXposed implements IXposedHookLoadPackage, IXposedHookZygoteInit
 		//TestingSettingHook.handleLoadPackage(lpparam);
 	mPref.reload();
 	if(!mPref.getBoolean(Common.KEY_MOVABLE_WINDOW, Common.DEFAULT_MOVABLE_WINDOW)) return;
+	if(lpparam.packageName==null) return;
 	if(lpparam.packageName.equals("android")){
 		try {
 			Class<?> classActivityRecord = findClass("com.android.server.am.ActivityRecord", lpparam.classLoader);
 			if (classActivityRecord != null)
 				SystemHooks.hookActivityRecord(classActivityRecord);
 			Class<?> classTaskRecord = findClass("com.android.server.am.TaskRecord", lpparam.classLoader);
-				if (classTaskRecord != null)
+			if (classTaskRecord != null)
 				SystemHooks.hookTaskRecord(classTaskRecord);
 			Class<?> AMS = findClass("com.android.server.am.ActivityManagerService", lpparam.classLoader);
 			if(AMS!=null)
