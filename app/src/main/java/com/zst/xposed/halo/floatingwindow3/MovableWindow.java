@@ -74,6 +74,7 @@ public class MovableWindow
 
 	//Float dot
 	public static int[] mFloatDotCoordinates = new int[2];
+	private static boolean showFocusOutline;
 	
 	static final int ID_NOTIFICATION_RESTORE = 22222222;
 	static final String INTENT_APP_PKG = "pkg";
@@ -135,6 +136,15 @@ public class MovableWindow
 					DEBUG("onResumeEND");
 				}
 			});
+		
+		XposedBridge.hookAllMethods(Activity.class, "onPause", new XC_MethodHook() {
+				@Override
+				protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+					DEBUG("onPause mWindows.size:" + mWindowHolder.mWindows.size());
+					hideFocusFrame(((Activity)param.thisObject).getApplicationContext());
+					return;
+				}
+			});
 			
 		XposedBridge.hookAllMethods(Activity.class, "onDestroy", new XC_MethodHook() {
 				@Override
@@ -147,7 +157,7 @@ public class MovableWindow
 						mWindowHolder = null;
 						isMovable=false;
 					}
-					((Activity)param.thisObject).getApplicationContext().sendBroadcast(new Intent(Common.SHOW_OUTLINE));
+					hideFocusFrame(((Activity)param.thisObject).getApplicationContext());
 					return;
 				}
 			});
@@ -513,6 +523,25 @@ public class MovableWindow
 			XposedBridge.log("changeFocusApp failed");
 		}
 		toggleDragger();
+		drawFocusFrame();
+	}
+	
+	private static void drawFocusFrame(){
+		//hide previous outlines
+		hideFocusFrame(mWindowHolder.mActivity.getApplicationContext());
+		if(!mWindowHolder.isSnapped) return;
+		//send new params
+		Intent mIntent = new Intent(Common.SHOW_OUTLINE);
+		int[] array = {mWindowHolder.x, mWindowHolder.y, mWindowHolder.height, mWindowHolder.width};
+		mIntent.putExtra(Common.INTENT_APP_PARAMS, array);
+		mIntent.putExtra(Common.INTENT_APP_FOCUS, true);
+		mWindowHolder.mActivity.getApplicationContext().sendBroadcast(mIntent);
+		showFocusOutline = true;
+	}
+	
+	private static void hideFocusFrame(Context mContext){
+		mContext.sendBroadcast(new Intent(Common.SHOW_OUTLINE));
+		showFocusOutline = false;
 	}
 
 	public static void toggleDragger(){
@@ -527,6 +556,10 @@ public class MovableWindow
 	}
 	
 	public static void toggleDragger(Context ctx, boolean show){
+		if(show) 
+			drawFocusFrame();
+		else
+			hideFocusFrame(ctx);
 		Intent intent = new Intent(Common.SHOW_MULTIWINDOW_DRAGGER);
 		intent.putExtra(Common.INTENT_FLOAT_DOT_BOOL, show);
 		ctx.sendBroadcast(intent);
@@ -581,6 +614,7 @@ public class MovableWindow
 	public static void resize(int width, int height){
 		mWindowHolder.size(width, height);
 		mWindowHolder.syncLayout();
+		if(showFocusOutline) drawFocusFrame();
 	}
 	
 	public static void pushLayout(){
@@ -609,6 +643,7 @@ public class MovableWindow
 		mWindowHolder.setMaximized();
 		mWindowHolder.syncLayout();
 		showTitleBar();
+		hideFocusFrame(mWindowHolder.mActivity.getApplicationContext());
 	}
 	
 	public static void snap(SnapWindowHolder mSnapWindowHolder){

@@ -190,6 +190,7 @@ public class Common {
 	public static final String INTENT_APP_PARAMS = "layout_paramz";
 	public static final String INTENT_APP_SNAP_ARR = "layout_snap_arr";
 	public static final String INTENT_APP_SNAP_GRAVITY = "layout_snap_gravity";
+	public static final String INTENT_APP_FOCUS = "app_focus";
 
 	/*Float dot commons*/
 	public static final String FLOAT_DOT_PACKAGE = Common.class.getPackage().getName();
@@ -204,6 +205,8 @@ public class Common {
 	public static final int TITLEBAR_ICON_ORIGINAL = 1;
 	public static final int TITLEBAR_ICON_BachMinuetInG = 2;
 	public static final int TITLEBAR_ICON_DEFAULT = TITLEBAR_ICON_BachMinuetInG;
+
+	
 
 	
 }

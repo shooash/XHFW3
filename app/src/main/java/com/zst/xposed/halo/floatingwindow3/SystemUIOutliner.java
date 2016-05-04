@@ -20,6 +20,7 @@ public class SystemUIOutliner {
 	
 	private static Context mContext;
 	private static View mOutline;
+	private static View mOutlineFocus;
 	private static WindowManager mWm;
 	
 	static final int HIDE = -10000;
@@ -50,14 +51,19 @@ public class SystemUIOutliner {
 	final static BroadcastReceiver mIntentReceiver = new BroadcastReceiver() {
 		@Override
 		public void onReceive(Context ctx, Intent intent) {
+			boolean isFocusOnly = intent.getBooleanExtra(Common.INTENT_APP_FOCUS, false);
 			int[] array = intent.getIntArrayExtra(Common.INTENT_APP_PARAMS);
 			int[] array2 = intent.getIntArrayExtra(Common.INTENT_APP_SNAP_ARR);
 			if (array != null) {
-				refreshOutlineView(ctx, array[0], array[1], array[2], array[3]);
+				if(isFocusOnly) 
+					refreshOutlineViewFocus(ctx,array[0], array[1], array[2], array[3]);
+				else
+					refreshOutlineView(ctx, array[0], array[1], array[2], array[3]);
 			} else if (array2 != null) {
 				refreshOutlineView(ctx, array2[0], array2[1], array2[2]);
 			} else {
 				refreshOutlineView(ctx, HIDE, HIDE, HIDE, HIDE);
+				refreshOutlineViewFocus(ctx, HIDE, HIDE, HIDE, HIDE);
 			}
 		}
 	};
@@ -68,9 +74,12 @@ public class SystemUIOutliner {
 			mWm = (WindowManager) ctx.getSystemService(Context.WINDOW_SERVICE);
 		}
 		WindowManager.LayoutParams layOutParams = new WindowManager.LayoutParams(
-				WindowManager.LayoutParams.TYPE_SYSTEM_OVERLAY,
-				WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
-				PixelFormat.TRANSLUCENT);
+			WindowManager.LayoutParams.TYPE_PHONE,
+			WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE |
+			WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM |
+			WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE |
+			WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
+			PixelFormat.TRANSLUCENT);
 		layOutParams.gravity = Gravity.TOP | Gravity.LEFT;
 		Util.addPrivateFlagNoMoveAnimationToLayoutParam(layOutParams);
 		mOutline = getOutlineView(ctx, 0xFF33b5e5);
@@ -78,7 +87,13 @@ public class SystemUIOutliner {
 		mOutline.setClickable(false);
 		mOutline.setVisibility(View.GONE);
 		
+		mOutlineFocus = getOutlineViewFocus(ctx, 0xFF33b5e5);
+		mOutlineFocus.setFocusable(false);
+		mOutlineFocus.setClickable(false);
+		mOutlineFocus.setVisibility(View.GONE);
+		
 		mWm.addView(mOutline, layOutParams);
+		mWm.addView(mOutlineFocus,layOutParams);
 	}
 	
 	// show the outline with positioning (x,y)
@@ -98,6 +113,25 @@ public class SystemUIOutliner {
 		param.gravity = Gravity.TOP | Gravity.LEFT;
 		mWm.updateViewLayout(mOutline, param);
 		mOutline.setVisibility(View.VISIBLE);
+	}
+	
+	// show the outline with positioning (x,y)
+	private static void refreshOutlineViewFocus(Context ctx, int x, int y, int height, int width) {
+		if (mOutlineFocus == null) {
+			createOutlineView(ctx);
+		}
+		if (x == HIDE || y == HIDE || height == HIDE || width == HIDE) {
+			mOutlineFocus.setVisibility(View.GONE);
+			return;
+		}
+		WindowManager.LayoutParams param = (WindowManager.LayoutParams) mOutlineFocus.getLayoutParams();
+		param.x = x;
+		param.y = y;
+		param.height = height;
+		param.width = width;		
+		param.gravity = Gravity.TOP | Gravity.LEFT;
+		mWm.updateViewLayout(mOutlineFocus, param);
+		mOutlineFocus.setVisibility(View.VISIBLE);
 	}
 	
 	// show the outline with gravity
@@ -129,6 +163,14 @@ public class SystemUIOutliner {
 		filling.setAlpha(0.5f);
 		outline.addView(filling);
 		
+		return outline;
+	}
+	
+	// create outline with no filling
+	private static View getOutlineViewFocus(Context ctx, int color) {
+		FrameLayout outline = new FrameLayout(ctx);
+		Util.setBackgroundDrawable(outline, Util.makeOutline(color, Util.realDp(4, ctx)));
+
 		return outline;
 	}
 }
