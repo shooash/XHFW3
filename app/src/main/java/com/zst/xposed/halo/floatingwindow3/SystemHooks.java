@@ -26,13 +26,19 @@ public class SystemHooks
 					isMovable = false;
 					if ((packageName.startsWith("com.android.systemui"))||(packageName.equals("android"))) return;
 					Intent mIntent = (Intent) param.args[MainXposed.mCompatibility.ActivityRecord_Intent];
+					Object mStackSupervisor = (MainXposed.mCompatibility.ActivityRecord_StackSupervisor==-1)?null : param.args[MainXposed.mCompatibility.ActivityRecord_StackSupervisor];
+					if(mStackSupervisor==null)
+						try{
+							mStackSupervisor=XposedHelpers.getObjectField(param.thisObject, "mStackSupervisor");
+						}catch(Throwable t){XposedBridge.log(t);}
+						
 					if(mNoMovableTasksList.containsKey(packageName)) {
 						removeFloatingFlag(mIntent);
 						return;
 					}
 					isMovable = checkInheritFloatingFlag(packageName,
 												 (MainXposed.mCompatibility.ActivityRecord_ActivityStack==-1)? 
-												 MainXposed.mCompatibility.getActivityRecord_ActivityStack(param.args[MainXposed.mCompatibility.ActivityRecord_StackSupervisor]) 
+												 MainXposed.mCompatibility.getActivityRecord_ActivityStack(mStackSupervisor) 
 												 : param.args[MainXposed.mCompatibility.ActivityRecord_ActivityStack], mIntent);
 					
 					isMovable = isMovable || Util.isFlag(mIntent.getFlags(), MainXposed.mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW));
@@ -64,6 +70,7 @@ public class SystemHooks
 					
 					if(mNoMovableTasksList.containsKey(packageName)){
 						Integer nmTaskNum = mNoMovableTasksList.get(packageName) - 1;
+						if(nmTaskNum==null) nmTaskNum=0;
 						if(nmTaskNum<1)
 							mNoMovableTasksList.remove(packageName);
 						else
@@ -189,6 +196,7 @@ public class SystemHooks
 	}
 	
 	private static boolean checkInheritFloatingFlag(String packageName, Object activityStack, final Intent mIntent){
+		if(activityStack==null) return false;
 		ArrayList<?> taskHistory = (ArrayList<?>) XposedHelpers.getObjectField(activityStack, MainXposed.mCompatibility.ActivityRecord_TaskHistory);
 		if(taskHistory==null || taskHistory.size()==0) return false;
 		Object lastRecord = taskHistory.get(taskHistory.size() - 1);

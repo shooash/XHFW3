@@ -20,11 +20,17 @@ public class Compatibility
 		public static String ActivityRecord_TaskHistory = "mTaskHistory";
 		public static String Internal_PhoneWindow = "com.android.internal.policy.PhoneWindow";
 		public static Object getActivityRecord_ActivityStack(Object stackSupervisor){
-			Object activityStack;
+			if(stackSupervisor==null) return null;
+			Object activityStack = null;
 			try{
 				activityStack = XposedHelpers.callMethod(stackSupervisor, "getFocusedStack");
-				} catch(Exception e){
-					activityStack = XposedHelpers.getObjectField(stackSupervisor, "mFocusedStack");
+				} catch(Throwable e){
+					XposedBridge.log(e);
+					try{
+						activityStack = XposedHelpers.getObjectField(stackSupervisor, "mFocusedStack");
+						} catch(Throwable t){
+							XposedBridge.log(t);
+						}
 				}
 			return activityStack;
 		}
