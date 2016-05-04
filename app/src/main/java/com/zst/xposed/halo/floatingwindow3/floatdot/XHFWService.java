@@ -125,37 +125,22 @@ public class XHFWService extends Service {
 		
 		@Override
 		public void toggleDragger(boolean show) throws RemoteException {
-			
-			//Log.i("Xposed XHFWService", "toggleDragger called");
 			fd.showDragger(show);
-			//h = new Handler();
-			//h.post(new FloatingDot(getApplicationContext()));
-			/*if(fd==null) fd = new FloatingDot(mContext);
-			//fd.showDragger(true);
-			Toast.makeText(mContext, "toogleDragger", Toast.LENGTH_SHORT).show();*/
-			//Log.i("Xposed XHFWService", "toggleDragger end");
-			//if (fd!=null) return;
-			//if(fd==null) fd = new FloatingDot(getApplicationContext());
-			//toggle(show);
 		}
 		
 		@Override
 		public void bringToFront(int taskId) throws RemoteException
 		{
-			//toggleDragger(true);
 			mContext=getApplicationContext();
-			//Log.e("Xposed XHFWService", "SUCCESS SUCCESS SUCCESS service called with taskid="+taskId);
 			ActivityManager mActivityManager = (ActivityManager) mContext
 				.getSystemService(Context.ACTIVITY_SERVICE);
 			try {
-				//XposedHelpers.callMethod(mActivityManager, "moveTaskToFront", mActivity.getTaskId(),ActivityManager.MOVE_TASK_NO_USER_ACTION);
 				mActivityManager.moveTaskToFront(taskId, ActivityManager.MOVE_TASK_NO_USER_ACTION);
 			} catch (Exception e) {
 				Log.e("Xposed XHFWService", "Cannot move task to front", e);
-				
-				//XposedBridge.log(e);
-				//Log.e("test1", Common.LOG_TAG + "Cannot move task to front", e);
+				return;
 			}
+			
 		}
 		
 		

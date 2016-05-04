@@ -94,11 +94,6 @@ public class MovableWindow
                 else mWindowHolder.setWindow(mActivity);
 				/* reconnect XHFWService if needed */
                 connectService();
-					/* we need to snap from very begining */
-                //if((mAeroSnap!=null)&&(mWindowHolder.isSnapped)) mAeroSnap.forceSnapGravity(mWindowHolder.SnapGravity);
-					/* add overlay */
-                //setOverlayView();
-                //showTitleBar();
                 DEBUG("onCreate");
             }
         });
@@ -110,12 +105,6 @@ public class MovableWindow
                 if(!isMovable || mWindowHolder==null) return;
                 mWindowHolder.setWindow((Activity) param.thisObject);
                 mWindowHolder.syncLayout();
-                /*  We don't touch floating dialogs  */
-                //if (mActivity.getWindow().isFloating()) return;
-				/* reconnect XHFWService if needed */
-                //connectService();
-                // Add our overlay view
-              //  if(!mWindowHolder.mWindow.isFloating()&&!mWindowHolder.mWindow.isActive())
 				setOverlayView();
                 showTitleBar();
                 DEBUG("onStartEND");
@@ -130,24 +119,12 @@ public class MovableWindow
 						toggleDragger((Activity) param.thisObject, false);
 						return;
 						}
-					//putOverlayView();
-					//showTitleBar();
-					//mActivity = (Activity) param.thisObject;
-					/*  We don't touch floating dialogs  */
-					//if (mActivity.getWindow().isFloating()) return;
 					/** update current window **/
 					mWindowHolder.setWindow((Activity) param.thisObject);
 					putOverlayView();
 					showTitleBar();
-					/* check if we need to show or hide floatdot */
-					//toggleDragger();
 					/* FIX FORCED ORIENTATION ON MOVABLE WINDOWS */
 					mWindowHolder.mActivity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER);
-					/* reconnect XHFWService if needed */
-					//connectService();
-					//restore snap layout if needed
-					//if(mWindowHolder.isSnapped&&mAeroSnap!=null) mAeroSnap.updateSnap(mWindowHolder.SnapGravity);
-					//else /* restore layout */
 					/* fix evernote layout */
 					if(mWindowHolder.packageName.equals("com.evernote")) 
 						mWindowHolder.syncLayoutForce();
@@ -167,17 +144,10 @@ public class MovableWindow
 					/* remove from window stack */
 					mWindowHolder.mWindows.remove(((Activity)param.thisObject).getWindow());
 					if(mWindowHolder.mWindows.size()<1) {
-						//mMainXposed.mMovablePackages.remove(mWindowHolder.packageName);
 						mWindowHolder = null;
 						isMovable=false;
 					}
-					//else showTitleBar();
-					/* disable dragger */
-					//toggleDragger(false);
-					// hide the resizing outline
 					((Activity)param.thisObject).getApplicationContext().sendBroadcast(new Intent(Common.SHOW_OUTLINE));
-					//TODO TEST
-					//showTitleBar();
 					return;
 				}
 			});
@@ -186,7 +156,6 @@ public class MovableWindow
 				@Override
 				protected void afterHookedMethod(MethodHookParam param) throws Throwable {
 					if(!isMovable||mWindowHolder==null) return;
-					//mActivity = (Activity) param.thisObject;
 					DEBUG("ACTION_CONFIGURATION_CHANGED");
 					int curOrientation = Util.getScreenOrientation(mWindowHolder.mActivity.getApplicationContext());
 					if(curOrientation!=mWindowHolder.cachedOrientation) {
@@ -219,15 +188,6 @@ public class MovableWindow
 								mChangedPreviousRange = true;
 							}
 							changeFocusApp(a);
-//							if (a.getWindow().getAttributes().gravity != (Gravity.LEFT | Gravity.TOP)) {
-//								// Fix First Resize moving into corner
-//								screenX = event.getRawX();
-//								screenY = event.getRawY();
-//								leftFromScreen = (screenX - viewX);
-//								topFromScreen = (screenY - viewY);
-//								a.getWindow().setGravity(Gravity.LEFT | Gravity.TOP);
-//								updateView(a.getWindow(), leftFromScreen, topFromScreen);
-//							}
 							break;
 						case MotionEvent.ACTION_MOVE:
 							if (mActionBarDraggable) {
@@ -281,11 +241,9 @@ public class MovableWindow
 					if (name.startsWith("com.android.systemui")||name.equals("android")) return;
 					if(window.isFloating()) return; //MODAL fix
 					if(mWindowHolder==null) return;
-					//mWindowHolder.setWindow(window);
 					//TODO add to settings an option to force titlebar to overlay windows 
 					//(but that will overlap actionbar)
 					//setOverlayView();
-					//pushLayout();
 					mWindowHolder.pushToWindow(window);
 				}
 			});
@@ -353,19 +311,14 @@ public class MovableWindow
 		connectService();
 		/* set initial layout */
 		setInitLayout();
-		/* connect XHFWService if needed */
-        //connectService();
         return true;
     }
 
 	private static void loadPrefs(){
-        mActionBarDraggable = MainXposed.mPref.getBoolean(Common.KEY_WINDOW_ACTIONBAR_DRAGGING_ENABLED, Common.DEFAULT_WINDOW_ACTIONBAR_DRAGGING_ENABLED);
+         mActionBarDraggable = MainXposed.mPref.getBoolean(Common.KEY_WINDOW_ACTIONBAR_DRAGGING_ENABLED, Common.DEFAULT_WINDOW_ACTIONBAR_DRAGGING_ENABLED);
 		 mRetainStartPosition = MainXposed.mPref.getBoolean(Common.KEY_WINDOW_MOVING_RETAIN_START_POSITION, Common.DEFAULT_WINDOW_MOVING_RETAIN_START_POSITION);
 		 mConstantMovePosition = MainXposed.mPref.getBoolean(Common.KEY_WINDOW_MOVING_CONSTANT_POSITION, Common.DEFAULT_WINDOW_MOVING_CONSTANT_POSITION);
-
-		 //mPreviousOrientation = mActivity.getResources().getConfiguration().orientation;
 		 mMinimizeToStatusbar = MainXposed.mPref.getBoolean(Common.KEY_MINIMIZE_APP_TO_STATUSBAR, Common.DEFAULT_MINIMIZE_APP_TO_STATUSBAR);
-
 		 mAeroSnapEnabled = MainXposed.mPref.getBoolean(Common.KEY_WINDOW_RESIZING_AERO_SNAP_ENABLED, Common.DEFAULT_WINDOW_RESIZING_AERO_SNAP_ENABLED);
 		 mAeroSnapDelay = MainXposed.mPref.getInt(Common.KEY_WINDOW_RESIZING_AERO_SNAP_DELAY, Common.DEFAULT_WINDOW_RESIZING_AERO_SNAP_DELAY);
 		 mAeroSnapSwipeApp = MainXposed.mPref.getBoolean(Common.KEY_WINDOW_RESIZING_AERO_SNAP_SWIPE_APP, Common.DEFAULT_WINDOW_RESIZING_AERO_SNAP_SWIPE_APP);
@@ -375,11 +328,6 @@ public class MovableWindow
     }
 	
     private static void setInitLayout(){
-        //if(mWindowHolder.mWindow.isFloating()) return;
-        //mWindowHolder.mWindow.setGravity(MainXposed.mPref.getInt(Common.KEY_GRAVITY, Common.DEFAULT_GRAVITY));
-        //WindowManager.LayoutParams params = mWindowHolder.mWindow.getAttributes();
-        //Util.addPrivateFlagNoMoveAnimationToLayoutParam(params);
-        //mWindowHolder.mWindow.setAttributes(params);
         mWindowHolder.mWindow.addFlags(WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
         //mWindowHolder.mWindow.setWindowAnimations(android.R.style.Animation_Dialog);
         mWindowHolder.mWindow.clearFlags(WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER);
@@ -420,10 +368,8 @@ public class MovableWindow
 	public static void showTitleBar(){
 		DEBUG("showTitleBar");
 		if(mOverlayView == null || mWindowHolder==null) return;
-		//toggleDragger(mWindowHolder.isSnapped);
 
 		if(mWindowHolder.mWindow.isFloating()) {
-			//mOverlayView.setTitleBarVisibility(false);
 			return;
 			}
 		if(mWindowHolder.isSnapped||mWindowHolder.isMaximized) showTitleBar(false);
@@ -481,13 +427,11 @@ public class MovableWindow
 		FrameLayout decor_view = (FrameLayout) mWindowHolder.mWindow.peekDecorView().getRootView();
 		mOverlayView = (MovableOverlayView) decor_view.getTag(Common.LAYOUT_OVERLAY_TAG);
 		decor_view.bringChildToFront(mOverlayView);
-		//mMainXposed.hookActionBarColor.setTitleBar(mOverlayView);
 	}
 	
 	private static void setTagInternalForView(View view, int key, Object object) {
 		Class<?>[] classes = { Integer.class, Object.class };
 		XposedHelpers.callMethod(view, "setTagInternal", classes, key, object);
-		// view.setTagInternal(key, object);
 	}
 	
 	/***********************************************************/
@@ -530,18 +474,7 @@ public class MovableWindow
 				mFloatDotCoordinates=coordinates;
 				if(mAeroSnap==null||mWindowHolder==null||!mWindowHolder.isSnapped) return;
 				mAeroSnap.updateSnap(mWindowHolder.SnapGravity);
-				//if(mWindowHolder.SnapGravity==0) mWindowHolder.restoreSnap();
-				//if(mAeroSnap!=null){
-				//	mAeroSnap.forceSnapGravity(mWindowHolder.SnapGravity);
-				//}
-				//syncLayoutParams();
-				//toggleDragger(true);
 			}
-//			if(intent.getAction().equals(Intent.ACTION_SCREEN_ON)){
-//				mWindowHolder.syncLayoutForce();
-//				pushLayout();
-//				DEBUG("Screen on");
-//			}
 		}
 	};
 	
@@ -550,15 +483,12 @@ public class MovableWindow
 	public static boolean registerLayoutBroadcastReceiver() {
 		IntentFilter filters = new IntentFilter();
 		filters.addAction(Common.REFRESH_FLOAT_DOT_POSITION);
-//		if(mWindowHolder.packageName.equals("com.evernote"))
-//			filters.addAction(Intent.ACTION_SCREEN_ON);
 		try{
 			mWindowHolder.mActivity.getApplicationContext().registerReceiver(mBroadcastReceiver, filters);
 		} catch(Throwable e){
 			DEBUG("Check registerLayoutBroadcastReceiver error");
 			return false;
 		}
-		//setTagInternalForView(window.getDecorView(), Common.LAYOUT_RECEIVER_TAG, br);
 		return true;
 	}
 	
@@ -617,13 +547,6 @@ public class MovableWindow
 			DEBUG("getFloatingDotCoordinates [" + mFloatDotCoordinates[0] +":"+mFloatDotCoordinates[1]+"]");
 			if(mWindowHolder.isSnapped)
 				mAeroSnap.updateSnap(mWindowHolder.SnapGravity);
-		//	if(mWindowHolder.isSnapped) toggleDragger(true);
-			/*We need to forceSnap once on create because some apps are started snapped with wrong params - so we just fix the layout*/
-//			if((!mWindowHolder.isSet)&&(mWindowHolder.isSnapped)&&(mAeroSnap!=null)){
-//				mAeroSnap.forceSnapGravity(mWindowHolder.SnapGravity);
-//
-//				mWindowHolder.isSet=true;
-//			}
 		} catch (RemoteException e) {}
 	}
 
