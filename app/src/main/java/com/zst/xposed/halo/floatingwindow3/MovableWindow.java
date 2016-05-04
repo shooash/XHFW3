@@ -66,6 +66,7 @@ public class MovableWindow
     public static AeroSnap mAeroSnap = null;
     public static boolean mAeroSnapChangeTitleBarVisibility;
     public static boolean mAeroSnapEnabled;
+	public static boolean mAeroFocusWindow;
     static int mAeroSnapDelay;
     static boolean mAeroSnapSwipeApp;
     static int mPreviousForceAeroSnap;
@@ -334,6 +335,7 @@ public class MovableWindow
 		 mAeroSnapSwipeApp = MainXposed.mPref.getBoolean(Common.KEY_WINDOW_RESIZING_AERO_SNAP_SWIPE_APP, Common.DEFAULT_WINDOW_RESIZING_AERO_SNAP_SWIPE_APP);
 		 mAeroSnapChangeTitleBarVisibility = MainXposed.mPref.getBoolean(Common.KEY_WINDOW_RESIZING_AERO_SNAP_TITLEBAR_HIDE, Common.DEFAULT_WINDOW_RESIZING_AERO_SNAP_TITLEBAR_HIDE);
 		 mMaximizeChangeTitleBarVisibility = MainXposed.mPref.getBoolean(Common.KEY_WINDOW_TITLEBAR_MAXIMIZE_HIDE, Common.DEFAULT_WINDOW_TITLEBAR_MAXIMIZE_HIDE);
+		 mAeroFocusWindow = MainXposed.mPref.getBoolean(Common.KEY_AERO_FOCUS_ENABLED, Common.DEFAULT_AERO_FOCUS_ENABLED);
 		 
     }
 	
@@ -527,6 +529,7 @@ public class MovableWindow
 	}
 	
 	private static void drawFocusFrame(){
+		if(!mAeroFocusWindow) return;
 		//hide previous outlines
 		hideFocusFrame(mWindowHolder.mActivity.getApplicationContext());
 		if(!mWindowHolder.isSnapped) return;

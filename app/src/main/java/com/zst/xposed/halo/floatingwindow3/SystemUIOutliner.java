@@ -15,6 +15,7 @@ import android.widget.FrameLayout;
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam;
+import android.graphics.*;
 
 public class SystemUIOutliner {
 	
@@ -81,13 +82,14 @@ public class SystemUIOutliner {
 			WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
 			PixelFormat.TRANSLUCENT);
 		layOutParams.gravity = Gravity.TOP | Gravity.LEFT;
+		String outlineColor = MainXposed.mPref.getString(Common.KEY_AERO_FOCUS_COLOR, Common.DEFAULT_AERO_FOCUS_COLOR);
 		Util.addPrivateFlagNoMoveAnimationToLayoutParam(layOutParams);
-		mOutline = getOutlineView(ctx, 0xFF33b5e5);
+		mOutline = getOutlineView(ctx, Color.parseColor("#" + outlineColor));
 		mOutline.setFocusable(false);
 		mOutline.setClickable(false);
 		mOutline.setVisibility(View.GONE);
 		
-		mOutlineFocus = getOutlineViewFocus(ctx, 0xFF33b5e5);
+		mOutlineFocus = getOutlineViewFocus(ctx, Color.parseColor("#" + outlineColor));
 		mOutlineFocus.setFocusable(false);
 		mOutlineFocus.setClickable(false);
 		mOutlineFocus.setVisibility(View.GONE);
