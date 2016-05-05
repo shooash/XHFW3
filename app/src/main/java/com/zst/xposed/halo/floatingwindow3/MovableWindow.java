@@ -141,6 +141,7 @@ public class MovableWindow
 		XposedBridge.hookAllMethods(Activity.class, "onPause", new XC_MethodHook() {
 				@Override
 				protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+					if(!isMovable || mWindowHolder==null) return;		
 					DEBUG("onPause mWindows.size:" + mWindowHolder.mWindows.size());
 					hideFocusFrame(((Activity)param.thisObject).getApplicationContext());
 					return;
@@ -210,7 +211,7 @@ public class MovableWindow
 									screenY = event.getRawY();
 									leftFromScreen = (screenX - viewX);
 									topFromScreen = (screenY - viewY);
-									if(moveRangeAboveLimit(event)){
+									if(moveRangeAboveLimit(event)&&mChangedPreviousRange){
 										if(mWindowHolder.isSnapped) unsnap();
 										move(leftFromScreen.intValue(), topFromScreen.intValue());
 										if (mAeroSnap != null) {
@@ -221,7 +222,10 @@ public class MovableWindow
 								}
 							}
 							break;
-					}
+						case MotionEvent.ACTION_UP:
+							mChangedPreviousRange=false;
+							break;
+						}
 					ActionBar ab = a.getActionBar();
 					int height = (ab != null) ? ab.getHeight() : Util.dp(48, a.getApplicationContext());
 					if (viewY < height && mAeroSnap != null && mActionBarDraggable) {
