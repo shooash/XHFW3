@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" android:summary=""
+    android:title="@string/pref_behavior_title">
+	
+	<PreferenceCategory android:title="Apps startup">
+		<Preference
+            android:key="window_whitelist"
+            android:summary="@string/pref_whitelist_summary"
+            android:title="@string/pref_whitelist_title" />
+        <Preference
+            android:key="window_blacklist"
+            android:summary="@string/pref_blacklist_summary"
+            android:title="@string/pref_blacklist_title" />
+        <ListPreference
+            android:defaultValue="0"
+            android:entries="@array/option_whiteblacklist_entries"
+            android:entryValues="@array/option_whiteblacklist_values"
+            android:key="window_whiteblacklist_options"
+            android:summary="@string/pref_whiteblacklist_summary"
+            android:title="@string/pref_whiteblacklist_title" />
+		<CheckBoxPreference
+            android:defaultValue="false"
+            android:key="window_force_open_app_above_halo"
+            android:summary="@string/pref_force_open_app_above_halo_summary"
+            android:title="@string/pref_force_open_app_above_halo_title" />
+		<com.zst.xposed.halo.floatingwindow3.prefs.IntListPreference
+            android:defaultValue="0"
+            android:entries="@array/option_force_snap_entries"
+            android:entryValues="@array/option_force_snap_values"
+            android:key="window_force_snap"
+            android:summary="@string/pref_force_snap_summary"
+            android:title="@string/pref_force_snap_title" />
+	</PreferenceCategory>
+	<PreferenceCategory android:title="Runtime">
+        <Preference
+            android:key="window_keyboard_mode"
+            android:summary="@string/pref_keyboard_summary"
+            android:title="@string/pref_keyboard_title" />
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="window_show_recents"
+            android:summary="@string/pref_show_recents_summary"
+            android:title="@string/pref_show_recents_title" />
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="window_force_recents"
+            android:dependency="window_show_recents"
+            android:summary="@string/pref_force_recents_summary"
+            android:title="@string/pref_force_recents_title" />
+		<SwitchPreference
+            android:defaultValue="true"
+            android:key="system_app_pausing"
+            android:summaryOff="@string/pref_app_pause_summary_off"
+            android:summaryOn="@string/pref_app_pause_summary_on"
+            android:title="@string/pref_app_pause_title" />
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="window_minimize_to_statusbar"
+            android:summary="@string/pref_movable_others_minimize_to_statusbar_summary"
+            android:title="@string/pref_movable_others_minimize_to_statusbar_title" />
+    </PreferenceCategory>
+    <PreferenceCategory android:title="AeroSnap">
+        <SwitchPreference
+            android:defaultValue="true"
+            android:key="window_resizing_aero_snap_enabled"
+            android:summary="@string/pref_movable_resizing_aero_snap_enabled_summary"
+            android:title="@string/pref_movable_resizing_aero_snap_enabled_title" />
+        <com.zst.xposed.halo.floatingwindow3.prefs.WidgetNumberPicker
+            defaultValue="1000"
+            maximum="10000"
+            minimum="1"
+            android:dependency="window_resizing_aero_snap_enabled"
+            android:key="window_resizing_aero_snap_delay"
+            android:summary="@string/pref_movable_resizing_aero_snap_delay_summary"
+            android:title="@string/pref_movable_resizing_aero_snap_delay_title" />
+        <SwitchPreference
+            android:defaultValue="true"
+            android:dependency="window_resizing_aero_snap_enabled"
+            android:key="aero_focus_frame"
+            android:summary="@string/pref_aero_focus_frame_summary"
+            android:title="@string/pref_aero_focus_frame_title" />
+        <com.zst.xposed.halo.floatingwindow3.prefs.ColorPicker
+            defaultValue="33b5e5"
+            android:key="aero_focus_frame_color"
+            android:summary="@string/pref_aero_focus_frame_color_summary"
+            android:title="@string/pref_aero_focus_frame_color_title" />
+		<CheckBoxPreference
+			android:defaultValue="true"
+			android:key="window_resizing_aero_snap_titlebar_hide"
+			android:summary="@string/pref_movable_resizing_aero_snap_titlebar_hide_summary"
+			android:title="@string/pref_movable_resizing_aero_snap_titlebar_hide_title" />
+		<CheckBoxPreference
+			android:defaultValue="true"
+			android:key="window_moving_titlebar_max_hide"
+			android:summary="@string/pref_movable_titlebar_max_hide_summary"
+			android:title="@string/pref_movable_titlebar_max_hide_title" />
+    </PreferenceCategory>
+</PreferenceScreen>
