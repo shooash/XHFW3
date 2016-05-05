@@ -47,6 +47,12 @@
             android:dependency="window_show_recents"
             android:summary="@string/pref_force_recents_summary"
             android:title="@string/pref_force_recents_title" />
+		<SwitchPreference
+            android:defaultValue="true"
+            android:key="system_app_pausing"
+            android:summaryOff="@string/pref_app_pause_summary_off"
+            android:summaryOn="@string/pref_app_pause_summary_on"
+            android:title="@string/pref_app_pause_title" />
         <CheckBoxPreference
             android:defaultValue="true"
             android:key="window_minimize_to_statusbar"
