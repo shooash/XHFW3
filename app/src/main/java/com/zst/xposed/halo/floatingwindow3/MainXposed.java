@@ -36,6 +36,7 @@ public class MainXposed implements IXposedHookLoadPackage, IXposedHookZygoteInit
 		//TestingSettingHook.handleLoadPackage(lpparam);
 	mPref.reload();
 	if(!mPref.getBoolean(Common.KEY_MOVABLE_WINDOW, Common.DEFAULT_MOVABLE_WINDOW)) return;
+	XposedBridge.log("XHFW3 load package " + lpparam.packageName);
 	if(lpparam.packageName==null) return;
 	if(lpparam.packageName.equals("android")){
 		try {
