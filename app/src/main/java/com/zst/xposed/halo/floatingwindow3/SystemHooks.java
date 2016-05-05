@@ -8,6 +8,8 @@ import android.os.*;
 import android.app.*;
 import android.view.*;
 
+import static de.robv.android.xposed.XposedHelpers.findClass;
+
 public class SystemHooks
 {
 	static boolean isMovable = false;
@@ -283,6 +285,48 @@ public class SystemHooks
 		}
 	
 	public static void hookActivityStack(Class<?> hookClass) throws Throwable {
+//		final Class<?> classActivityRecord = findClass("com.android.server.am.ActivityRecord",
+//													   lpp.classLoader);
+		XposedBridge.hookAllMethods(hookClass, "resumeTopActivityLocked", new XC_MethodHook() {
+				Object previous = null;
+				boolean appPauseEnabled;
+//				boolean isHalo;
+				protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+					// Find the first activity that is not finishing.
+					if (!isMovable) return;
+					//if (mIsPreviousActivityHome) return;
+
+//					Object nextAR = XposedHelpers.callMethod(param.thisObject, "topRunningActivityLocked",
+//															 new Class[] { classActivityRecord }, (Object) null);
+//					Intent nextIntent = (Intent) XposedHelpers.getObjectField(nextAR, "intent");
+//					// TODO Find better whatsapp workaround.
+//					try {
+//						isHalo = (!nextIntent.getPackage().equals("com.whatsapp")) &&
+//							(nextIntent.getFlags() & Common.FLAG_FLOATING_WINDOW) == Common.FLAG_FLOATING_WINDOW;
+//					} catch (NullPointerException e) {
+//						// if getPackage returns null
+//					}
+//					if (!isHalo) return;
+
+					appPauseEnabled = MainXposed.mPref.getBoolean(Common.KEY_APP_PAUSE, Common.DEFAULT_APP_PAUSE);
+					if (appPauseEnabled) return;
+
+					final Object prevActivity = XposedHelpers.getObjectField(param.thisObject, "mResumedActivity");
+					previous = prevActivity;
+					XposedHelpers.setObjectField(param.thisObject, "mResumedActivity", null);
+				}
+				protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+					if (!isMovable) return;
+//					if (!isHalo) return;
+//					if (mIsPreviousActivityHome) return;
+					if (appPauseEnabled) return;
+					if (previous != null) {
+						XposedHelpers.setObjectField(param.thisObject, "mResumedActivity", previous);
+						previous = null;
+					}
+				}
+			});
+			
 		/* This is a Kitkat work-around to make sure the background is transparent */
 		XposedBridge.hookAllMethods(hookClass, "startActivityLocked", new XC_MethodHook() {
 				protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
