@@ -14,6 +14,7 @@ public class Common {
 	public static final String PREFERENCE_MAIN_FILE = THIS_MOD_PACKAGE_NAME + "_general";
 	public static final String PREFERENCE_BLACKLIST_FILE = THIS_MOD_PACKAGE_NAME + "_blacklist";
 	public static final String PREFERENCE_WHITELIST_FILE = THIS_MOD_PACKAGE_NAME + "_whitelist";
+	public static final String PREFERENCE_MAXIMIZED_FILE = THIS_MOD_PACKAGE_NAME + "_maximized";
 	public static final String PREFERENCE_STATUSBAR_LAUNCHER_FILE = THIS_MOD_PACKAGE_NAME + "_statusbar_launcher";
 	
 
@@ -81,6 +82,8 @@ public class Common {
 	public static final String KEY_FORCE_OPEN_APP_ABOVE_HALO = "window_force_open_app_above_halo";
 	public static final String KEY_BLACKLIST_APPS = "window_blacklist";
 	public static final String KEY_WHITELIST_APPS = "window_whitelist";
+	public static final String KEY_MAXIMIZED_APPS = "window_maximized";
+	public static final String KEY_MAXIMIZED_HELP = "window_maximized_help";
 	public static final String KEY_BLACKLIST_HELP = "window_blacklist_help";
 	public static final String KEY_WHITELIST_HELP = "window_whitelist_help";
 	public static final String KEY_WHITEBLACKLIST_OPTIONS = "window_whiteblacklist_options";

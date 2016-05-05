@@ -371,7 +371,9 @@ public class MovableWindow
 			mWindowHolder.isSnapped=false;
 			mAeroSnap.forceSnapGravity(mWindowHolder.SnapGravity);
 			}
-		else {
+		else if(MainXposed.isMaximizedlisted(mWindowHolder.packageName)){
+			maximize();
+		} else {
 			mWindowHolder.syncLayout();
 			}
     }

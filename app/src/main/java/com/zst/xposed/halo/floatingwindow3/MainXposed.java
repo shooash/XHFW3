@@ -15,6 +15,7 @@ public class MainXposed implements IXposedHookLoadPackage, IXposedHookZygoteInit
 	public static XSharedPreferences mPref;
 	public static XSharedPreferences mBlacklist;
 	public static XSharedPreferences mWhitelist;
+	public static XSharedPreferences mMaximizedlist;
 	public static Compatibility.Hooks mCompatibility = new Compatibility.Hooks();
 	//public final List<String> mMovablePackages = new ArrayList<String>();
 
@@ -24,6 +25,7 @@ public class MainXposed implements IXposedHookLoadPackage, IXposedHookZygoteInit
 		mPref = new XSharedPreferences(Common.THIS_MOD_PACKAGE_NAME, Common.PREFERENCE_MAIN_FILE);
 		mBlacklist = new XSharedPreferences(Common.THIS_MOD_PACKAGE_NAME, Common.PREFERENCE_BLACKLIST_FILE);
 		mWhitelist = new XSharedPreferences(Common.THIS_MOD_PACKAGE_NAME, Common.PREFERENCE_WHITELIST_FILE);
+		mMaximizedlist = new XSharedPreferences(Common.THIS_MOD_PACKAGE_NAME, Common.PREFERENCE_MAXIMIZED_FILE);
 		sModRes = XModuleResources.createInstance(startupParam.modulePath, null);
 		mPref.reload();
 		
@@ -118,6 +120,11 @@ public class MainXposed implements IXposedHookLoadPackage, IXposedHookZygoteInit
 	public static int getBlackWhiteListOption() {
 		mPref.reload();
 		return Integer.parseInt(mPref.getString(Common.KEY_WHITEBLACKLIST_OPTIONS, Common.DEFAULT_WHITEBLACKLIST_OPTIONS));
+	}
+	
+	public static boolean isMaximizedlisted(String pkg) {
+		mMaximizedlist.reload();
+		return mMaximizedlist.contains(pkg);
 	}
 
 }

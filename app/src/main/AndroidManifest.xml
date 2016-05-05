@@ -50,6 +50,13 @@
             </intent-filter>
         </activity>
 		<activity
+            android:name="com.zst.xposed.halo.floatingwindow3.prefs.MaximizedActivity"
+            android:label="@string/app_maximized" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+            </intent-filter>
+        </activity>
+		<activity
             android:name="com.zst.xposed.halo.floatingwindow3.prefs.TitleBarSettingsActivity"
             android:label="@string/pref_movable_sub_titlebar_title" >
             <intent-filter>
