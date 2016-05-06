@@ -26,8 +26,13 @@ public class MainXposed implements IXposedHookLoadPackage, IXposedHookZygoteInit
 		mBlacklist = new XSharedPreferences(Common.THIS_MOD_PACKAGE_NAME, Common.PREFERENCE_BLACKLIST_FILE);
 		mWhitelist = new XSharedPreferences(Common.THIS_MOD_PACKAGE_NAME, Common.PREFERENCE_WHITELIST_FILE);
 		mMaximizedlist = new XSharedPreferences(Common.THIS_MOD_PACKAGE_NAME, Common.PREFERENCE_MAXIMIZED_FILE);
-		sModRes = XModuleResources.createInstance(startupParam.modulePath, null);
-		mPref.reload();
+		try{
+			sModRes = XModuleResources.createInstance(startupParam.modulePath, null);
+			}catch(Throwable t){
+				XposedBridge.log("ModuleResources init failed");
+				XposedBridge.log(t);
+			}
+//		mPref.reload();
 		
 
 	}
@@ -36,6 +41,7 @@ public class MainXposed implements IXposedHookLoadPackage, IXposedHookZygoteInit
 	public void handleLoadPackage(final LoadPackageParam lpparam) throws Throwable {
 		// XHFW
 		//TestingSettingHook.handleLoadPackage(lpparam);
+	if(mPref==null) return;
 	mPref.reload();
 	if(!mPref.getBoolean(Common.KEY_MOVABLE_WINDOW, Common.DEFAULT_MOVABLE_WINDOW)) return;
 	XposedBridge.log("XHFW3 load package " + lpparam.packageName);
@@ -64,7 +70,7 @@ public class MainXposed implements IXposedHookLoadPackage, IXposedHookZygoteInit
 				SystemHooks.removeAppStartingWindow(classWMS);
 		} catch(ClassNotFoundError e){
 			XposedBridge.log("Class com.android.server.wm.WindowManagerService not found in MainXposed");
-		}catch (Exception e){
+		}catch (Throwable e){
 			XposedBridge.log("removeAppStartingWindow failed - Exception");
 			XposedBridge.log(e);
 		}
@@ -88,24 +94,36 @@ public class MainXposed implements IXposedHookLoadPackage, IXposedHookZygoteInit
 			XposedBridge.log(t);
 			return;
 		}
-		Class<?> clsAT = findClass("android.app.ActivityThread", lpparam.classLoader);
-		if(clsAT!=null){
-			try{
+		try{
+			Class<?> clsAT = findClass("android.app.ActivityThread", lpparam.classLoader);
+			if(clsAT!=null){
 				MovableWindow.fixExceptionWhenResuming(clsAT);
-			} catch(Throwable t){XposedBridge.log(t);}
+				} 
+			}catch(Throwable t){XposedBridge.log(t);}
 		}
-		}
-	else {//TODO SHOULDN'T HOOK SYSTEMUI
+	else if(lpparam.packageName.equals("com.android.systemui")) {//TODO SHOULDN'T HOOK SYSTEMUI
 		try{
 			SystemUIOutliner.handleLoadPackage(lpparam);
-		} catch(Exception e){
-			XposedBridge.log("SystemUIOutliner exception in MainXposed");
-			XposedBridge.log(e);
-		} catch(Throwable t){
-			XposedBridge.log(t);
-		}
-		}
-	}
+			} catch(Exception e){
+				XposedBridge.log("SystemUIOutliner exception in MainXposed");
+				XposedBridge.log(e);
+			} catch(Throwable t){
+				XposedBridge.log(t);
+			}
+//		try{
+//			Class<?> classRecentsApps = findClass("com.android.systemui.recents.RecentsActivity", lpparam.classLoader);
+//			if(classRecentsApps!=null){
+//				SystemHooks.hookRecents(classRecentsApps);
+//			} 
+//			else {
+//				XposedBridge.log("class Recents not found");
+//			}
+//		} catch (Throwable t){
+//			XposedBridge.log("hookRecents failed");
+//			XposedBridge.log(t);
+//			}
+		} //elseif
+	}//handleLoadPackage
 
 	public static boolean isBlacklisted(String pkg) {
 		mBlacklist.reload();

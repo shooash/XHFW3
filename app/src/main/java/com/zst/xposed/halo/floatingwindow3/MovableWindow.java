@@ -245,7 +245,13 @@ public class MovableWindow
 	
 	private static void injectGenerateLayout(final XC_LoadPackage.LoadPackageParam lpparam)
 	throws Throwable {
-		Class<?> cls = XposedHelpers.findClass(MainXposed.mCompatibility.Internal_PhoneWindow, lpparam.classLoader);
+		Class<?> cls = null;
+		try{
+			cls = XposedHelpers.findClass(MainXposed.mCompatibility.Internal_PhoneWindow, lpparam.classLoader);
+		} catch(Throwable t){
+			XposedBridge.log(t);
+			return;
+		}
 		if(cls==null) return;
 		XposedBridge.hookAllMethods(cls, "generateLayout", new XC_MethodHook() {
 				protected void afterHookedMethod(MethodHookParam param) throws Throwable {
