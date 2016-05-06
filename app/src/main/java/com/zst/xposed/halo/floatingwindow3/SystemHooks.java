@@ -62,8 +62,8 @@ public class SystemHooks
 	{
 		XposedBridge.hookAllMethods(AMS, "removeTask", new XC_MethodHook() {
 				protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-					if((param.args[0] == null) || !(param.args[0] instanceof Integer)) return;
-					Integer taskId = (Integer) param.args[0];
+					if((param.args[0] == null) || !(param.args[0] instanceof int)) return;
+					int taskId = param.args[0];
 					Object taskRecord = XposedHelpers.callMethod(param.thisObject, "recentTaskForIdLocked", taskId);
 					if(taskRecord==null) {
 						XposedBridge.log("removeTask hook failed: wrong taskID:" + taskId);
