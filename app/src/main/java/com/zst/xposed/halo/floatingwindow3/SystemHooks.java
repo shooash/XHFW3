@@ -128,6 +128,22 @@ public class SystemHooks
 					}
 				});
 	}
+	
+//	public static void hookRecents(Class<?> classRecentsView) throws Throwable{
+//		XposedBridge.hookAllMethods(classRecentsView, "onTaskViewClicked", new XC_MethodHook(XCallback.PRIORITY_LOWEST) {
+//				@Override
+//				protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+//					//XposedBridge.log("XHFW RECENTS ITEM CLICKED");
+//					try{
+//						//XposedHelpers.callMethod(param.thisObject, "dismissRecentsToFocusedTaskOrHome", false);
+//						XposedHelpers.callMethod(param.thisObject, "finish");
+//						}catch(Throwable t){
+//							XposedBridge.log("hookRecents failed to hide recents");
+//							XposedBridge.log(t);
+//						}
+//					}
+//			});
+//	}
 
 	private static Intent setIntentFlags(Intent mIntent){
 		int flags = mIntent.getFlags();
