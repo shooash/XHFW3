@@ -64,9 +64,20 @@ public class SystemHooks
 				protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
 					if(param.args[0] == null) return;
 					int taskId = (int) param.args[0];
-					Object taskRecord = XposedHelpers.callMethod(param.thisObject, "recentTaskForIdLocked", taskId);
+					Object taskRecord = null;
+					if(Build.VERSION.SDK_INT<23) {
+						try {
+							taskRecord = XposedHelpers.callMethod(param.thisObject, "recentTaskForIdLocked", taskId);
+						} catch (Throwable t){}
+					}
+					else { //for Marshmallow
+						try {
+							Object mActivityStackSupervisor = XposedHelpers.getObjectField(param.thisObject, "mStackSupervisor");
+							taskRecord = XposedHelpers.callMethod(mActivityStackSupervisor, "anyTaskForIdLocked", taskId, false);
+						} catch (Throwable t){}
+					}
 					if(taskRecord==null) {
-						XposedBridge.log("removeTask hook failed: wrong taskID:" + taskId);
+						XposedBridge.log("removeTask hook failed for taskID:" + taskId);
 						return;
 					}
 					String packageName = (String) XposedHelpers.getObjectField(taskRecord, "affinity");
