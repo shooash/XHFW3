@@ -2,6 +2,7 @@ package com.zst.xposed.halo.floatingwindow3.prefs.adapters;
 
 import java.util.LinkedList;
 
+import android.annotation.SuppressLint;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.os.Bundle;
@@ -18,7 +19,8 @@ public abstract class PageAdapter extends FragmentPagerAdapter {
 		super(fm);
 		mFragmentPages = fragmentPages;
 	}
-	
+
+	@SuppressLint("ValidFragment")
 	@Override
 	public Fragment getItem(int position) {
 		return new PageFragment() {
