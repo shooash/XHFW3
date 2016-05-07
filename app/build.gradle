@@ -2,8 +2,7 @@ apply plugin: 'com.android.application'
 
 android {
     compileSdkVersion 23
-    buildToolsVersion "21.1.0"
-
+    buildToolsVersion '23.0.3'
     defaultConfig {
         applicationId "com.zst.xposed.halo.floatingwindow3"
         minSdkVersion 17
@@ -15,8 +14,10 @@ android {
         release {
             minifyEnabled false
             //proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-            zipAlignEnabled false
+            zipAlignEnabled true
         }
+    }
+    productFlavors {
     }
 }
 
