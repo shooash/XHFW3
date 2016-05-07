@@ -74,7 +74,8 @@ public class SystemHooks
 					XposedBridge.log("ActivityManagerService REMOVETASK affinity: "+packageName);
 					
 					if(mNoMovableTasksList.containsKey(packageName)){
-						int nmTaskNum = mNoMovableTasksList.get(packageName) - 1;
+						Integer nmTaskNum = mNoMovableTasksList.get(packageName) - 1;
+						if(nmTaskNum==null) nmTaskNum=0;
 						if(nmTaskNum<1)
 							mNoMovableTasksList.remove(packageName);
 						else
@@ -84,7 +85,8 @@ public class SystemHooks
 					
 					if(!mTasksList.containsKey(packageName))return;
 					
-					int tasksNum = mTasksList.get(packageName)-1;
+					Integer tasksNum = mTasksList.get(packageName)-1;
+					if(tasksNum == null) tasksNum=0;
 					if(tasksNum<1){
 						mTasksList.remove(packageName);
 						//mListPackages.remove(packageName);
@@ -101,10 +103,11 @@ public class SystemHooks
 				@Override
 				protected void afterHookedMethod(MethodHookParam param) throws Throwable {
 					MovableWindow.DEBUG("TaskRecord start");
-					if(!(param.args[MainXposed.mCompatibility.TaskRecord_Intent] instanceof Intent)) return;
-					Intent mIntent = (Intent) param.args[MainXposed.mCompatibility.TaskRecord_Intent];
+					if(param==null || param.args==null || param.args.length<MainXposed.mCompatibility.TaskRecord_Intent+1 || param.args[MainXposed.mCompatibility.TaskRecord_Intent]==null || !(param.args[MainXposed.mCompatibility.TaskRecord_Intent] instanceof Intent)) return;
+					
+					Intent mIntent = (Intent) param.args[3];
 					String packageName = (String) XposedHelpers.getObjectField(param.thisObject, "affinity");
-					if(packageName==null) return;
+					if(packageName==null || packageName.equals("")) return;
 					isMovable = false;
 					if ((packageName.startsWith("com.android.systemui"))||(packageName.equals("android"))) return;
 					isMovable = Util.isFlag(mIntent.getFlags(), MainXposed.mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW))
@@ -123,8 +126,8 @@ public class SystemHooks
 						mTasksList.put(packageName, mTasksList.get(packageName)+1);
 					else
 						mTasksList.put(packageName, 1);
-					MovableWindow.DEBUG("TaskRecord for movable " + packageName + " tasks in stack:" + mTasksList.get(packageName) 
-						+ " isMovable:[" + isMovable + "] is multiple tasks:[" + Util.isFlag(mIntent.getFlags(), Intent.FLAG_ACTIVITY_MULTIPLE_TASK) +"]");
+//					MovableWindow.DEBUG("TaskRecord for movable " + packageName + " tasks in stack:" + mTasksList.get(packageName) 
+//						+ " isMovable:[" + isMovable + "] is multiple tasks:[" + Util.isFlag(mIntent.getFlags(), Intent.FLAG_ACTIVITY_MULTIPLE_TASK) +"]");
 					}
 				});
 	}

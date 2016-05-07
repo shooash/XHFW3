@@ -40,6 +40,8 @@ public class Util
 		} catch (Exception e) {
 			dpi = "0";
 			//failed, set to zero.
+		} catch(Throwable t){
+			if(dpi.equals("")) dpi="0";
 		}
 		float scale = Integer.parseInt(dpi);
 		if (scale == 0) {

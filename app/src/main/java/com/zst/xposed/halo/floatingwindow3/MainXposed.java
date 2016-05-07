@@ -16,7 +16,7 @@ public class MainXposed implements IXposedHookLoadPackage, IXposedHookZygoteInit
 	public static XSharedPreferences mBlacklist;
 	public static XSharedPreferences mWhitelist;
 	public static XSharedPreferences mMaximizedlist;
-	public static Compatibility.Hooks mCompatibility = new Compatibility.Hooks();
+	public static Compatibility.Hooks mCompatibility =  new Compatibility.Hooks();
 	//public final List<String> mMovablePackages = new ArrayList<String>();
 
 	
@@ -44,8 +44,9 @@ public class MainXposed implements IXposedHookLoadPackage, IXposedHookZygoteInit
 	if(mPref==null) return;
 	mPref.reload();
 	if(!mPref.getBoolean(Common.KEY_MOVABLE_WINDOW, Common.DEFAULT_MOVABLE_WINDOW)) return;
-	XposedBridge.log("XHFW3 load package " + lpparam.packageName);
+	
 	if(lpparam.packageName==null) return;
+	XposedBridge.log("XHFW3 load package " + lpparam.packageName);
 	if(lpparam.packageName.equals("android")){
 		try {
 			Class<?> classActivityRecord = findClass("com.android.server.am.ActivityRecord", lpparam.classLoader);
@@ -57,8 +58,6 @@ public class MainXposed implements IXposedHookLoadPackage, IXposedHookZygoteInit
 			Class<?> AMS = findClass("com.android.server.am.ActivityManagerService", lpparam.classLoader);
 			if(AMS!=null)
 				SystemHooks.hookAMS(AMS);
-		} catch (ClassNotFoundError e) {
-			//TODO copy to zygote for old androids
 		}
 		catch (Throwable e){
 			XposedBridge.log("hookActivityRecord failed - Exception");
@@ -84,7 +83,6 @@ public class MainXposed implements IXposedHookLoadPackage, IXposedHookZygoteInit
 			XposedBridge.log("hookActivityStack failed - Exception");
 			XposedBridge.log(e);
 		}
-		
 		
 	} else if(!lpparam.packageName.startsWith("com.android.systemui")){
 		try{

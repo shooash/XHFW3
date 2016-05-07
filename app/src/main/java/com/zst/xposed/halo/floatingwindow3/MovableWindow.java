@@ -217,8 +217,8 @@ public class MovableWindow
 										if (mAeroSnap != null) {
 											mAeroSnap.dispatchTouchEvent(event);
 										}
-										mChangedPreviousRange=false;
 										}
+									mChangedPreviousRange=false;
 								}
 							}
 							break;
