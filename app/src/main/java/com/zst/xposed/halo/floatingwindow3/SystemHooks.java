@@ -114,13 +114,12 @@ public class SystemHooks
 				@Override
 				protected void afterHookedMethod(MethodHookParam param) throws Throwable {
 					MovableWindow.DEBUG("TaskRecord start");
-					if(param==null || param.args==null || param.args.length<MainXposed.mCompatibility.TaskRecord_Intent+1 || param.args[MainXposed.mCompatibility.TaskRecord_Intent]==null || !(param.args[MainXposed.mCompatibility.TaskRecord_Intent] instanceof Intent)) return;
-					
-					Intent mIntent = (Intent) param.args[3];
 					String packageName = (String) XposedHelpers.getObjectField(param.thisObject, "affinity");
 					if(packageName==null || packageName.equals("")) return;
 					isMovable = false;
 					if ((packageName.startsWith("com.android.systemui"))||(packageName.equals("android"))) return;
+					if(param==null || param.args==null || param.args.length<MainXposed.mCompatibility.TaskRecord_Intent+1 || param.args[MainXposed.mCompatibility.TaskRecord_Intent]==null || !(param.args[MainXposed.mCompatibility.TaskRecord_Intent] instanceof Intent)) return;
+					Intent mIntent = (Intent) param.args[MainXposed.mCompatibility.TaskRecord_Intent];
 					isMovable = Util.isFlag(mIntent.getFlags(), MainXposed.mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW))
 						|| mTasksList.containsKey(packageName);
 					if(!isMovable) {
@@ -360,14 +359,24 @@ public class SystemHooks
 		/* This is a Kitkat work-around to make sure the background is transparent */
 		XposedBridge.hookAllMethods(hookClass, "startActivityLocked", new XC_MethodHook() {
 				protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+					MovableWindow.DEBUG("startActivityLocked [" + isMovable + "]");
 					if (!isMovable&&!MovableWindow.isMovable) return;
 					if (param.args[1] instanceof Intent) return;
 					Object activityRecord = param.args[0];
 					if(activityRecord==null) return;
 					XposedHelpers.setBooleanField(activityRecord, "fullscreen", false);
-					MovableWindow.DEBUG("startActivityLocked [" + isMovable + "]");
+
 				}
 			});
+		XposedBridge.hookAllMethods(hookClass, "relaunchActivityLocked", new XC_MethodHook() {
+			protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+				if (!isMovable&&!MovableWindow.isMovable) return;
+				Object activityRecord = param.args[0];
+				if(activityRecord==null) return;
+				XposedHelpers.setBooleanField(activityRecord, "fullscreen", false);
+				MovableWindow.DEBUG("relaunchActivityLocked [" + isMovable + "]");
+			}
+		});
 
 		if (Build.VERSION.SDK_INT < 19) {
 			/*
