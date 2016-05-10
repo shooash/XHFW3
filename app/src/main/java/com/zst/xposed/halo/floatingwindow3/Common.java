@@ -144,7 +144,7 @@ public class Common {
 	public static final String DEFAULT_WINDOW_TRIANGLE_LONGPRESS_ACTION = "1";
 	public static final boolean DEFAULT_WINDOW_TRIANGLE_RESIZE_ENABLED = true;
 	public static final boolean DEFAULT_WINDOW_TRIANGLE_DRAGGING_ENABLED = false;
-	public static final boolean DEFAULT_WINDOW_QUADRANT_ENABLE = true;
+	public static final boolean DEFAULT_WINDOW_QUADRANT_ENABLE = false;
 	public static final String DEFAULT_WINDOW_QUADRANT_COLOR = "FFFFFF";
 	public static final float DEFAULT_WINDOW_QUADRANT_ALPHA = 0.5f;
 	public static final int DEFAULT_WINDOW_QUADRANT_SIZE = 30;
