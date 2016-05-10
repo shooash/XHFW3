@@ -372,7 +372,8 @@ public class MovableWindow
                 mWindowHolder.height = (int) (mScreenHeight * MainXposed.mPref.getFloat(Common.KEY_PORTRAIT_HEIGHT, Common.DEFAULT_PORTRAIT_HEIGHT));
                 break;
         }
-		mWindowHolder.position((mScreenWidth-mWindowHolder.width)/2, (mScreenHeight-mWindowHolder.height)/2);
+		//mWindowHolder.position((mScreenWidth-mWindowHolder.width)/2, (mScreenHeight-mWindowHolder.height)/2);
+		setInitGravity(MainXposed.mPref.getInt(Common.KEY_GRAVITY, Common.DEFAULT_GRAVITY));
 		if(mAeroSnap!=null&&mWindowHolder.isSnapped) {
 			mWindowHolder.isSnapped=false;
 			mAeroSnap.forceSnapGravity(mWindowHolder.SnapGravity);
@@ -383,6 +384,30 @@ public class MovableWindow
 			mWindowHolder.syncLayout();
 			}
     }
+	
+	private static void setInitGravity(int startGravity){
+		if(Util.isFlag(startGravity, Gravity.CENTER)){
+			mWindowHolder.position((mScreenWidth-mWindowHolder.width)/2, (mScreenHeight-mWindowHolder.height)/2);
+			return;
+			}
+		int x;
+		int y;
+		if(Util.isFlag(startGravity, Gravity.LEFT))
+			x = 0;
+		else if(Util.isFlag(startGravity, Gravity.RIGHT))
+			x = mScreenWidth-mWindowHolder.width;
+		else
+			x = (mScreenWidth-mWindowHolder.width)/2;
+		
+		if(Util.isFlag(startGravity, Gravity.TOP))
+			y = 0;
+		else if(Util.isFlag(startGravity, Gravity.BOTTOM))
+			y = mScreenHeight-mWindowHolder.height;
+		else
+			y = (mScreenHeight-mWindowHolder.height)/2;
+		
+		mWindowHolder.position(x,y);
+	}
 	
 
 	/***********************************************************/
