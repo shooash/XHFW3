@@ -13,9 +13,10 @@ public class MainXposed implements IXposedHookLoadPackage, IXposedHookZygoteInit
 	
 	public static XModuleResources sModRes;
 	public static XSharedPreferences mPref;
-	public static XSharedPreferences mBlacklist;
-	public static XSharedPreferences mWhitelist;
-	public static XSharedPreferences mMaximizedlist;
+	public static XSharedPreferences mPackagesList;
+//	public static XSharedPreferences mBlacklist;
+//	public static XSharedPreferences mWhitelist;
+//	public static XSharedPreferences mMaximizedlist;
 	public static Compatibility.Hooks mCompatibility =  new Compatibility.Hooks();
 	//public final List<String> mMovablePackages = new ArrayList<String>();
 
@@ -23,11 +24,12 @@ public class MainXposed implements IXposedHookLoadPackage, IXposedHookZygoteInit
 	@Override
 	public void initZygote(StartupParam startupParam) throws Throwable {
 		mPref = new XSharedPreferences(Common.THIS_MOD_PACKAGE_NAME, Common.PREFERENCE_MAIN_FILE);
-		mBlacklist = new XSharedPreferences(Common.THIS_MOD_PACKAGE_NAME, Common.PREFERENCE_BLACKLIST_FILE);
-		mWhitelist = new XSharedPreferences(Common.THIS_MOD_PACKAGE_NAME, Common.PREFERENCE_WHITELIST_FILE);
-		mMaximizedlist = new XSharedPreferences(Common.THIS_MOD_PACKAGE_NAME, Common.PREFERENCE_MAXIMIZED_FILE);
+//		mBlacklist = new XSharedPreferences(Common.THIS_MOD_PACKAGE_NAME, Common.PREFERENCE_BLACKLIST_FILE);
+//		mWhitelist = new XSharedPreferences(Common.THIS_MOD_PACKAGE_NAME, Common.PREFERENCE_WHITELIST_FILE);
+//		mMaximizedlist = new XSharedPreferences(Common.THIS_MOD_PACKAGE_NAME, Common.PREFERENCE_MAXIMIZED_FILE);
+		mPackagesList = new XSharedPreferences(Common.THIS_MOD_PACKAGE_NAME, Common.PREFERENCE_PACKAGES_FILE);
 		try{
-			sModRes = XModuleResources.createInstance(startupParam.modulePath, null);
+		sModRes = XModuleResources.createInstance(startupParam.modulePath, null);
 			}catch(Throwable t){
 				XposedBridge.log("ModuleResources init failed");
 				XposedBridge.log(t);
@@ -43,6 +45,7 @@ public class MainXposed implements IXposedHookLoadPackage, IXposedHookZygoteInit
 		//TestingSettingHook.handleLoadPackage(lpparam);
 	if(mPref==null) return;
 	mPref.reload();
+	mPackagesList.reload();
 	if(!mPref.getBoolean(Common.KEY_MOVABLE_WINDOW, Common.DEFAULT_MOVABLE_WINDOW)) return;
 	
 	if(lpparam.packageName==null) return;
@@ -124,13 +127,11 @@ public class MainXposed implements IXposedHookLoadPackage, IXposedHookZygoteInit
 	}//handleLoadPackage
 
 	public static boolean isBlacklisted(String pkg) {
-		mBlacklist.reload();
-		return mBlacklist.contains(pkg);
+		return Util.isFlag(mPackagesList.getInt(pkg, 0), Common.PACKAGE_BLACKLIST);
 	}
 	
 	public static boolean isWhitelisted(String pkg) {
-		mWhitelist.reload();
-		return mWhitelist.contains(pkg);
+		return Util.isFlag(mPackagesList.getInt(pkg, 0), Common.PACKAGE_WHITELIST);
 	}
 	
 	public static int getBlackWhiteListOption() {
@@ -139,8 +140,7 @@ public class MainXposed implements IXposedHookLoadPackage, IXposedHookZygoteInit
 	}
 	
 	public static boolean isMaximizedlisted(String pkg) {
-		mMaximizedlist.reload();
-		return mMaximizedlist.contains(pkg);
+		return Util.isFlag(mPackagesList.getInt(pkg, 0), Common.PACKAGE_MAXIMIZE);
 	}
 
 }

@@ -26,6 +26,8 @@ import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.AdapterView.OnItemClickListener;
+import java.util.*;
+import com.zst.xposed.halo.floatingwindow3.*;
 
 public class BlacklistActivity extends Activity {
 	
@@ -52,7 +54,7 @@ public class BlacklistActivity extends Activity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		showFirstTimeHelper(false);
-		mPref = getSharedPreferences(Common.PREFERENCE_BLACKLIST_FILE, MODE_WORLD_READABLE);
+		mPref = getSharedPreferences(Common.PREFERENCE_PACKAGES_FILE, MODE_WORLD_READABLE);
 		loadBlacklist();
 		initAppList();
 	}
@@ -156,7 +158,13 @@ public class BlacklistActivity extends Activity {
 	}
 	
 	private Set<String> getSetStrings() {
-		return mPref.getAll().keySet();
+		Map<String, ?> pkgList = mPref.getAll();
+		Set<String> result = new HashSet<String>();
+		for(Map.Entry<String, ?> E : pkgList.entrySet()){
+			if(Util.isFlag(E.getValue(), Common.PACKAGE_BLACKLIST))
+				result.add(E.getKey());
+		}
+		return result;
 	}
 	
 	public void removeApp(String pkg) {
@@ -166,7 +174,8 @@ public class BlacklistActivity extends Activity {
 	}
 	
 	public void addApp(String pkg) {
-		mPref.edit().putBoolean(pkg, true).commit();
+		int value = mPref.getInt(pkg, 0) | Common.PACKAGE_BLACKLIST;
+		mPref.edit().putInt(pkg, value).commit();
 		updateList();
 	}
 	

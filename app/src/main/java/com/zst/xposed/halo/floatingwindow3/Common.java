@@ -12,11 +12,16 @@ public class Common {
 	public static final String THIS_PACKAGE_NAME = "com.zst.xposed.halo.floatingwindow";//To keep backwards compatibility we have to use old package name
 	public static final String THIS_MOD_PACKAGE_NAME = Common.class.getPackage().getName();
 	public static final String PREFERENCE_MAIN_FILE = THIS_MOD_PACKAGE_NAME + "_general";
-	public static final String PREFERENCE_BLACKLIST_FILE = THIS_MOD_PACKAGE_NAME + "_blacklist";
-	public static final String PREFERENCE_WHITELIST_FILE = THIS_MOD_PACKAGE_NAME + "_whitelist";
-	public static final String PREFERENCE_MAXIMIZED_FILE = THIS_MOD_PACKAGE_NAME + "_maximized";
-	public static final String PREFERENCE_STATUSBAR_LAUNCHER_FILE = THIS_MOD_PACKAGE_NAME + "_statusbar_launcher";
+//	public static final String PREFERENCE_BLACKLIST_FILE = THIS_MOD_PACKAGE_NAME + "_blacklist";
+//	public static final String PREFERENCE_WHITELIST_FILE = THIS_MOD_PACKAGE_NAME + "_whitelist";
+//	public static final String PREFERENCE_MAXIMIZED_FILE = THIS_MOD_PACKAGE_NAME + "_maximized";
+	public static final String PREFERENCE_PACKAGES_FILE = THIS_MOD_PACKAGE_NAME + "_packages";
+	//public static final String PREFERENCE_STATUSBAR_LAUNCHER_FILE = THIS_MOD_PACKAGE_NAME + "_statusbar_launcher";
 	
+	/* packages types */
+	public static final int PACKAGE_WHITELIST = 1;
+	public static final int PACKAGE_BLACKLIST = 2;
+	public static final int PACKAGE_MAXIMIZE = 4;
 
 	/* Preference keys */
 	public static final String KEY_ALPHA = "window_alpha";
