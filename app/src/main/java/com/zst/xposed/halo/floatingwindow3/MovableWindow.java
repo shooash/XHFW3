@@ -386,7 +386,7 @@ public class MovableWindow
     }
 	
 	private static void setInitGravity(int startGravity){
-		if(Util.isFlag(startGravity, Gravity.CENTER)){
+		if(startGravity == Gravity.CENTER){
 			mWindowHolder.position((mScreenWidth-mWindowHolder.width)/2, (mScreenHeight-mWindowHolder.height)/2);
 			return;
 			}
