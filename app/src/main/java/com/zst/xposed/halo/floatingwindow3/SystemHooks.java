@@ -30,20 +30,22 @@ public class SystemHooks
 					if (packageName==null || packageName.startsWith("com.android.systemui")|| packageName.equals("android")) return;
 					Intent mIntent = (Intent) param.args[MainXposed.mCompatibility.ActivityRecord_Intent];
 					if(mIntent==null) return;
-					Object mStackSupervisor = (MainXposed.mCompatibility.ActivityRecord_StackSupervisor==-1)?null : param.args[MainXposed.mCompatibility.ActivityRecord_StackSupervisor];
-					if(mStackSupervisor==null)
-						try{
-							mStackSupervisor=XposedHelpers.getObjectField(param.thisObject, "mStackSupervisor");
-						}catch(Throwable t){XposedBridge.log(t);}
-						
 					if(mNoMovableTasksList.containsKey(packageName)) {
 						removeFloatingFlag(mIntent);
 						return;
 					}
-					isMovable = checkInheritFloatingFlag(packageName,
-												 (MainXposed.mCompatibility.ActivityRecord_ActivityStack==-1)? 
-												 MainXposed.mCompatibility.getActivityRecord_ActivityStack(mStackSupervisor) 
-												 : param.args[MainXposed.mCompatibility.ActivityRecord_ActivityStack], mIntent);
+					Object mStackSupervisor = null;
+					Object mActivityStack = null;
+					if(MainXposed.mCompatibility.ActivityRecord_ActivityStack!=-1)
+						mActivityStack=param.args[MainXposed.mCompatibility.ActivityRecord_ActivityStack];
+					else if (MainXposed.mCompatibility.ActivityRecord_StackSupervisor!=-1){
+						mStackSupervisor = param.args[MainXposed.mCompatibility.ActivityRecord_StackSupervisor];
+						mActivityStack = MainXposed.mCompatibility.getActivityRecord_ActivityStack(mStackSupervisor);
+						}
+					else if(Util.getFailsafeObjectFromObject(mStackSupervisor, param.thisObject, "mStackSupervisor"))
+						mActivityStack = MainXposed.mCompatibility.getActivityRecord_ActivityStack(mStackSupervisor);
+						
+					isMovable = checkInheritFloatingFlag(packageName, mActivityStack, mIntent);
 					
 					isMovable = isMovable || Util.isFlag(mIntent.getFlags(), MainXposed.mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW));
 					isMovable = isMovable || mTasksList.containsKey(packageName);
@@ -71,22 +73,32 @@ public class SystemHooks
 						} catch (Throwable t){}
 					}
 					else { //for Marshmallow
-						try {
-							Object mActivityStackSupervisor = XposedHelpers.getObjectField(param.thisObject, "mStackSupervisor");
-							taskRecord = XposedHelpers.callMethod(mActivityStackSupervisor, "anyTaskForIdLocked", taskId, false);
-						} catch (Throwable t){}
+						Object mActivityStackSupervisor = null;
+						if(Util.getFailsafeObjectFromObject(mActivityStackSupervisor, param.thisObject, "mStackSupervisor"))
+							try {
+								taskRecord = XposedHelpers.callMethod(mActivityStackSupervisor, "anyTaskForIdLocked", taskId, false);
+							} catch (Throwable t){}
 					}
 					if(taskRecord==null) {
 						XposedBridge.log("removeTask hook failed for taskID:" + taskId);
 						return;
 					}
-					String packageName = (String) XposedHelpers.getObjectField(taskRecord, "affinity");
-					if(packageName==null) return;
-					XposedBridge.log("ActivityManagerService REMOVETASK affinity: "+packageName);
+//					String packageName = null;
+//					try{
+//						packageName = (String) XposedHelpers.getObjectField(taskRecord, "affinity");
+//						} catch (Throwable t){
+//							XposedBridge.log(t);
+//						}
+//					if(packageName==null) return;
+					String packageName = new String();
+					if(!Util.getFailsafeStringFromObject(packageName, taskRecord, "affinity"))
+						return;
+					XposedBridge.log("ActivityManagerService REMOVETASK affinity: " + packageName);
 					
 					if(mNoMovableTasksList.containsKey(packageName)){
-						Integer nmTaskNum = mNoMovableTasksList.get(packageName) - 1;
+						Integer nmTaskNum = mNoMovableTasksList.get(packageName);
 						if(nmTaskNum==null) nmTaskNum=0;
+						nmTaskNum-=1;
 						if(nmTaskNum<1)
 							mNoMovableTasksList.remove(packageName);
 						else
@@ -94,10 +106,11 @@ public class SystemHooks
 						return;
 					}
 					
-					if(!mTasksList.containsKey(packageName))return;
-					
-					Integer tasksNum = mTasksList.get(packageName)-1;
+					if(!mTasksList.containsKey(packageName))
+						return;
+					Integer tasksNum = mTasksList.get(packageName);
 					if(tasksNum == null) tasksNum=0;
+					tasksNum-=1;
 					if(tasksNum<1){
 						mTasksList.remove(packageName);
 						//mListPackages.remove(packageName);
@@ -114,8 +127,11 @@ public class SystemHooks
 				@Override
 				protected void afterHookedMethod(MethodHookParam param) throws Throwable {
 					MovableWindow.DEBUG("TaskRecord start");
-					String packageName = (String) XposedHelpers.getObjectField(param.thisObject, "affinity");
-					if(packageName==null || packageName.equals("")) return;
+//					String packageName = (String) XposedHelpers.getObjectField(param.thisObject, "affinity");
+//					if(packageName==null || packageName.equals("")) return;
+					String packageName = new String();
+					if(!Util.getFailsafeStringFromObject(packageName, param.thisObject, "affinity"))
+						return;
 					isMovable = false;
 					if ((packageName.startsWith("com.android.systemui"))||(packageName.equals("android"))) return;
 					if(param.args==null || param.args.length<MainXposed.mCompatibility.TaskRecord_Intent+1 || param.args[MainXposed.mCompatibility.TaskRecord_Intent]==null || !(param.args[MainXposed.mCompatibility.TaskRecord_Intent] instanceof Intent)) return;
@@ -229,13 +245,21 @@ public class SystemHooks
 		return sGravity;
 	}
 	
-	private static boolean checkInheritFloatingFlag(String packageName, Object activityStack, final Intent mIntent) throws Throwable {
-		if(activityStack==null) return false;
-		ArrayList<?> taskHistory = (ArrayList<?>) XposedHelpers.getObjectField(activityStack, MainXposed.mCompatibility.ActivityRecord_TaskHistory);
+	private static boolean checkInheritFloatingFlag(String packageName, Object activityStack, Intent mIntent) throws Throwable {
+		//if(activityStack==null) return false;
+		ArrayList<?> taskHistory = null;
+		if(!Util.getFailsafeObjectFromObject(taskHistory, activityStack, MainXposed.mCompatibility.ActivityRecord_TaskHistory))
+			return false;
+//		try{
+//			taskHistory = (ArrayList<?>) XposedHelpers.getObjectField(activityStack, MainXposed.mCompatibility.ActivityRecord_TaskHistory);
+//			} catch(Throwable t){XposedBridge.log(t);}
 		if(taskHistory==null || taskHistory.size()==0) return false;
 		Object lastRecord = taskHistory.get(taskHistory.size() - 1);
 		if(lastRecord==null) return false;
-		Intent lastIntent = (Intent) XposedHelpers.getObjectField(lastRecord, "intent");
+		Intent lastIntent = null;
+		if(!Util.getFailsafeObjectFromObject(lastIntent, lastRecord, "intent"))
+			return false;
+		//(Intent) XposedHelpers.getObjectField(lastRecord, "intent");
 		int sGravity;
 		if(lastIntent==null) return false;
 		if((packageName.equals(lastIntent.getPackage()))){

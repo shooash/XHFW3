@@ -19,6 +19,7 @@ import android.os.Build;
 import android.app.*;
 import android.view.*;
 import android.content.res.*;
+import de.robv.android.xposed.*;
 
 
 public class Util
@@ -139,5 +140,38 @@ public class Util
 	 * we need this to speed up our resizing */
 	// params.privateFlags |= 0x00000040; //PRIVATE_FLAG_NO_MOVE_ANIMATION
 	
+	public static boolean getFailsafeStringFromObject(String result, Object mObject, String mItem){
+		if(mObject==null) return false;
+		try{
+			result = (String) XposedHelpers.getObjectField(mObject, mItem);
+		} catch (Throwable t){
+			XposedBridge.log(t);
+			return false;
+		}
+		return !(result==null || result.equals(""));
+	}
+	
+	public static boolean getFailsafeObjectFromObject(Object result, Object mObject, String mItem){
+		if(mObject==null) return false;
+		try{
+			result = XposedHelpers.getObjectField(mObject, mItem);
+		} catch (Throwable t){
+			XposedBridge.log(t);
+			return false;
+		}
+		return (result!=null);
+	}
+	
+	
+	public static boolean getFailsafeObjectFromMethod(Object result, Object mObject, String mItem){
+		if(mObject==null) return false;
+		try{
+			result = XposedHelpers.callMethod(mObject, mItem);
+		} catch (Throwable t){
+			XposedBridge.log(t);
+			return false;
+		}
+		return (result!=null);
+		}
 
 }
