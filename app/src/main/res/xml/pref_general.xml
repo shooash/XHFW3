@@ -38,34 +38,45 @@
             android:key="window_gravity"
             android:summary="@string/pref_gravity_summary"
             android:title="@string/pref_gravity_title" />
+		<CheckBoxPreference
+			android:defaultValue="false"
+			android:key="window_maximize_all"
+			android:title="@string/pref_all_maximized_title"
+			android:summary="@string/pref_all_maximized_summary"
+			android:disableDependentsState="true"
+			/>
         <com.zst.xposed.halo.floatingwindow3.prefs.WidgetFloatPercentage
             defaultValue="0.95"
             maximum="1"
             minimum="0.1"
             android:key="window_portrait_width"
             android:summary="@string/pref_width_portrait_summary"
-            android:title="@string/pref_width_portrait_title" />
+            android:title="@string/pref_width_portrait_title" 
+			android:dependency="window_maximize_all"/>
         <com.zst.xposed.halo.floatingwindow3.prefs.WidgetFloatPercentage
             defaultValue="0.7"
             maximum="1"
             minimum="0.1"
             android:key="window_portrait_height"
             android:summary="@string/pref_height_portrait_summary"
-            android:title="@string/pref_height_portrait_title" />
+            android:title="@string/pref_height_portrait_title" 
+			android:dependency="window_maximize_all" />
         <com.zst.xposed.halo.floatingwindow3.prefs.WidgetFloatPercentage
             defaultValue="0.7"
             maximum="1"
             minimum="0.1"
             android:key="window_landscape_width"
             android:summary="@string/pref_width_landscape_summary"
-            android:title="@string/pref_width_landscape_title" />
+            android:title="@string/pref_width_landscape_title" 
+			android:dependency="window_maximize_all" />
         <com.zst.xposed.halo.floatingwindow3.prefs.WidgetFloatPercentage
             defaultValue="0.85"
             maximum="1"
             minimum="0.1"
             android:key="window_landscape_height"
             android:summary="@string/pref_height_landscape_summary"
-            android:title="@string/pref_height_landscape_title" />
+            android:title="@string/pref_height_landscape_title" 
+			android:dependency="window_maximize_all" />
     </PreferenceCategory>
     
 </PreferenceScreen>

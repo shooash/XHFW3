@@ -26,6 +26,7 @@ public class Common {
 	/* Preference keys */
 	public static final String KEY_ALPHA = "window_alpha";
 	public static final String KEY_DIM = "window_dim";
+	public static final String KEY_MAXIMIZE_ALL = "window_maximize_all";
 	public static final String KEY_PORTRAIT_WIDTH = "window_portrait_width";
 	public static final String KEY_PORTRAIT_HEIGHT = "window_portrait_height";
 	public static final String KEY_LANDSCAPE_WIDTH = "window_landscape_width";
@@ -106,6 +107,7 @@ public class Common {
 	/* Preference defaults */
 	public static final float DEFAULT_ALPHA = 1f;
 	public static final float DEFAULT_DIM = 0.25f;
+	public static final boolean DEFAULT_MAXIMIZE_ALL = false;
 	public static final float DEFAULT_PORTRAIT_WIDTH = 0.95f;
 	public static final float DEFAULT_PORTRAIT_HEIGHT = 0.7f;
 	public static final float DEFAULT_LANDSCAPE_WIDTH = 0.7f;

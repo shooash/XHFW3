@@ -69,6 +69,8 @@
     <string name="pref_width_landscape_summary">Width of Popup in Landscape</string>
     <string name="pref_height_landscape_title">Landscape Height</string>
     <string name="pref_height_landscape_summary">Height of Popup in Landscape</string>
+	<string name="pref_all_maximized_title">Start All Movable Windows Maximized</string>
+    <string name="pref_all_maximized_summary">Maximize everything from start</string>
 
     <!-- 3rd Preference Screen -->
     <string name="pref_behave_top_title">Popup Behavior</string>
