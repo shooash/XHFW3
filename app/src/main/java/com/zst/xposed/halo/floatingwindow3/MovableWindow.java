@@ -267,6 +267,7 @@ public class MovableWindow
 					//TODO add to settings an option to force titlebar to overlay windows 
 					//(but that will overlap actionbar)
 					//setOverlayView();
+					putOverlayView();
 					mWindowHolder.pushToWindow(window);
 				}
 			});
@@ -353,7 +354,7 @@ public class MovableWindow
 	
     private static void setInitLayout(){
         mWindowHolder.mWindow.addFlags(WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
-        //mWindowHolder.mWindow.setWindowAnimations(android.R.style.Animation_Dialog);
+        mWindowHolder.mWindow.setWindowAnimations(android.R.style.Animation_Dialog);
         mWindowHolder.mWindow.clearFlags(WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER);
         switch(MainXposed.mPref.getInt(Common.KEY_KEYBOARD_MODE, Common.DEFAULT_KEYBOARD_MODE)){
             case 2:
@@ -475,9 +476,15 @@ public class MovableWindow
 	public static void putOverlayView(){
 		/*  We don't touch floating dialogs  */
 		if (mWindowHolder==null || mWindowHolder.mWindow.isFloating()) return;	
-		FrameLayout decor_view = (FrameLayout) mWindowHolder.mWindow.peekDecorView().getRootView();
+		FrameLayout decor_view;
+		try{
+			decor_view = (FrameLayout) mWindowHolder.mWindow.peekDecorView().getRootView();
+		} catch(Throwable t){
+			decor_view=null;
+		}
+		if (decor_view == null) return;
 		mOverlayView = (MovableOverlayView) decor_view.getTag(Common.LAYOUT_OVERLAY_TAG);
-		decor_view.bringChildToFront(mOverlayView);
+		if (mOverlayView != null)  decor_view.bringChildToFront(mOverlayView);
 	}
 	
 	private static void setTagInternalForView(View view, int key, Object object) {
