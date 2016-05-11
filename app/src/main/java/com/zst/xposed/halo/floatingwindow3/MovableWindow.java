@@ -211,14 +211,14 @@ public class MovableWindow
 									screenY = event.getRawY();
 									leftFromScreen = (screenX - viewX);
 									topFromScreen = (screenY - viewY);
-									if(moveRangeAboveLimit(event)&&mChangedPreviousRange){
-										if(mWindowHolder.isSnapped) unsnap();
-										move(leftFromScreen.intValue(), topFromScreen.intValue());
-										if (mAeroSnap != null) {
-											mAeroSnap.dispatchTouchEvent(event);
-										}
-										}
-									mChangedPreviousRange=false;
+									if((mWindowHolder.isSnapped || mWindowHolder.isMaximized) && !moveRangeAboveLimit(event))
+										break;
+									unsnap();
+									move(leftFromScreen.intValue(), topFromScreen.intValue());
+//									if (mAeroSnap != null) 
+//										mAeroSnap.dispatchTouchEvent(event);
+										
+									
 								}
 							}
 							break;
@@ -228,7 +228,9 @@ public class MovableWindow
 						}
 					ActionBar ab = a.getActionBar();
 					int height = (ab != null) ? ab.getHeight() : Util.dp(48, a.getApplicationContext());
-					if (viewY < height && mAeroSnap != null && mActionBarDraggable) {
+					if (viewY < height && mAeroSnap != null 
+						&& mActionBarDraggable && !mWindowHolder.isSnapped 
+						&& !mWindowHolder.isMaximized) {
 						mAeroSnap.dispatchTouchEvent(event);
 					}
 

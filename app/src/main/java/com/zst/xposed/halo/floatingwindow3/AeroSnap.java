@@ -50,7 +50,7 @@ public class AeroSnap {
 	public void dispatchTouchEvent(MotionEvent event) {
 		switch (event.getAction()) {
 		case MotionEvent.ACTION_UP:
-			if(!MovableWindow.mWindowHolder.isSnapped) {
+			if(!MovableWindow.mWindowHolder.isSnapped && !MovableWindow.mWindowHolder.isMaximized) {
 				finishSnap(mSnapWindowHolder.isSnapped && mTimeoutDone);
 			}
 			discardTimeout();
