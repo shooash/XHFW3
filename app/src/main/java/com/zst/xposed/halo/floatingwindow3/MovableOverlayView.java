@@ -391,6 +391,12 @@ public class MovableOverlayView extends RelativeLayout {
 			min_button.setImageDrawable(mResource.getDrawable(R.drawable.movable_title_min));
 			more_button.setImageDrawable(mResource.getDrawable(R.drawable.movable_title_more));
 			break;
+		case Common.TITLEBAR_ICON_SSNJR2002:
+			close_button.setImageDrawable(mResource.getDrawable(R.drawable.movable_title_close_ssnjr));
+			max_button.setImageDrawable(mResource.getDrawable(R.drawable.movable_title_max_ssnjr));
+			min_button.setImageDrawable(mResource.getDrawable(R.drawable.movable_title_min_ssnjr));
+			more_button.setImageDrawable(mResource.getDrawable(R.drawable.movable_title_more_ssnjr));
+			break;
 		}
 		
 		RelativeLayout.LayoutParams header_param = (LayoutParams) header.getLayoutParams();

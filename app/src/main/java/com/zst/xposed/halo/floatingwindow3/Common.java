@@ -212,6 +212,7 @@ public class Common {
 	public static final int TITLEBAR_ICON_NONE = 0;
 	public static final int TITLEBAR_ICON_ORIGINAL = 1;
 	public static final int TITLEBAR_ICON_BachMinuetInG = 2;
+	public static final int TITLEBAR_ICON_SSNJR2002 = 3;
 	public static final int TITLEBAR_ICON_DEFAULT = TITLEBAR_ICON_BachMinuetInG;
 
 	

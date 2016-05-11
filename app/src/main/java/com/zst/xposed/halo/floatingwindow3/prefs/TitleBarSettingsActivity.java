@@ -57,6 +57,9 @@ public class TitleBarSettingsActivity extends Activity implements OnSharedPrefer
 		adapter.add(new ThemeItem(mResource,
 								  R.string.tbic_theme_clearer_t,
 								  R.string.tbic_theme_clearer_s, Common.TITLEBAR_ICON_BachMinuetInG));
+		adapter.add(new ThemeItem(mResource,
+								  R.string.tbic_theme_ssnjr_t,
+								  R.string.tbic_theme_ssnjr_s, Common.TITLEBAR_ICON_SSNJR2002));
 		adapter.mSelectedId = mIconType;
 
 		lv.setAdapter(adapter);
@@ -233,6 +236,12 @@ public class TitleBarSettingsActivity extends Activity implements OnSharedPrefer
 				tbMaxButton.setImageDrawable(mResource.getDrawable(R.drawable.movable_title_max));
 				tbMinButton.setImageDrawable(mResource.getDrawable(R.drawable.movable_title_min));
 				tbMoreButton.setImageDrawable(mResource.getDrawable(R.drawable.movable_title_more));
+				break;
+			case Common.TITLEBAR_ICON_SSNJR2002:
+				tbCloseButton.setImageDrawable(mResource.getDrawable(R.drawable.movable_title_close_ssnjr));
+				tbMaxButton.setImageDrawable(mResource.getDrawable(R.drawable.movable_title_max_ssnjr));
+				tbMinButton.setImageDrawable(mResource.getDrawable(R.drawable.movable_title_min_ssnjr));
+				tbMoreButton.setImageDrawable(mResource.getDrawable(R.drawable.movable_title_more_ssnjr));
 				break;
 		}
 	}

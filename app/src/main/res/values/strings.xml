@@ -273,6 +273,8 @@
     <string name="tbic_theme_original_s">The icons originally used in the very first version</string>
     <string name="tbic_theme_clearer_t">Clearer Icons</string>
     <string name="tbic_theme_clearer_s">Icons created by BachMinuetInG from XDA</string>
+	<string name="tbic_theme_ssnjr_t">Remix Icons</string>
+    <string name="tbic_theme_ssnjr_s">Icons created by SSNJR2002 from XDA</string>
 
     <!-- ColorPicker -->
     <string name="apply">Apply</string>
