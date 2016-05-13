@@ -140,26 +140,39 @@ public class Util
 	 * we need this to speed up our resizing */
 	// params.privateFlags |= 0x00000040; //PRIVATE_FLAG_NO_MOVE_ANIMATION
 	
-	public static boolean getFailsafeStringFromObject(String result, Object mObject, String mItem){
-		if(mObject==null) return false;
+	public static String getFailsafeStringFromObject(String result, Object mObject, String mItem){
+		if(mObject==null) return null;
 		try{
 			result = (String) XposedHelpers.getObjectField(mObject, mItem);
 		} catch (Throwable t){
 			XposedBridge.log(t);
-			return false;
+			return null;
 		}
-		return !(result==null || result.equals(""));
+		return result;
 	}
 	
-	public static boolean getFailsafeObjectFromObject(Object result, Object mObject, String mItem){
-		if(mObject==null) return false;
+	public static Object getFailsafeObjectFromObject(Object mObject, String mItem){
+		if(mObject==null) return null;
+		Object result = null;
 		try{
 			result = XposedHelpers.getObjectField(mObject, mItem);
 		} catch (Throwable t){
 			XposedBridge.log(t);
-			return false;
+			return null;
 		}
-		return (result!=null);
+		return result;
+	}
+	
+	public static Integer getFailsafeIntFromObject(Object mObject, String mItem){
+		if(mObject==null) return null;
+		Integer result = null;
+		try{
+			result = (Integer) XposedHelpers.getIntField(mObject, mItem);
+		} catch (Throwable t){
+			XposedBridge.log(t);
+			return null;
+		}
+		return result;
 	}
 	
 	
@@ -173,5 +186,7 @@ public class Util
 		}
 		return (result!=null);
 		}
+		
+	
 
 }

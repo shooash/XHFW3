@@ -58,9 +58,11 @@ public class MainXposed implements IXposedHookLoadPackage, IXposedHookZygoteInit
 			Class<?> classTaskRecord = findClass("com.android.server.am.TaskRecord", lpparam.classLoader);
 			if (classTaskRecord != null)
 				SystemHooks.hookTaskRecord(classTaskRecord);
-			Class<?> AMS = findClass("com.android.server.am.ActivityManagerService", lpparam.classLoader);
-			if(AMS!=null)
-				SystemHooks.hookAMS(AMS);
+				else
+					XposedBridge.log("Failed to get class TaskRecord");
+//			Class<?> AMS = findClass("com.android.server.am.ActivityManagerService", lpparam.classLoader);
+//			if(AMS!=null)
+//				SystemHooks.hookAMS(AMS);
 		}
 		catch (Throwable e){
 			XposedBridge.log("hookActivityRecord failed - Exception");
