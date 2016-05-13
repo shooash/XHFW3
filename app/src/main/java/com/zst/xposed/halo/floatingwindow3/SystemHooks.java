@@ -123,8 +123,10 @@ public class SystemHooks
 //				protected void afterHookedMethod(MethodHookParam param) throws Throwable {
 //					//XposedBridge.log("XHFW RECENTS ITEM CLICKED");
 //					try{
-//						//XposedHelpers.callMethod(param.thisObject, "dismissRecentsToFocusedTaskOrHome", false);
+//						//XposedHelpers.callMethod(param.thisObject, "dismissRecentsToFocusedTaskOrHome", true);
+//						//XposedHelpers.callMethod(param.thisObject, "dismissRecentsToHomeWithoutTransitionAnimation");
 //						XposedHelpers.callMethod(param.thisObject, "finish");
+//						//((Activity) param.thisObject).sendBroadcast(new Intent("action_hide_recents_activity"));
 //						}catch(Throwable t){
 //							XposedBridge.log("hookRecents failed to hide recents");
 //							XposedBridge.log(t);
