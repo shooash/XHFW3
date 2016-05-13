@@ -88,9 +88,11 @@ public class SystemHooks
 					MovableWindow.DEBUG("TaskRecord package: " + packageName);
 					if ((packageName.startsWith("com.android.systemui"))||(packageName.equals("android"))) return;
 					if(param.args==null || param.args.length<MainXposed.mCompatibility.TaskRecord_Intent+1 || param.args[MainXposed.mCompatibility.TaskRecord_Intent]==null || !(param.args[MainXposed.mCompatibility.TaskRecord_Intent] instanceof Intent)) return;
-					Intent mIntent = (Intent) param.args[MainXposed.mCompatibility.TaskRecord_Intent];
-					isMovable = Util.isFlag(mIntent.getFlags(), MainXposed.mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW))
-						|| isPackageMovable(packageName);
+					Intent mIntent = (Intent) Util.getFailsafeObjectFromObject(param.thisObject, "intent");
+					//(Intent) param.args[MainXposed.mCompatibility.TaskRecord_Intent];
+					if(mIntent!=null)
+						isMovable = Util.isFlag(mIntent.getFlags(), MainXposed.mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW));
+					isMovable = isMovable || isPackageMovable(packageName);
 					Integer taskID = Util.getFailsafeIntFromObject(param.thisObject, "taskId");
 					if(taskID==null)
 						return;
