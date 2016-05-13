@@ -24,8 +24,8 @@ public class MovableWindow
 
     public static void DEBUG(String tag){
 //        XposedBridge.log(tag + " Package:[" + (mWindowHolder==null?"null":mWindowHolder.packageName + "] isSnapped: [" + mWindowHolder.isSnapped 
-//						 + "] isMaximized: [" + mWindowHolder.isMaximized + "]")
-//							+ "] isMovable:[" + isMovable );
+//						 + "] isMaximized: [" + mWindowHolder.isMaximized)
+//							+ "] isMovable:[" + isMovable + "]");
 //		if(mWindowHolder!=null) 
 //			XposedBridge.log("      window:[" + mWindowHolder.width + ":" + mWindowHolder.height
 //				+ "] at [" + mWindowHolder.x + ":" + mWindowHolder.y + "]");
