@@ -8,15 +8,10 @@ import com.zst.xposed.halo.floatingwindow3.prefs.*;
 public class Common {
 
 	/* Preference misc */
-	//public static final String THIS_PACKAGE_NAME = Common.class.getPackage().getName();
-	public static final String THIS_PACKAGE_NAME = "com.zst.xposed.halo.floatingwindow";//To keep backwards compatibility we have to use old package name
+	public static final String ORIGINAL_PACKAGE_NAME = "com.zst.xposed.halo.floatingwindow";//To keep backwards compatibility we have to use old package name
 	public static final String THIS_MOD_PACKAGE_NAME = Common.class.getPackage().getName();
 	public static final String PREFERENCE_MAIN_FILE = THIS_MOD_PACKAGE_NAME + "_general";
-//	public static final String PREFERENCE_BLACKLIST_FILE = THIS_MOD_PACKAGE_NAME + "_blacklist";
-//	public static final String PREFERENCE_WHITELIST_FILE = THIS_MOD_PACKAGE_NAME + "_whitelist";
-//	public static final String PREFERENCE_MAXIMIZED_FILE = THIS_MOD_PACKAGE_NAME + "_maximized";
 	public static final String PREFERENCE_PACKAGES_FILE = THIS_MOD_PACKAGE_NAME + "_packages";
-	//public static final String PREFERENCE_STATUSBAR_LAUNCHER_FILE = THIS_MOD_PACKAGE_NAME + "_statusbar_launcher";
 	
 	/* packages types */
 	public static final int PACKAGE_WHITELIST = 1;
@@ -178,9 +173,9 @@ public class Common {
 
 	/* Xposed Constants */
 	public static final int FLAG_FLOATING_WINDOW = 0x00002001; //XHFWMOD NEW DEFAULT FLOATING FLAG not to confuse with official android flags
-	public static final String EXTRA_SNAP_SIDE = THIS_PACKAGE_NAME + ".EXTRA_SNAP_SIDE";
-	public static final String EXTRA_SNAP = THIS_PACKAGE_NAME + ".EXTRA_SNAP"; //int Gravity flags
-	public static final String REFRESH_APP_LAYOUT = THIS_PACKAGE_NAME + ".REFRESH_APP_LAYOUT";
+	public static final String EXTRA_SNAP_SIDE = ORIGINAL_PACKAGE_NAME + ".EXTRA_SNAP_SIDE";
+	public static final String EXTRA_SNAP = ORIGINAL_PACKAGE_NAME + ".EXTRA_SNAP"; //int Gravity flags
+	public static final String REFRESH_APP_LAYOUT = ORIGINAL_PACKAGE_NAME + ".REFRESH_APP_LAYOUT";
 	
 
 	/* Others */
@@ -190,11 +185,11 @@ public class Common {
 	public static final String XDA_THREAD = "http://forum.xda-developers.com/showthread.php?t=2419287";
 
 	/* SystemUI Broadcast */
-	public static final String STATUSBAR_TASKBAR_REFRESH = THIS_PACKAGE_NAME + ".STATUSBAR_TASKBAR_REFRESH";
-	public static final String STATUSBAR_TASKBAR_LAUNCH = THIS_PACKAGE_NAME + ".STATUSBAR_TASKBAR_LAUNCH";
-	public static final String SHOW_OUTLINE = THIS_PACKAGE_NAME + ".SHOW_OUTLINE";
-	public static final String REMOVE_NOTIFICATION_RESTORE = THIS_PACKAGE_NAME + ".REMOVE_NOTIFICATION_RESTORE.";
-	public static final String SEND_MULTIWINDOW_SWIPE = THIS_PACKAGE_NAME + ".SEND_MULTIWINDOW_SWIPE.";
+	public static final String STATUSBAR_TASKBAR_REFRESH = ORIGINAL_PACKAGE_NAME + ".STATUSBAR_TASKBAR_REFRESH";
+	public static final String STATUSBAR_TASKBAR_LAUNCH = ORIGINAL_PACKAGE_NAME + ".STATUSBAR_TASKBAR_LAUNCH";
+	public static final String SHOW_OUTLINE = ORIGINAL_PACKAGE_NAME + ".SHOW_OUTLINE";
+	public static final String REMOVE_NOTIFICATION_RESTORE = ORIGINAL_PACKAGE_NAME + ".REMOVE_NOTIFICATION_RESTORE.";
+	public static final String SEND_MULTIWINDOW_SWIPE = ORIGINAL_PACKAGE_NAME + ".SEND_MULTIWINDOW_SWIPE.";
 	public static final String INTENT_APP_TOKEN = "token";
 	public static final String INTENT_APP_ID = "id";
 	public static final String INTENT_APP_PARAMS = "layout_paramz";
@@ -205,10 +200,10 @@ public class Common {
 	/*Float dot commons*/
 	public static final String FLOAT_DOT_PACKAGE = Common.class.getPackage().getName();
 	public static final String FLOAT_DOT_SERVICE_ACTION = "service.XHFWService";
-	public static final String REFRESH_FLOAT_DOT_POSITION = THIS_PACKAGE_NAME + ".REFRESH_FLOAT_DOT";
+	public static final String REFRESH_FLOAT_DOT_POSITION = ORIGINAL_PACKAGE_NAME + ".REFRESH_FLOAT_DOT";
 	public static final String INTENT_FLOAT_DOT_EXTRA = "float_dot_extra";
 	public static final String INTENT_FLOAT_DOT_BOOL = "float_dot_bool";
-	public static final String SHOW_MULTIWINDOW_DRAGGER = THIS_PACKAGE_NAME + ".SHOW_MULTIWINDOW_DRAGGER";
+	public static final String SHOW_MULTIWINDOW_DRAGGER = ORIGINAL_PACKAGE_NAME + ".SHOW_MULTIWINDOW_DRAGGER";
 
 	/* Titlebar themes */
 	public static final int TITLEBAR_ICON_NONE = 0;
