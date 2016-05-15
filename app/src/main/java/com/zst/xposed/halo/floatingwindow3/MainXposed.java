@@ -41,8 +41,7 @@ public class MainXposed implements IXposedHookLoadPackage, IXposedHookZygoteInit
 	
 	@Override
 	public void handleLoadPackage(final LoadPackageParam lpparam) throws Throwable {
-		// XHFW
-		//TestingSettingHook.handleLoadPackage(lpparam);
+	
 	if(mPref==null) return;
 	mPref.reload();
 	mPackagesList.reload();
@@ -103,6 +102,9 @@ public class MainXposed implements IXposedHookLoadPackage, IXposedHookZygoteInit
 				MovableWindow.fixExceptionWhenResuming(clsAT);
 				} 
 			}catch(Throwable t){XposedBridge.log(t);}
+		
+		// XHFW
+		TestingSettingHook.handleLoadPackage(lpparam);
 		}
 	else if(lpparam.packageName.equals("com.android.systemui")) {//TODO SHOULDN'T HOOK SYSTEMUI
 		try{
