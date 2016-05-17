@@ -118,7 +118,8 @@ public class MovableOverlayView extends RelativeLayout {
 		mTriangle = findViewByIdHelper(this, R.id.movable_corner, "movable_corner");
 		mQuadrant = findViewByIdHelper(this, R.id.movable_quadrant, "movable_quadrant");
 		mBorderOutline = (ImageView) findViewByIdHelper(this, R.id.movable_background, "movable_background");
-		mBorderOutline.bringToFront();
+		if(mBorderOutline!=null)
+			mBorderOutline.bringToFront();
 		
 		// set preferences values
 		mTitleBarIconType = mPref.getInt(Common.KEY_WINDOW_TITLEBAR_ICON_TYPE,

@@ -156,8 +156,10 @@ public class MovableWindow
 					/* remove from window stack */
 					mWindowHolder.mWindows.remove(((Activity)param.thisObject).getWindow());
 					if(mWindowHolder.mWindows.size()<1) {
+						sendRemovedPackageInfo(mWindowHolder.packageName, (Activity)param.thisObject, false);
 						mWindowHolder = null;
 						isMovable=false;
+						
 					}
 					hideFocusFrame(((Activity)param.thisObject).getApplicationContext());
 					return;
@@ -335,6 +337,7 @@ public class MovableWindow
 		connectService();
 		/* set initial layout */
 		setInitLayout();
+		sendPackageInfo();
         return true;
     }
 
@@ -630,6 +633,21 @@ public class MovableWindow
 			if(mWindowHolder.isSnapped)
 				mAeroSnap.updateSnap(mWindowHolder.SnapGravity);
 		} catch (RemoteException e) {}
+	}
+	
+	private static void sendRemovedPackageInfo(String packageName, Context mContext, boolean mCompletely){
+		Intent mIntent = new Intent(Common.ORIGINAL_PACKAGE_NAME + ".APP_REMOVED");
+		mIntent.putExtra("packageName", packageName);
+		mIntent.putExtra("removeCompletely", mCompletely);
+		mContext.getApplicationContext().sendBroadcast(mIntent);
+	}
+	
+	private static void sendPackageInfo(){
+		Intent mIntent = new Intent(Common.ORIGINAL_PACKAGE_NAME + ".APP_LAUNCHED");
+		mIntent.putExtra("packageName", mWindowHolder.packageName);
+		mIntent.putExtra("float-gravity", mWindowHolder.SnapGravity);
+		mIntent.putExtra("float-taskid", mWindowHolder.mActivity.getTaskId());
+		mWindowHolder.mActivity.getApplicationContext().sendBroadcast(mIntent);
 	}
 
 	/***********************************************************/

@@ -10,6 +10,7 @@ import android.media.*;
 import java.lang.annotation.*;
 import android.widget.TableLayout.*;
 import com.zst.xposed.halo.floatingwindow3.*;
+import android.graphics.drawable.*;
 
 public class FloatingDot implements Runnable
 {
@@ -27,6 +28,7 @@ public class FloatingDot implements Runnable
 	private int mScreenHeight;
 	private int mCircleDiameter = 26;
 	private int lastOrientation;
+	private boolean mMoved;
 	//private boolean secondTouch = false;
 	//private long checkTime;
 	//private long checkBroadcastTime;
@@ -50,10 +52,12 @@ public class FloatingDot implements Runnable
 	int mColor = Color.BLACK;
 	boolean mViewOn = false;
 	int[] coordinates = new int[2];
+	FloatLauncher mFloatLauncher;
 
     public FloatingDot(Context sContext) {
 		mContext = sContext;
 		mCircleDiameter = Util.realDp(mCircleDiameter, mContext);
+		mFloatLauncher = new FloatLauncher(mContext);
 	}
 
 
@@ -90,11 +94,17 @@ public class FloatingDot implements Runnable
 		paramsF.windowAnimations = android.R.style.Animation_Translucent;
 		setLayout();
 		registerListener();
-
+		//image.setOnClickListener(menuLauncher);
 		mWindowManager.addView(image, paramsF);
 		mViewOn = true;
 		//sendPosition(image);
 	}
+
+	private void menuLauncher(View anchor) {
+			mFloatLauncher.showMenu(anchor, paramsF, mCircleDiameter);
+		}
+	
+	//private void fillMenu(PopupMenu menu)
 
 	public void hideDragger(){
 		hideDragger(image);
@@ -123,6 +133,7 @@ public class FloatingDot implements Runnable
 								initialY = paramsF.y;
 								initialTouchX = event.getRawX();
 								initialTouchY = event.getRawY();
+								
 								//checkTime = SystemClock.uptimeMillis();
 								break;
 							case MotionEvent.ACTION_UP:
@@ -130,6 +141,10 @@ public class FloatingDot implements Runnable
 								//else {
 								//mWindowManager.removeView(v);
 								sendPosition(v);
+								if(Math.abs(coordinates[0] - initialTouchX)<mCircleDiameter/2 && Math.abs(coordinates[1] - initialTouchY) < mCircleDiameter/2){
+									menuLauncher(v);
+									break;
+								}
 //								if(SystemClock.uptimeMillis()-checkTime>3000){
 //									hideDragger(v);
 //									return false;
@@ -141,13 +156,16 @@ public class FloatingDot implements Runnable
 								//}
 								break;
 							case MotionEvent.ACTION_MOVE:
+								
 								paramsF.x = initialX + (int) (event.getRawX() - initialTouchX);
 								paramsF.y = initialY + (int) (event.getRawY() - initialTouchY);
+								
 								coordinates[0] = paramsF.x;
 								coordinates[1] = paramsF.y;
 								mWindowManager.updateViewLayout(v, paramsF);
 								//checkTime = SystemClock.uptimeMillis();
 								//sendPosition(v);
+								mMoved = true;
 								break;
 						}
 						return false;

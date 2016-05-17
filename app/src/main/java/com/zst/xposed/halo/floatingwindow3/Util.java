@@ -20,6 +20,9 @@ import android.app.*;
 import android.view.*;
 import android.content.res.*;
 import de.robv.android.xposed.*;
+import android.util.*;
+import android.content.*;
+import android.preference.*;
 
 
 public class Util
@@ -186,7 +189,35 @@ public class Util
 		}
 		return (result!=null);
 		}
-		
 	
-
+	public static int getStatusBarHeight(Context mContext){
+		int result = 0;
+		int resourceId = mContext.getResources().getIdentifier("status_bar_height", "dimen", "android");
+		if (resourceId > 0)
+			result = mContext.getResources().getDimensionPixelSize(resourceId);
+		return result;
+	}
+	
+	public static boolean moveToFront(Context mContext, int taskId){
+		ActivityManager mActivityManager = (ActivityManager) mContext
+			.getSystemService(Context.ACTIVITY_SERVICE);
+		try {
+			mActivityManager.moveTaskToFront(taskId, ActivityManager.MOVE_TASK_NO_USER_ACTION);
+		} catch (Exception e) {
+			Log.e("Xposed", "Cannot move task to front", e);
+			return false;
+		}
+		return true;
+	}
+	
+	public static void startApp(Context mContext, String mPackageName){
+		final Intent intent = new Intent(mContext.getPackageManager()
+										  .getLaunchIntentForPackage(mPackageName));
+		if(intent==null) return;
+		//TODO add load shared prefs
+		SharedPreferences mSPrefs = mContext.getSharedPreferences(Common.PREFERENCE_MAIN_FILE, mContext.MODE_WORLD_READABLE);
+		int floatFlag = mSPrefs.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW);
+		intent.addFlags(floatFlag);
+		mContext.startActivity(intent);
+	}
 }
