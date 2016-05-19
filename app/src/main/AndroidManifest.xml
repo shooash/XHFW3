@@ -10,6 +10,7 @@
         android:targetSdkVersion="21" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.REORDER_TASKS" />
+	<uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <application
         android:allowBackup="true"
@@ -63,6 +64,11 @@
                 <action android:name="android.intent.action.MAIN" />
             </intent-filter>
         </activity>
+		<receiver android:name="com.zst.xposed.halo.floatingwindow3.floatdot.BootReceiver">  
+			<intent-filter>  
+				<action android:name="android.intent.action.BOOT_COMPLETED" />  
+			</intent-filter>  
+		</receiver>
 		<service android:name="com.zst.xposed.halo.floatingwindow3.floatdot.XHFWService" android:process=":remote" >
 			<intent-filter>
 				<action android:name="service.XHFWService" />

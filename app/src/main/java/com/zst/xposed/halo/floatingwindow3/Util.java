@@ -214,7 +214,6 @@ public class Util
 		final Intent intent = new Intent(mContext.getPackageManager()
 										  .getLaunchIntentForPackage(mPackageName));
 		if(intent==null) return;
-		//TODO add load shared prefs
 		SharedPreferences mSPrefs = mContext.getSharedPreferences(Common.PREFERENCE_MAIN_FILE, mContext.MODE_WORLD_READABLE);
 		int floatFlag = mSPrefs.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW);
 		intent.addFlags(floatFlag);

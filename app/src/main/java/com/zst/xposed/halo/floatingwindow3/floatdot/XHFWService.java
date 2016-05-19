@@ -22,14 +22,24 @@ public class XHFWService extends Service {
 	public static final String INTENT_FLOAT_DOT_BOOL = Common.INTENT_FLOAT_DOT_BOOL;
 	static Class<?> classSvcMgr;
 	public FloatingDot fd = null;
+	private LauncherDot ld = null;
 	private int cachedRotation = 0;
+	private FloatLauncher mFloatLauncher;
 
 	@Override
 	public void onCreate()
 	{
 		// TODO: Implement this method
 		//fd = new FloatingDot(getApplicationContext());
+		mContext = this;
+		mFloatLauncher = new FloatLauncher(mContext);
+		cachedRotation = Util.getDisplayRotation(this);
+		if(ld==null){
+			ld = new LauncherDot(mContext, mFloatLauncher);
+			ld.putDragger();
+			}
 		super.onCreate();
+		Log.d("Xposed", "Service XHFW onCreate");
 	}
 	
 	/*public XHFWService(Context sContext){
@@ -45,12 +55,12 @@ public class XHFWService extends Service {
 		
 		//fd.putDragger();
 		//toggle(true);
-		mContext = this;
-		cachedRotation = Util.getDisplayRotation(this);
+		//mContext = this;
+		
 		
 		if(fd==null) 
 		{
-			fd = new FloatingDot(mContext);
+			fd = new FloatingDot(mContext, mFloatLauncher);
 			fd.putDragger();
 			registerBroadcast();
 			}
@@ -85,6 +95,7 @@ public class XHFWService extends Service {
 			if(!sIntent.getAction().equals(SHOW_MULTIWINDOW_DRAGGER)) return;
 			boolean show = sIntent.getBooleanExtra(INTENT_FLOAT_DOT_BOOL, false);
 			fd.showDragger(show);
+			ld.showDragger(!show);
 		}
 	};
 	

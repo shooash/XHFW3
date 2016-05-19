@@ -1,28 +1,16 @@
 package com.zst.xposed.halo.floatingwindow3.floatdot;
 import android.view.*;
 import android.widget.*;
-import android.app.*;
+import com.zst.xposed.halo.floatingwindow3.*;
 import android.graphics.*;
-import android.os.*;
 import android.content.*;
 import android.util.*;
-import android.media.*;
-import java.lang.annotation.*;
-import android.widget.TableLayout.*;
-import com.zst.xposed.halo.floatingwindow3.*;
-import android.graphics.drawable.*;
+import android.view.animation.*;
 
-public class FloatingDot implements Runnable
+public class LauncherDot
 {
-
-	@Override
-	public void run()
-	{
-		putDragger();
-		//Toast.makeText(mContext, "toogleDragger", Toast.LENGTH_SHORT).show();
-	}
-
-    private WindowManager mWindowManager;
+	
+	private WindowManager mWindowManager;
     private ImageView image;
 	private int mScreenWidth;
 	private int mScreenHeight;
@@ -48,13 +36,14 @@ public class FloatingDot implements Runnable
 		WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH |
 		WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
 		PixelFormat.TRANSLUCENT);
+	
 	Context mContext;
 	int mColor = Color.BLACK;
 	boolean mViewOn = false;
 	int[] coordinates = new int[2];
 	FloatLauncher mFloatLauncher;
 
-    public FloatingDot(Context sContext, FloatLauncher sFloatLauncher) {
+    public LauncherDot(Context sContext, FloatLauncher sFloatLauncher) {
 		mContext = sContext;
 		mCircleDiameter = Util.realDp(mCircleDiameter, mContext);
 		mFloatLauncher = sFloatLauncher;
@@ -63,12 +52,13 @@ public class FloatingDot implements Runnable
 
 	private void setLayout(){
 		refreshScreenSize();
-		coordinates = new int[] {(mScreenWidth / 2) - (mCircleDiameter / 2),(mScreenHeight / 2) - (mCircleDiameter / 2)};
+		coordinates = new int[] {(mScreenWidth / 4 * 3) - (mCircleDiameter / 2),(mScreenHeight / 4) - (mCircleDiameter / 2)};
 		paramsF.x = coordinates[0];
 		paramsF.y = coordinates[1];
 		paramsF.width = mCircleDiameter;
 		paramsF.height = mCircleDiameter;
 		paramsF.alpha = 0.5f;
+		
 		lastOrientation = Util.getScreenOrientation(mContext);
 	}
 
@@ -85,9 +75,9 @@ public class FloatingDot implements Runnable
 		// image.setImageResource(R.drawable.multiwindow_dragger_press_ud);
 		//image.setBackgroundResource(R.drawable.multiwindow_dragger_press_ud);
 		//image.setImageDrawable(Util.makeCircle(mColor, mCircleDiameter));
-		image.setImageDrawable(Util.makeDoubleCircle(mColor, Color.RED, mCircleDiameter, mCircleDiameter/3));
+		image.setImageDrawable(Util.makeDoubleCircle(mColor, Color.GREEN, mCircleDiameter, mCircleDiameter/4));
 
-		image.setVisibility(View.INVISIBLE);
+		//image.setVisibility(View.INVISIBLE);
         mWindowManager = (WindowManager)mContext.getSystemService(Context.WINDOW_SERVICE);
 
         paramsF.gravity = Gravity.TOP | Gravity.LEFT;
@@ -101,9 +91,9 @@ public class FloatingDot implements Runnable
 	}
 
 	private void menuLauncher(View anchor) {
-			mFloatLauncher.showMenu(anchor, paramsF, mCircleDiameter);
-		}
-	
+		mFloatLauncher.showMenu(anchor, paramsF, mCircleDiameter);
+	}
+
 	//private void fillMenu(PopupMenu menu)
 
 	public void hideDragger(){
@@ -129,18 +119,24 @@ public class FloatingDot implements Runnable
 					public boolean onTouch(View v, MotionEvent event) {
 						switch(event.getAction()){
 							case MotionEvent.ACTION_DOWN:
+								int x = (int) event.getRawX();
+								int y = (int) event.getRawY();
+								if(x<paramsF.x || x>paramsF.x+mCircleDiameter 
+									|| y < paramsF.y || y > paramsF.y+mCircleDiameter)
+									mFloatLauncher.popupWin.dismiss();
 								initialX = paramsF.x;
 								initialY = paramsF.y;
 								initialTouchX = event.getRawX();
 								initialTouchY = event.getRawY();
-								
+
 								//checkTime = SystemClock.uptimeMillis();
 								break;
 							case MotionEvent.ACTION_UP:
 								//if(!secondTouch) secondTouch = true;
 								//else {
 								//mWindowManager.removeView(v);
-								sendPosition(v);
+								//moveAnim(v, 100, 100);
+								getAbsoluteCoordinates(v);
 								if(Math.abs(coordinates[0] - initialTouchX)<mCircleDiameter/2 && Math.abs(coordinates[1] - initialTouchY) < mCircleDiameter/2){
 									menuLauncher(v);
 									break;
@@ -156,10 +152,10 @@ public class FloatingDot implements Runnable
 								//}
 								break;
 							case MotionEvent.ACTION_MOVE:
-								
+
 								paramsF.x = initialX + (int) (event.getRawX() - initialTouchX);
 								paramsF.y = initialY + (int) (event.getRawY() - initialTouchY);
-								
+
 								coordinates[0] = paramsF.x;
 								coordinates[1] = paramsF.y;
 								mWindowManager.updateViewLayout(v, paramsF);
@@ -199,9 +195,8 @@ public class FloatingDot implements Runnable
 		paramsF.y = heightPercent*mScreenHeight/100;
 		//coordinates = new int[]{coordinates[Util.rollInt(0,1,-rotation)], coordinates[Util.rollInt(0,1,-rotation+1)]};
 		mWindowManager.updateViewLayout(image, paramsF);
-		sendPosition(image);
 	}
-	
+
 	public void rotatePositionByOrientation(){
 		int newOrientation = Util.getScreenOrientation(mContext);
 		if(newOrientation==lastOrientation) return;
@@ -217,27 +212,8 @@ public class FloatingDot implements Runnable
 		coordinates[0] = newx;
 		coordinates[1] = newy;
 		mWindowManager.updateViewLayout(image, lp);
-		sendPosition(coordinates);
-	}
-	
-//	public void sendPosition(){
-//		sendPosition(new int[]{paramsF.x+mCircleDiameter/2,paramsF.y+mCircleDiameter/2});
-//	}
-//
-	public void sendPosition(View v){
-		sendPosition(getAbsoluteCoordinates(v));
 	}
 
-	public void sendPosition(int[] coordinates){
-
-		//if(SystemClock.uptimeMillis() - checkBroadcastTime < 250) return;
-		//checkBroadcastTime = SystemClock.uptimeMillis();
-		Intent intent = new Intent(REFRESH_FLOAT_DOT_POSITION);
-
-		intent.putExtra(INTENT_FLOAT_DOT_EXTRA, coordinates);
-		// set package so this is broadcasted only to our own package
-		mContext.sendBroadcast(intent);
-	}
 
 	private void refreshScreenSize(){
 		//final WindowManager wm = (WindowManager) mActivity.getSystemService(Context.WINDOW_SERVICE);
@@ -246,6 +222,32 @@ public class FloatingDot implements Runnable
 
 		mScreenHeight = metrics.heightPixels;
 		mScreenWidth = metrics.widthPixels;
+	}
+	
+	private void moveAnim(final View view, final int amountToMoveRight, final int amountToMoveDown){
+		view.animate().x(50).y(100);
+//		TranslateAnimation anim = new TranslateAnimation(0, amountToMoveRight, 0, amountToMoveDown);
+//		anim.setDuration(1000);
+//
+//		anim.setAnimationListener(new TranslateAnimation.AnimationListener() {
+//
+//				@Override
+//				public void onAnimationStart(Animation animation) { }
+//
+//				@Override
+//				public void onAnimationRepeat(Animation animation) { }
+//
+//				@Override
+//				public void onAnimationEnd(Animation animation) 
+//				{
+//					FrameLayout.LayoutParams params = (FrameLayout.LayoutParams)view.getLayoutParams();
+//					params.topMargin += amountToMoveDown;
+//					params.leftMargin += amountToMoveRight;
+//					view.setLayoutParams(params);
+//				}
+//			});
+//
+//		view.startAnimation(anim);
 	}
 
 }

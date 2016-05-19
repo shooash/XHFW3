@@ -23,6 +23,7 @@ public class FloatLauncher
 	int MINIMAL_HEIGHT;
 	ArrayList<PackageItem> itemsList = new ArrayList<PackageItem>();
 	ArrayList<String> itemsIndex = new ArrayList<String>();
+	public PopupWindow popupWin = new PopupWindow();
 	
 	public FloatLauncher(Context sContext){
 		mContext = sContext;
@@ -31,33 +32,26 @@ public class FloatLauncher
 		//fillMenu(itemsList);
 	}
 	
+	
+	
 	public void showMenu(View anchor, WindowManager.LayoutParams paramsF, int offset){
+		if(popupWin.isShowing()) {
+			popupWin.dismiss();
+			return;
+		}
 		refreshScreenSize();
 		refreshMinimalSize();
 		ListView lv = new ListView(mContext);
-//		String[] values = new String[] { "Android List View", 
-//			"Adapter implementation",
-//			"Simple List View In Android",
-//			"Create List View Android", 
-//			"Android Example", 
-//			"List View Source Code", 
-//			"List View Array Adapter", 
-//			"Android Example List View" 
-//		};
-//		ArrayAdapter<String> adapter = new ArrayAdapter<String>(mContext,
-//			android.R.layout.simple_list_item_1, android.R.id.text1, values);
-		PopupWindow popupWin = new PopupWindow();
 		LauncherListAdapter adapter = new LauncherListAdapter(mContext, itemsList, popupWin);
 		lv.setAdapter(adapter);
-		int width = lv.getWidth();
-		int height = lv.getHeight();
-		boolean putLeft = false;
+		
 		
 		popupWin.setContentView(lv);
 		popupWin.setWidth(WindowManager.LayoutParams.WRAP_CONTENT);
 		popupWin.setHeight(MINIMAL_HEIGHT);
-		width = View.MeasureSpec.getSize(popupWin.getWidth());
-		height = View.MeasureSpec.getSize(popupWin.getHeight());
+		int width = View.MeasureSpec.getSize(popupWin.getWidth());
+		int height = View.MeasureSpec.getSize(popupWin.getHeight());
+		boolean putLeft = false;
 		if(width>mScreenWidth-paramsF.x-offset || width == 0)
 			width = mScreenWidth-paramsF.x-offset;
 		if(height > mScreenHeight/3 || height == 0)
@@ -70,7 +64,7 @@ public class FloatLauncher
 //			height=MINIMAL_HEIGHT;
 		popupWin.setWidth(MINIMAL_WIDTH);
 		popupWin.setHeight(WindowManager.LayoutParams.WRAP_CONTENT);
-		popupWin.setOutsideTouchable(true);
+		//popupWin.setOutsideTouchable(true);
 		popupWin.setClippingEnabled(true);
 		ColorDrawable cd = new ColorDrawable(Color.parseColor("#AA333333"));
 		popupWin.setBackgroundDrawable(cd);
