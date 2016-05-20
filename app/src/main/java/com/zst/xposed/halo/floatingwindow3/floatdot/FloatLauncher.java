@@ -12,6 +12,7 @@ import de.robv.android.xposed.*;
 import android.content.pm.*;
 import android.content.pm.PackageManager.*;
 import android.app.*;
+import android.os.*;
 
 public class FloatLauncher
 {
@@ -24,6 +25,7 @@ public class FloatLauncher
 	ArrayList<PackageItem> itemsList = new ArrayList<PackageItem>();
 	ArrayList<String> itemsIndex = new ArrayList<String>();
 	public PopupWindow popupWin = new PopupWindow();
+	public long dismissedTime;
 	
 	public FloatLauncher(Context sContext){
 		mContext = sContext;
@@ -64,12 +66,18 @@ public class FloatLauncher
 //			height=MINIMAL_HEIGHT;
 		popupWin.setWidth(MINIMAL_WIDTH);
 		popupWin.setHeight(WindowManager.LayoutParams.WRAP_CONTENT);
-		//popupWin.setOutsideTouchable(true);
+		popupWin.setOutsideTouchable(true);
 		popupWin.setClippingEnabled(true);
 		ColorDrawable cd = new ColorDrawable(Color.parseColor("#AA333333"));
 		popupWin.setBackgroundDrawable(cd);
 		popupWin.setWindowLayoutType(WindowManager.LayoutParams.TYPE_APPLICATION_ATTACHED_DIALOG);
-		
+		popupWin.setOnDismissListener(new PopupWindow.OnDismissListener(){
+				@Override
+				public void onDismiss()
+				{
+					dismissedTime = SystemClock.uptimeMillis();
+				}
+		});
 		int x = putLeft? paramsF.x-width: paramsF.x+offset;
 		int y = paramsF.y/*+offset-Util.getStatusBarHeight(mContext)*/-mScreenHeight/2; //-height/2;
 		popupWin.showAtLocation(anchor, Gravity.CENTER_VERTICAL | Gravity.LEFT, x, y);

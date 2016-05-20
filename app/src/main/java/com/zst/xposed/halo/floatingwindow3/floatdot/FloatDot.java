@@ -5,12 +5,11 @@ import com.zst.xposed.halo.floatingwindow3.*;
 import android.graphics.*;
 import android.content.*;
 import android.util.*;
-import android.view.animation.*;
 import android.os.*;
 
-public class LauncherDot
+public class FloatDot
 {
-	
+
 	private WindowManager mWindowManager;
     private ImageView image;
 	private int mScreenWidth;
@@ -18,6 +17,10 @@ public class LauncherDot
 	private int mCircleDiameter = 26;
 	private int lastOrientation;
 	private boolean mMoved;
+	private float mAlpha = Common.DEFAULT_FLOATDOT_ALPHA;
+	private boolean mPrefCommunication = true;
+	public boolean isDrawableRes = false;
+	public int mDrawableRes;
 	//private boolean secondTouch = false;
 	//private long checkTime;
 	//private long checkBroadcastTime;
@@ -26,7 +29,15 @@ public class LauncherDot
 
 	public static final String REFRESH_FLOAT_DOT_POSITION = Common.REFRESH_FLOAT_DOT_POSITION;
 	public static final String INTENT_FLOAT_DOT_EXTRA = Common.INTENT_FLOAT_DOT_EXTRA;
-
+	private int TOUCH_SENSITIVITY;
+	private final Context mContext;
+	public int mColor = Color.BLACK;
+	public int mColorInner = Color.BLACK;
+	private boolean mViewOn = false;
+	private Point mCoordinates = new Point((mScreenWidth / 2) - (mCircleDiameter / 2),(mScreenHeight / 2) - (mCircleDiameter / 2));
+	//private int[] coordinates = new int[] {(mScreenWidth / 2) - (mCircleDiameter / 2),(mScreenHeight / 2) - (mCircleDiameter / 2)};
+	private FloatLauncher mFloatLauncher;
+	
 	final WindowManager.LayoutParams paramsF = new WindowManager.LayoutParams(
 		mCircleDiameter,
 		mCircleDiameter,
@@ -37,58 +48,123 @@ public class LauncherDot
 		WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH |
 		WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
 		PixelFormat.TRANSLUCENT);
-	
-	Context mContext;
-	int mColor = Color.BLACK;
-	boolean mViewOn = false;
-	int[] coordinates = new int[2];
-	FloatLauncher mFloatLauncher;
 
-    public LauncherDot(Context sContext, FloatLauncher sFloatLauncher) {
+	public FloatDot(Context sContext, FloatLauncher sFloatLauncher, int sCircleDiameter, int initx, int inity, int sColor, int sColorInner){
+		mContext = sContext;
+		mFloatLauncher = sFloatLauncher;
+		mCircleDiameter = Util.realDp(sCircleDiameter, mContext);
+		TOUCH_SENSITIVITY = mCircleDiameter/2;
+		mColor = sColor;
+		mColorInner = sColorInner;
+		mCoordinates.x = initx;
+		mCoordinates.y = inity;
+		image = new ImageView(mContext);
+	}
+	
+    public FloatDot(Context sContext, FloatLauncher sFloatLauncher) {
 		mContext = sContext;
 		mCircleDiameter = Util.realDp(mCircleDiameter, mContext);
 		mFloatLauncher = sFloatLauncher;
+		TOUCH_SENSITIVITY = mCircleDiameter/2;
+		image = new ImageView(mContext);
 	}
-
-
-	private void setLayout(){
-		refreshScreenSize();
-		coordinates = new int[] {(mScreenWidth / 4 * 3) - (mCircleDiameter / 2),(mScreenHeight / 4) - (mCircleDiameter / 2)};
-		paramsF.x = coordinates[0];
-		paramsF.y = coordinates[1];
+	
+	public void setColor(int sColor, int sColorInner){
+		mColor = sColor;
+		mColorInner = sColorInner;
+	}
+	
+	public void setColor(int sColor){
+		mColor = sColor;
+		mColorInner = sColor;
+	}
+	
+	public void setColor(int newcolor, boolean inner){
+		if(inner)
+			mColorInner = newcolor;
+		else
+			mColor = newcolor;
+	}
+	
+	public void redrawView(){
+		//updateDot();
+		if(!isDrawableRes) image.setImageDrawable(Util.makeDoubleCircle(mColor, mColorInner, mCircleDiameter, mCircleDiameter/4));
+		paramsF.x = mCoordinates.x;
+		paramsF.y = mCoordinates.y;
 		paramsF.width = mCircleDiameter;
 		paramsF.height = mCircleDiameter;
-		paramsF.alpha = 0.5f;
+		paramsF.alpha = mAlpha;
+		mWindowManager.updateViewLayout(image, paramsF);
 		
-		lastOrientation = Util.getScreenOrientation(mContext);
 	}
-
+	
+	public void setAlpha(float sAlpha){
+		if(sAlpha!=0)
+			mAlpha = sAlpha;
+	}
+	
+	public void setPosition(int x, int y){
+		mCoordinates.x = x;
+		mCoordinates.y = y;
+	}
+	
+	public void setDrawableResource(int res){
+		mDrawableRes = res;
+		isDrawableRes = true;
+	}
+	
+	public void setSize(int sCircleDiameter){
+		mCircleDiameter = Util.realDp(sCircleDiameter, mContext);
+		TOUCH_SENSITIVITY = mCircleDiameter/2;
+	}
+	
+	public void enableCommunication(){
+		mPrefCommunication = true;
+	}
+	
 	public void showDragger(boolean show){
-		if(show) image.setVisibility(View.VISIBLE);
-		else
-			image.setVisibility(View.INVISIBLE);
-		//mWindowManager.updateViewLayout(image, paramsF);
+		image.setVisibility(show?View.VISIBLE:View.INVISIBLE);
 	}
 
 	public void putDragger(){
 		//if(mViewOn) return;
-		image = new ImageView(mContext);
-		// image.setImageResource(R.drawable.multiwindow_dragger_press_ud);
-		//image.setBackgroundResource(R.drawable.multiwindow_dragger_press_ud);
-		//image.setImageDrawable(Util.makeCircle(mColor, mCircleDiameter));
-		image.setImageDrawable(Util.makeDoubleCircle(mColor, Color.GREEN, mCircleDiameter, mCircleDiameter/4));
-
-		//image.setVisibility(View.INVISIBLE);
+		
+		if(isDrawableRes)
+			image.setImageResource(mDrawableRes);
+		else
+			image.setImageDrawable(Util.makeDoubleCircle(mColor, mColorInner, mCircleDiameter, mCircleDiameter/4));
+		image.setVisibility(View.INVISIBLE);
         mWindowManager = (WindowManager)mContext.getSystemService(Context.WINDOW_SERVICE);
-
         paramsF.gravity = Gravity.TOP | Gravity.LEFT;
 		paramsF.windowAnimations = android.R.style.Animation_Translucent;
 		setLayout();
 		registerListener();
-		//image.setOnClickListener(menuLauncher);
 		mWindowManager.addView(image, paramsF);
 		mViewOn = true;
-		//sendPosition(image);
+		if(mPrefCommunication)
+			sendPosition(image);
+	}
+	
+	public void removeDot(){
+		mWindowManager.removeView(image);
+	}
+	
+	public void updateDot(){
+		boolean show = image.getVisibility()==View.VISIBLE;
+		removeDot();
+		setLayout();
+		putDragger();
+		showDragger(show);
+	}
+	
+	private void setLayout(){
+		refreshScreenSize();
+		paramsF.x = mCoordinates.x;
+		paramsF.y = mCoordinates.y;
+		paramsF.width = mCircleDiameter;
+		paramsF.height = mCircleDiameter;
+		paramsF.alpha = mAlpha;
+		lastOrientation = Util.getScreenOrientation(mContext);
 	}
 
 	private void menuLauncher(View anchor) {
@@ -139,31 +215,20 @@ public class LauncherDot
 								//else {
 								//mWindowManager.removeView(v);
 								//moveAnim(v, 100, 100);
-								getAbsoluteCoordinates(v);
-								if(Math.abs(coordinates[0] - initialTouchX)<mCircleDiameter/2 && Math.abs(coordinates[1] - initialTouchY) < mCircleDiameter/2){
+								//getAbsoluteCoordinates(v);
+								if(Math.abs(mCoordinates.x + mCircleDiameter/2 - initialTouchX)<mCircleDiameter/2 && Math.abs(mCoordinates.y + mCircleDiameter/2 - initialTouchY) < TOUCH_SENSITIVITY)
 									menuLauncher(v);
-									break;
-								}
-//								if(SystemClock.uptimeMillis()-checkTime>3000){
-//									hideDragger(v);
-//									return false;
-//								}
-								//setLayout();
-								//putDragger();
-								//secondTouch = false;
-
-								//}
 								break;
 							case MotionEvent.ACTION_MOVE:
-
 								paramsF.x = initialX + (int) (event.getRawX() - initialTouchX);
 								paramsF.y = initialY + (int) (event.getRawY() - initialTouchY);
 
-								coordinates[0] = paramsF.x;
-								coordinates[1] = paramsF.y;
+								mCoordinates.x = paramsF.x;
+								mCoordinates.y = paramsF.y;
 								mWindowManager.updateViewLayout(v, paramsF);
 								//checkTime = SystemClock.uptimeMillis();
-								//sendPosition(v);
+								if(mPrefCommunication)
+									sendPosition(v);
 								mMoved = true;
 								break;
 						}
@@ -183,6 +248,7 @@ public class LauncherDot
 	}
 
 	public int[] getAbsoluteCoordinates(View v){
+		int[] coordinates = new int[2];
 		refreshScreenSize();
 		v.getLocationOnScreen(coordinates);
 		coordinates[0]+= mCircleDiameter/2;
@@ -204,19 +270,25 @@ public class LauncherDot
 		int newOrientation = Util.getScreenOrientation(mContext);
 		if(newOrientation==lastOrientation) return;
 		lastOrientation = newOrientation;
-		//if(View.GONE == image.getVisibility()) return;
-//		int newx = coordinates[1]; // paramsF.y;
-//		int newy = coordinates[0]; // paramsF.x;
 		WindowManager.LayoutParams lp = (WindowManager.LayoutParams)image.getLayoutParams();
 		int newx = lp.y; // paramsF.y;
 		int newy = lp.x; // paramsF
 		lp.x = newx;
 		lp.y = newy;
-		coordinates[0] = newx;
-		coordinates[1] = newy;
+		mCoordinates.x = newx;
+		mCoordinates.y = newy;
 		mWindowManager.updateViewLayout(image, lp);
 	}
 
+	public void sendPosition(View v){
+		sendPosition(getAbsoluteCoordinates(v));
+	}
+
+	public void sendPosition(int[] coordinates){
+		Intent intent = new Intent(REFRESH_FLOAT_DOT_POSITION);
+		intent.putExtra(INTENT_FLOAT_DOT_EXTRA, coordinates);
+		mContext.sendBroadcast(intent);
+	}
 
 	private void refreshScreenSize(){
 		//final WindowManager wm = (WindowManager) mActivity.getSystemService(Context.WINDOW_SERVICE);
@@ -226,7 +298,7 @@ public class LauncherDot
 		mScreenHeight = metrics.heightPixels;
 		mScreenWidth = metrics.widthPixels;
 	}
-	
+
 	private void moveAnim(final View view, final int amountToMoveRight, final int amountToMoveDown){
 		view.animate().x(50).y(100);
 //		TranslateAnimation anim = new TranslateAnimation(0, amountToMoveRight, 0, amountToMoveDown);

@@ -219,4 +219,11 @@ public class Util
 		intent.addFlags(floatFlag);
 		mContext.startActivity(intent);
 	}
+	
+	public static Point getScreenSize(Context mContext){
+		final WindowManager mWindowManager = (WindowManager) mContext.getApplicationContext().getSystemService(Context.WINDOW_SERVICE);
+		final DisplayMetrics metrics = new DisplayMetrics();
+		mWindowManager.getDefaultDisplay().getMetrics(metrics);
+		return new Point(metrics.widthPixels, metrics.heightPixels);
+	}
 }

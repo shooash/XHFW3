@@ -11,14 +11,14 @@ import android.preference.PreferenceFragment;
 import com.zst.xposed.halo.floatingwindow3.Common;
 import com.zst.xposed.halo.floatingwindow3.R;
 
-public class OverlayFragment extends PreferenceFragment {
+public class FloatDotFragment extends PreferenceFragment {
 
-	static OverlayFragment mInstance;
+	static FloatDotFragment mInstance;
 	SharedPreferences mPref;
 
-	public static OverlayFragment getInstance() {
+	public static FloatDotFragment getInstance() {
 		if (mInstance == null) {
-			mInstance = new OverlayFragment();
+			mInstance = new FloatDotFragment();
 		}
 		return mInstance;
 	}
@@ -29,24 +29,7 @@ public class OverlayFragment extends PreferenceFragment {
 		super.onCreate(savedInstanceState);
 		getPreferenceManager().setSharedPreferencesName(Common.PREFERENCE_MAIN_FILE);
 		getPreferenceManager().setSharedPreferencesMode(PreferenceActivity.MODE_WORLD_READABLE);
-		addPreferencesFromResource(R.xml.pref_overlay);
-		findPreference("titlebar_theme").setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
-				@Override
-				public boolean onPreferenceClick(Preference preference) {
-					getActivity().startActivity(new Intent(getActivity(), TitleBarSettingsActivity.class));
-					return false;
-				}
-			});
-		findPreference("floatdot_theme").setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
-				@Override
-				public boolean onPreferenceClick(Preference preference) {
-					Intent intent = new Intent();
-					intent.setClass(getActivity(), FloatDotActivity.class);
-					startActivityForResult(intent, 0); 
-					
-					return false;
-				}
-			});
+		addPreferencesFromResource(R.xml.pref_floatdot);
 		mPref = getActivity().getSharedPreferences(Common.PREFERENCE_MAIN_FILE,
 												   PreferenceActivity.MODE_WORLD_READABLE);
 	}

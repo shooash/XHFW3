@@ -212,6 +212,27 @@ public class Common {
 	public static final int TITLEBAR_ICON_SSNJR2002 = 3;
 	public static final int TITLEBAR_ICON_DEFAULT = TITLEBAR_ICON_BachMinuetInG;
 
+	/*Floating dot themes */
+	public static final String KEY_FLOATDOT_LAUNCHER_ENABLED = "floatdot_launcher_enabled";
+	public static final boolean DEFAULT_FLOATDOT_LAUNCHER_ENABLED = true;
+	public static final String KEY_FLOATDOT_COLOR_OUTER1 = "floatdot_color_outer1";
+	public static final String DEFAULT_FLOATDOT_COLOR_OUTER1 = "000000";
+	public static final String KEY_FLOATDOT_COLOR_INNER1 = "floatdot_color_inner1";
+	public static final String DEFAULT_FLOATDOT_COLOR_INNER1 = "008080";
+	public static final String KEY_FLOATDOT_COLOR_OUTER2 = "floatdot_color_outer2";
+	public static final String DEFAULT_FLOATDOT_COLOR_OUTER2 = "000000";
+	public static final String KEY_FLOATDOT_COLOR_INNER2 = "floatdot_color_inner2";
+	public static final String DEFAULT_FLOATDOT_COLOR_INNER2 = "00FF00";
+	public static final String KEY_FLOATDOT_SIZE = "floatdot_size";
+	public static final int DEFAULT_FLOATDOT_SIZE = 26;
+	public static final String KEY_FLOATDOT_SINGLE_COLOR_SNAP = "floatdot_single_color_snap";
+	public static final boolean DEFAULT_FLOATDOT_SINGLE_COLOR_SNAP = false;
+	public static final String KEY_FLOATDOT_SINGLE_COLOR_LAUNCHER = "floatdot_single_color_launcher";
+	public static final boolean DEFAULT_FLOATDOT_SINGLE_COLOR_LAUNCHER = false;
+	public static final String KEY_FLOATDOT_ALPHA = "floatdot_alpha";
+	public static final float DEFAULT_FLOATDOT_ALPHA = 0.7f;
+	public static final String UPDATE_FLOATDOT_PARAMS = "update_floatdot_params";
+
 	
 
 	

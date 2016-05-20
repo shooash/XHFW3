@@ -64,6 +64,13 @@
                 <action android:name="android.intent.action.MAIN" />
             </intent-filter>
         </activity>
+		<activity
+		android:name="com.zst.xposed.halo.floatingwindow3.prefs.FloatDotActivity"
+		android:label="@string/pref_movable_sub_titlebar_title" >
+		<intent-filter>
+			<action android:name="android.intent.action.MAIN" />
+		</intent-filter>
+        </activity>
 		<receiver android:name="com.zst.xposed.halo.floatingwindow3.floatdot.BootReceiver">  
 			<intent-filter>  
 				<action android:name="android.intent.action.BOOT_COMPLETED" />  

@@ -307,5 +307,18 @@
     <string name="pref_statusbar_taskbar_pin_apps_title">Pin Apps</string>
     <string name="pref_statusbar_taskbar_number_summary">Choose the maximum applications to be show in the notification\n(Requires SystemUI restart)</string>
     <string name="pref_statusbar_taskbar_number_title">Max Number of Apps</string>
+	
+	<!-- FloatDot -->
+	<string name="floatdot_color_outer1_title">FloatDot Snap Color</string>
+	<string name="floatdot_color_inner1_title">FloatDot Snap Inner Color</string>
+	<string name="floatdot_color_outer2_title">FloatDot Launcher Color</string>
+	<string name="floatdot_color_inner2_title">FloatDot Launcher Inner Color</string>
+	<string name="pref_floatdot_single_color_snap_title">Single Color for FloatDot Snap</string>
+	<string name="pref_floatdot_single_color_snap_summary">Do not use double circles</string>
+	<string name="pref_floatdot_single_color_launcher_title">Single Color for FloatDot Launcher</string>
+	<string name="pref_floatdot_single_color_launcher_summary">Do not use double circles</string>
+	<string name="pref_floatdot_size_title">Floating Dots\' Size</string>
+	<string name="pref_floatdot_alpha_title">Transparency</string>
+	<string name="pref_floatdot_launcher_title">Enable FloatDot Launcher</string>
     
 </resources>
