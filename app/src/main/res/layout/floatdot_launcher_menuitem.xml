@@ -7,7 +7,7 @@
 	<RelativeLayout
 		android:id="@android:id/background"
 		android:layout_width="fill_parent"
-		android:layout_height="48dp"
+		android:layout_height="40dp"
 		android:layout_marginBottom="4dp"
 		android:layout_marginLeft="8dp"
 		android:layout_marginRight="8dp"
@@ -26,27 +26,28 @@
 
 		<TextView
 			android:id="@android:id/text1"
-			android:layout_width="wrap_content"
+			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
 			android:layout_alignParentRight="true"
 			android:layout_centerVertical="true"
 			android:layout_marginLeft="8dp"
-			android:layout_marginRight="8dp"
+			android:layout_marginRight="12dp"
 			android:layout_toRightOf="@android:id/icon"
 			android:text="@android:string/unknownName"
 			android:textAppearance="?android:attr/textAppearanceSmall"
 			android:textColor="#fff"
-			android:singleLine="true"/>
+			android:singleLine="true"
+			android:minWidth="150dp"
+			android:maxWidth="200dp"/>
 
-		<ImageButton
+		<ImageView
 			android:id="@android:id/button1"
-			style="@android:style/Widget.Holo.Button.Borderless"
-			android:layout_width="48dp"
-			android:layout_height="match_parent"
-			android:layout_alignParentBottom="true"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
 			android:layout_alignParentRight="true"
-			android:layout_alignParentTop="true"
-			android:scaleType="fitCenter"/>
+			android:layout_centerVertical="true"
+			android:padding="4dp"
+			/>
 
 	</RelativeLayout>
 

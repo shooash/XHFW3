@@ -30,6 +30,7 @@ public class FloatDotFragment extends PreferenceFragment {
 		getPreferenceManager().setSharedPreferencesName(Common.PREFERENCE_MAIN_FILE);
 		getPreferenceManager().setSharedPreferencesMode(PreferenceActivity.MODE_WORLD_READABLE);
 		addPreferencesFromResource(R.xml.pref_floatdot);
+		
 		mPref = getActivity().getSharedPreferences(Common.PREFERENCE_MAIN_FILE,
 												   PreferenceActivity.MODE_WORLD_READABLE);
 	}

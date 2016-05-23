@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" android:summary="">
-        <com.zst.xposed.halo.floatingwindow3.prefs.WidgetNumberPicker
+    <com.zst.xposed.halo.floatingwindow3.prefs.WidgetNumberPicker
             defaultValue="26"
             maximum="120"
             minimum="10"

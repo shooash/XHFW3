@@ -100,7 +100,10 @@
 	<string name="pref_maximized_title">Maximized Apps</string>
     <string name="pref_maximized_summary">Choose a list of apps to always open maximized</string>
     <string name="pref_maximized_dialog">Newly auto maximized apps need to be force-closed for changes to take effect.\n\nYou may single press on the app icon for the app info to open. After which, you may select Force Stop.</string>
-    <string name="pref_whiteblacklist_title">Whitelist/Blacklist Options</string>
+	<string name="pref_launcher_title">FloatDot Launcher Apps</string>
+    <string name="pref_launcher_summary">Choose a list of apps to show in launcher menu</string>
+    <string name="pref_launcher_dialog">To reopen apps as movable you might need to force-close them for changes to take effect.\n\nYou may single press on the app icon for the app info to open. After which, you may select Force Stop.</string>
+	<string name="pref_whiteblacklist_title">Whitelist/Blacklist Options</string>
     <string name="pref_whiteblacklist_summary">Choose a different behavior to use the black and whitelist</string>
 	<string name="pref_force_snap_title">Autosnap windows</string>
 	<string name="pref_force_snap_summary">If new windows should automaticaly snap side by side</string>
@@ -320,5 +323,6 @@
 	<string name="pref_floatdot_size_title">Floating Dots\' Size</string>
 	<string name="pref_floatdot_alpha_title">Transparency</string>
 	<string name="pref_floatdot_launcher_title">Enable FloatDot Launcher</string>
+    <string name="pref_floatdot_title">FloatDot settings</string>
     
 </resources>

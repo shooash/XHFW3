@@ -17,6 +17,8 @@ public class Common {
 	public static final int PACKAGE_WHITELIST = 1;
 	public static final int PACKAGE_BLACKLIST = 2;
 	public static final int PACKAGE_MAXIMIZE = 4;
+	public static final int PACKAGE_LAUNCHER_SAVED = 8;
+	public static final int PACKAGE_UNUSED = 16;
 
 	/* Preference keys */
 	public static final String KEY_ALPHA = "window_alpha";
