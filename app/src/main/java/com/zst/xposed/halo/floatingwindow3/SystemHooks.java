@@ -113,6 +113,16 @@ public class SystemHooks
 					if(taskID==null)
 						return;
 					removeTask(packageName, taskID.intValue());
+					Object mActivityStack = Util.getFailsafeObjectFromObject(param.thisObject, "stack");
+					if(mActivityStack==null)
+						return;
+					Object mWindowManagerService = Util.getFailsafeObjectFromObject(mActivityStack, "mWindowManager");
+					if(mWindowManagerService==null)
+						return;
+					Context mContext = (Context) Util.getFailsafeObjectFromObject(mWindowManagerService, "mContext");
+					if(mContext==null)
+						return;
+					MovableWindow.sendRemovedPackageInfo(packageName, mContext, true);
 					}
 				});
 	}

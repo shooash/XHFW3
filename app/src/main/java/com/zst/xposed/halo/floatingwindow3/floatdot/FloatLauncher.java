@@ -118,12 +118,14 @@ public class FloatLauncher
 		if(!itemsIndex.contains(pkgName))
 			return;
 		itemsList.remove(itemsIndex.indexOf(pkgName));
+		itemsIndex.remove(pkgName);
 	}
 	
 	private void updateItem(String pkgName, int mTaskId){
-		if(!itemsIndex.contains(pkgName))
+		if(!itemsIndex.contains(pkgName)||itemsList.size()==0)
 			return;
-		PackageItem pi = itemsList.get(itemsIndex.indexOf(pkgName));
+		int index = itemsIndex.indexOf(pkgName);
+		PackageItem pi = itemsList.get(index);
 		pi.taskId=mTaskId;
 		
 	}

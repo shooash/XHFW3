@@ -67,6 +67,7 @@ public class MovableWindow
     public static boolean mAeroSnapChangeTitleBarVisibility;
     public static boolean mAeroSnapEnabled;
 	public static boolean mAeroFocusWindow;
+	public static boolean mResized;
     static int mAeroSnapDelay;
     static boolean mAeroSnapSwipeApp;
     static int mPreviousForceAeroSnap;
@@ -94,6 +95,7 @@ public class MovableWindow
                 if(!isMovable) return;
 				if(mWindowHolder==null) initWindow(mActivity);
                 else mWindowHolder.setWindow(mActivity);
+				setCommonLayout();
 				/* reconnect XHFWService if needed */
                 connectService();
                 DEBUG("onCreate");
@@ -105,11 +107,13 @@ public class MovableWindow
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                 DEBUG("onStartSTART");
                 if(!isMovable || mWindowHolder==null) return;
+				showFocusOutline = false; //is was actualy disabled because the window lost focus
                 mWindowHolder.setWindow((Activity) param.thisObject);
                 mWindowHolder.syncLayout();
 				setOverlayView();
                 showTitleBar();
                 DEBUG("onStartEND");
+				
             }
         });
 		
@@ -157,6 +161,7 @@ public class MovableWindow
 					mWindowHolder.mWindows.remove(((Activity)param.thisObject).getWindow());
 					if(mWindowHolder.mWindows.size()<1) {
 						sendRemovedPackageInfo(mWindowHolder.packageName, (Activity)param.thisObject, false);
+						//mWindowHolder.mActivity.getApplicationContext().unbindService(XHFWServiceConnection);
 						mWindowHolder = null;
 						isMovable=false;
 						
@@ -219,8 +224,6 @@ public class MovableWindow
 									move(leftFromScreen.intValue(), topFromScreen.intValue());
 //									if (mAeroSnap != null) 
 //										mAeroSnap.dispatchTouchEvent(event);
-										
-									
 								}
 							}
 							break;
@@ -355,8 +358,8 @@ public class MovableWindow
 		 
     }
 	
-    private static void setInitLayout(){
-        mWindowHolder.mWindow.addFlags(WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
+	private static void setCommonLayout(){
+		mWindowHolder.mWindow.addFlags(WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
         mWindowHolder.mWindow.setWindowAnimations(android.R.style.Animation_Dialog);
         mWindowHolder.mWindow.clearFlags(WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER);
         switch(MainXposed.mPref.getInt(Common.KEY_KEYBOARD_MODE, Common.DEFAULT_KEYBOARD_MODE)){
@@ -367,6 +370,9 @@ public class MovableWindow
                 mWindowHolder.mWindow.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
                 break;
         }
+	}
+	
+    private static void setInitLayout(){
         switch(Util.getScreenOrientation(mWindowHolder.mActivity)){
             case Configuration.ORIENTATION_LANDSCAPE:
                 mWindowHolder.width = (int) (mScreenWidth * MainXposed.mPref.getFloat(Common.KEY_LANDSCAPE_WIDTH, Common.DEFAULT_LANDSCAPE_WIDTH));
@@ -424,9 +430,9 @@ public class MovableWindow
 		DEBUG("showTitleBar");
 		if(mOverlayView == null || mWindowHolder==null) return;
 
-		if(mWindowHolder.mWindow.isFloating()) {
+		if(mWindowHolder.mWindow.isFloating())
 			return;
-			}
+			
 		if(mWindowHolder.isSnapped||mWindowHolder.isMaximized) showTitleBar(false);
 		else showTitleBar(true);
 	}
@@ -534,6 +540,7 @@ public class MovableWindow
 				if(coordinates == null) return;
 				mFloatDotCoordinates=coordinates;
 				if(mAeroSnap==null||mWindowHolder==null||!mWindowHolder.isSnapped) return;
+				mResized = true;
 				mAeroSnap.updateSnap(mWindowHolder.SnapGravity);
 			}
 		}
@@ -565,7 +572,8 @@ public class MovableWindow
 	}
 
 	private static void changeFocusApp(Activity a) {
-		if(XHFWInterfaceLink==null) {connectService();}
+		if(XHFWInterfaceLink==null) 
+			connectService();
 		try		{
 			XHFWInterfaceLink.bringToFront(a.getTaskId());
 		}
@@ -574,11 +582,12 @@ public class MovableWindow
 			XposedBridge.log("changeFocusApp failed");
 		}
 		toggleDragger();
-		drawFocusFrame();
+		//drawFocusFrame();
 	}
 	
 	private static void drawFocusFrame(){
 		if(!mAeroFocusWindow) return;
+		if(showFocusOutline&&!mResized) return;
 		//hide previous outlines
 		hideFocusFrame(mWindowHolder.mActivity.getApplicationContext());
 		if(!mWindowHolder.isSnapped) return;
@@ -589,6 +598,7 @@ public class MovableWindow
 		mIntent.putExtra(Common.INTENT_APP_FOCUS, true);
 		mWindowHolder.mActivity.getApplicationContext().sendBroadcast(mIntent);
 		showFocusOutline = true;
+		mResized = false;
 	}
 	
 	private static void hideFocusFrame(Context mContext){
@@ -632,10 +642,11 @@ public class MovableWindow
 			DEBUG("getFloatingDotCoordinates [" + mFloatDotCoordinates[0] +":"+mFloatDotCoordinates[1]+"]");
 			if(mWindowHolder.isSnapped)
 				mAeroSnap.updateSnap(mWindowHolder.SnapGravity);
+			mResized=true;
 		} catch (RemoteException e) {}
 	}
 	
-	private static void sendRemovedPackageInfo(String packageName, Context mContext, boolean mCompletely){
+	public static void sendRemovedPackageInfo(String packageName, Context mContext, boolean mCompletely){
 		Intent mIntent = new Intent(Common.ORIGINAL_PACKAGE_NAME + ".APP_REMOVED");
 		mIntent.putExtra("packageName", packageName);
 		mIntent.putExtra("removeCompletely", mCompletely);

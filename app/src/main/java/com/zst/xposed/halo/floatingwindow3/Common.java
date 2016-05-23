@@ -232,6 +232,10 @@ public class Common {
 	public static final String KEY_FLOATDOT_ALPHA = "floatdot_alpha";
 	public static final float DEFAULT_FLOATDOT_ALPHA = 0.7f;
 	public static final String UPDATE_FLOATDOT_PARAMS = "update_floatdot_params";
+	public static final String KEY_FLOATDOT_LAUNCHER_X = "floatdot_launcher_x";
+	public static final String KEY_FLOATDOT_LAUNCHER_Y = "floatdot_launcher_y";
+	public static final int DEFAULT_FLOATDOT_LAUNCHER_X = 80;
+	public static final int DEFAULT_FLOATDOT_LAUNCHER_Y = 20;
 
 	
 

@@ -18,7 +18,7 @@ public class FloatDot
 	private int lastOrientation;
 	private boolean mMoved;
 	private float mAlpha = Common.DEFAULT_FLOATDOT_ALPHA;
-	private boolean mPrefCommunication = true;
+	private boolean mPrefCommunication = false;
 	public boolean isDrawableRes = false;
 	public int mDrawableRes;
 	//private boolean secondTouch = false;
@@ -34,7 +34,7 @@ public class FloatDot
 	public int mColor = Color.BLACK;
 	public int mColorInner = Color.BLACK;
 	private boolean mViewOn = false;
-	private Point mCoordinates = new Point((mScreenWidth / 2) - (mCircleDiameter / 2),(mScreenHeight / 2) - (mCircleDiameter / 2));
+	public Point mCoordinates = new Point((mScreenWidth / 2) - (mCircleDiameter / 2),(mScreenHeight / 2) - (mCircleDiameter / 2));
 	//private int[] coordinates = new int[] {(mScreenWidth / 2) - (mCircleDiameter / 2),(mScreenHeight / 2) - (mCircleDiameter / 2)};
 	private FloatLauncher mFloatLauncher;
 	
@@ -124,6 +124,8 @@ public class FloatDot
 	
 	public void showDragger(boolean show){
 		image.setVisibility(show?View.VISIBLE:View.INVISIBLE);
+		if(mPrefCommunication&&show)
+			sendPosition(image);
 	}
 
 	public void putDragger(){
@@ -141,12 +143,12 @@ public class FloatDot
 		registerListener();
 		mWindowManager.addView(image, paramsF);
 		mViewOn = true;
-		if(mPrefCommunication)
-			sendPosition(image);
 	}
 	
 	public void removeDot(){
-		mWindowManager.removeView(image);
+		try{
+			mWindowManager.removeView(image);
+			} catch(Throwable t){}
 	}
 	
 	public void updateDot(){
@@ -216,6 +218,8 @@ public class FloatDot
 								//mWindowManager.removeView(v);
 								//moveAnim(v, 100, 100);
 								//getAbsoluteCoordinates(v);
+								if(mPrefCommunication)
+									sendPosition(v);
 								if(Math.abs(mCoordinates.x + mCircleDiameter/2 - initialTouchX)<mCircleDiameter/2 && Math.abs(mCoordinates.y + mCircleDiameter/2 - initialTouchY) < TOUCH_SENSITIVITY)
 									menuLauncher(v);
 								break;
@@ -227,8 +231,7 @@ public class FloatDot
 								mCoordinates.y = paramsF.y;
 								mWindowManager.updateViewLayout(v, paramsF);
 								//checkTime = SystemClock.uptimeMillis();
-								if(mPrefCommunication)
-									sendPosition(v);
+							
 								mMoved = true;
 								break;
 						}

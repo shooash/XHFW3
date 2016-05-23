@@ -35,7 +35,7 @@ public class XHFWService extends Service {
 		// TODO: Implement this method
 		//fd = new FloatingDot(getApplicationContext());
 		mContext = this;
-		mPref = getSharedPreferences(Common.PREFERENCE_MAIN_FILE, MODE_WORLD_READABLE);
+		mPref = getSharedPreferences(Common.PREFERENCE_MAIN_FILE, MODE_MULTI_PROCESS);
 		isLauncherDotEnabled = mPref.getBoolean(Common.KEY_FLOATDOT_LAUNCHER_ENABLED, Common.DEFAULT_FLOATDOT_LAUNCHER_ENABLED);
 //		mPref.registerOnSharedPreferenceChangeListener(new SharedPreferences.OnSharedPreferenceChangeListener(){
 //
@@ -92,26 +92,43 @@ public class XHFWService extends Service {
 		
 		loadColors();
 		if(isLauncherDotEnabled) setupLauncherDot();
+		registerBroadcast();
 		super.onCreate();
 	}
 	
 	private void setupLauncherDot(){
 		Point mScreenSize = Util.getScreenSize(mContext.getApplicationContext());
+		int x = mScreenSize.x/100*mPref.getInt(Common.KEY_FLOATDOT_LAUNCHER_X, Common.DEFAULT_FLOATDOT_LAUNCHER_X);
+		int y = mScreenSize.y/100*mPref.getInt(Common.KEY_FLOATDOT_LAUNCHER_Y, Common.DEFAULT_FLOATDOT_LAUNCHER_Y);
 		if(ld!=null)
 			ld.removeDot();
-		ld = new FloatDot(mContext, mFloatLauncher, mDotsSize, mScreenSize.x/5*4, mScreenSize.y/5, mColors[2], mColors[3]);
+		ld = new FloatDot(mContext, mFloatLauncher, mDotsSize, x, y, mColors[2], mColors[3]);
 		ld.setAlpha(mPref.getFloat(Common.KEY_FLOATDOT_ALPHA, Common.DEFAULT_FLOATDOT_ALPHA));
 		ld.putDragger();
 		ld.showDragger(true);
+	}
+	
+	private void saveLauncherPosition(int x, int y){
+		if(x==0||y==0) return;
+		final Point mScreenSize = Util.getScreenSize(mContext);
+		SharedPreferences.Editor editor = mPref.edit();
+		editor.putInt(Common.KEY_FLOATDOT_LAUNCHER_X, 100*x/mScreenSize.x);
+		editor.putInt(Common.KEY_FLOATDOT_LAUNCHER_Y, 100*y/mScreenSize.y);
+		editor.apply();
 	}
 
 	@Override
 	public void onDestroy()
 	{
-		if(ld!=null) ld.removeDot();
+		if(ld!=null) {
+			saveLauncherPosition(ld.mCoordinates.x, ld.mCoordinates.y);
+			ld.removeDot();
+			}
 		if(fd!=null) fd.removeDot();
 		super.onDestroy();
 	}
+	
+	
 	
 	@Override
 	public IBinder onBind(Intent intent){
@@ -123,7 +140,6 @@ public class XHFWService extends Service {
 			fd.enableCommunication();
 			fd.setAlpha(mPref.getFloat(Common.KEY_FLOATDOT_ALPHA, Common.DEFAULT_FLOATDOT_ALPHA));
 			fd.putDragger();
-			registerBroadcast();
 			}
 		return mBinder;
 	}
@@ -132,6 +148,9 @@ public class XHFWService extends Service {
 	public boolean onUnbind(Intent intent)
 	{
 		if(fd!=null) fd.removeDot();
+		if(ld!=null){
+			saveLauncherPosition(ld.mCoordinates.x, ld.mCoordinates.y);
+		}
 		unregisterReceiver(br);
 		return super.onUnbind(intent);
 	}
