@@ -46,6 +46,7 @@ public class FloatDot
 		WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM |
 		WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL |
 		WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH |
+		WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED |
 		WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
 		PixelFormat.TRANSLUCENT);
 
