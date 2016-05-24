@@ -23,6 +23,7 @@ public class FloatLauncher
 	int MINIMAL_WIDTH;
 	int MINIMAL_HEIGHT;
 	ListView lv = null;
+	boolean updateMenu;
 	boolean mPopUpSet;
 	ArrayList<PackageItem> itemsList = new ArrayList<PackageItem>();
 	ArrayList<String> itemsIndex = new ArrayList<String>();
@@ -30,29 +31,47 @@ public class FloatLauncher
 	public PopupWindow popupWin = new PopupWindow();
 	public long dismissedTime;
 	SharedPreferences SavedPackages;
+	PackageManager pm;
+	LauncherListAdapter adapter;
+	Handler mHandler;
 	
 	public FloatLauncher(Context sContext){
 		mContext = sContext;
 		mPackageManager = mContext.getPackageManager();
 		regBroadcastReceiver();
 		SavedPackages = sContext.getSharedPreferences(Common.PREFERENCE_PACKAGES_FILE, Context.MODE_MULTI_PROCESS);
-		
+		pm = mContext.getPackageManager();
+		mHandler = new Handler();
 		//loadSavedPackages();
 		//fillMenu(itemsList);
 	}
 	
 	public void setupMenu(){
 		lv = new ListView(mContext);
-		LauncherListAdapter adapter = new LauncherListAdapter(mContext, itemsList, popupWin);
+		adapter = new LauncherListAdapter(mContext, itemsList, popupWin);
 		lv.setAdapter(adapter);
+		//new Thread(new Runnable(){
+		updateMenu = true;
+	}
+	
+	public void fillMenu(){
 		new Handler().post(new Runnable(){
 				@Override
 				public void run()
 				{
 					loadSavedPackages();
 					addSavedPackages();
+//					mHandler.post(new Runnable() {
+//							@Override
+//							public void run() {
+//								adapter.notifyDataSetChanged();
+//							}
+//						});
+					adapter.notifyDataSetChanged();
 				}	
 			});
+		//		}).start();
+		updateMenu = false;
 	}
 	
 	public void setupPopup(){
@@ -81,37 +100,39 @@ public class FloatLauncher
 		refreshMinimalSize();
 		if(lv==null)
 			setupMenu();
+		if(updateMenu)
+			fillMenu();
 		if(!mPopUpSet)
 			setupPopup();
 		popupWin.setContentView(lv);
-//		popupWin.setWidth(WindowManager.LayoutParams.WRAP_CONTENT);
-//		popupWin.setHeight(MINIMAL_HEIGHT);
-		int width = View.MeasureSpec.getSize(popupWin.getWidth());
-		int height = View.MeasureSpec.getSize(popupWin.getHeight());
-		boolean putLeft = false;
-		if(width>mScreenWidth-paramsF.x-offset || width == 0)
-			width = mScreenWidth-paramsF.x-offset;
-		if(width<MINIMAL_WIDTH){
-			width=MINIMAL_WIDTH;
-			putLeft=true;
-		}
-		if(height > mScreenHeight/3 || height == 0)
-			height = mScreenHeight/3;
-//		if(height<MINIMAL_HEIGHT)
-//			height=MINIMAL_HEIGHT;
 		popupWin.setWidth(MINIMAL_WIDTH);
 		popupWin.setHeight(WindowManager.LayoutParams.WRAP_CONTENT);
+//		popupWin.setHeight(MINIMAL_HEIGHT);
+		int width =  MINIMAL_WIDTH; // View.MeasureSpec.getSize(popupWin.getWidth());
+//		int height = View.MeasureSpec.getSize(popupWin.getHeight());
+		boolean putLeft = false;
+		if(width>mScreenWidth-paramsF.x-offset){
+//			width = mScreenWidth-paramsF.x-offset;
+//			}
+//		if(width<MINIMAL_WIDTH){
+//			width=MINIMAL_WIDTH;
+			putLeft=true;
+		}
+//		if(height > mScreenHeight/3 || height == 0)
+//			height = mScreenHeight/3;
+//		if(height<MINIMAL_HEIGHT)
+//			height=MINIMAL_HEIGHT;
+//		popupWin.setWidth(MINIMAL_WIDTH);
+//		popupWin.setHeight(WindowManager.LayoutParams.WRAP_CONTENT);
 		
 		int x = putLeft? paramsF.x-width: paramsF.x+offset;
-		int y = paramsF.y/*+offset-Util.getStatusBarHeight(mContext)*/-mScreenHeight/2; //-height/2;
+		int y = paramsF.y-mScreenHeight/2; //-height/2;
 		
 		popupWin.showAtLocation(anchor, Gravity.CENTER_VERTICAL | Gravity.LEFT, x, y);
 	}
 	
 	private void loadSavedPackages(){
-		final Set<String> mItems = new HashSet<String>(SavedPackages.getStringSet("launcher", null));
-		if(mItems==null)
-			return;
+		final Set<String> mItems = new HashSet<String>(SavedPackages.getStringSet("launcher", new HashSet<String>()));
 		savedPackages = new ArrayList<String>(mItems);
 		
 		//TODO add pinned apps
@@ -158,7 +179,7 @@ public class FloatLauncher
 			updateItem(pkgName, taskId);
 			return;
 		}
-		itemsList.add(0, new PackageItem(mContext.getPackageManager(), pkgName, taskId, sGravity, savedPackages.contains(pkgName)));
+		itemsList.add(0, new PackageItem(pm, pkgName, taskId, sGravity, savedPackages.contains(pkgName)));
 		itemsIndex.add(0, pkgName);
 	}
 	
@@ -167,6 +188,8 @@ public class FloatLauncher
 			return;
 		itemsList.remove(itemsIndex.indexOf(pkgName));
 		itemsIndex.remove(pkgName);
+		if(adapter!=null)
+			adapter.notifyDataSetChanged();
 	}
 	
 	private void updateItem(String pkgName, int mTaskId){
@@ -179,8 +202,12 @@ public class FloatLauncher
 		//force it appear at top of the list
 		itemsList.remove(index);
 		itemsIndex.remove(index);
+		if(adapter!=null)
+			adapter.notifyDataSetChanged();
 		itemsList.add(0, pi);
 		itemsIndex.add(0, pkgName);
+		if(adapter!=null)
+			adapter.notifyDataSetChanged();
 	}
 	
 	
@@ -195,6 +222,7 @@ public class FloatLauncher
 					removeItem(sIntent.getStringExtra("packageName"));
 				else
 					updateItem(sIntent.getStringExtra("packageName"), 0);
+				return;
 			}
 			String pkgName = sIntent.getStringExtra("packageName");
 			Log.d("Xposed", "FloatingLauncher broadcast package " + (pkgName==null?"null":pkgName));
@@ -205,6 +233,7 @@ public class FloatLauncher
 			if(taskId==0)
 				return;
 			addItem(pkgName, taskId, sGravity);
+			adapter.notifyDataSetChanged();
 		}
 	};
 	
@@ -233,98 +262,123 @@ public class FloatLauncher
 //		mContext.sendBroadcast(new Intent(Common.SHOW_OUTLINE));
 //		showFocusOutline = false;
 //	}
+	
+	
+	
+	class PackageItem implements Comparable<PackageItem>{
+		public Drawable packageIcon;
+		public String packageName;
+		public CharSequence title;
+		public int snapGravity;
+		public int taskId;
+		public boolean isFavorite;
+		
+		public PackageItem(final PackageManager mPackageManager, final String mPackageName, int mTaskId, int sGravity, boolean isThisFavorite){
+
+//			mHandler.post(new Runnable(){
+//					@Override
+//					public void run()
+//					{
+//						getIconLabel(mPackageManager, mPackageName);
+//					}
+//				});
+			getIconLabel(mPackageManager, mPackageName);
+			taskId = mTaskId;
+			snapGravity = sGravity;
+			packageName = mPackageName;
+			isFavorite = isThisFavorite;
+			
+			// (packageName);
+			//= mAppInfo.loadIcon(
+		}
+
+		public PackageItem(final String mPackageName, final String mTitle, int mTaskId, final Drawable icon, int sGravity, boolean isThisFavorite){
+			packageName = mPackageName;
+			title = mTitle;
+			taskId = mTaskId;
+			packageIcon = icon;
+			snapGravity = sGravity;
+			isFavorite = isThisFavorite;
+		}
+
+		public PackageItem(final String mPackageName){
+			packageName = mPackageName;
+			packageIcon = new ColorDrawable(Color.BLACK);
+		}
+
+		void getIconLabel(final PackageManager mPackageManager, final String mPackageName){
+			Drawable icon;
+			try{
+				icon = mPackageManager.getApplicationIcon(mPackageName);
+			} catch (Throwable t){
+				icon = new ColorDrawable(Color.BLACK);
+			}
+			packageIcon = icon;
+			try
+			{
+				title = mPackageManager.getApplicationInfo(mPackageName, 0).loadLabel(mPackageManager);
+			} catch (Throwable e)
+			{
+				title = mPackageName;
+			}
+//			if(adapter!=null)
+//				adapter.notifyDataSetChanged();
+		}
+
+		@Override
+		public int compareTo(PackageItem another) {
+			return this.packageName.toString().compareTo(another.packageName.toString());
+		}
+	}
+
+	class LauncherListAdapter extends ArrayAdapter<PackageItem>{
+		Context mContext;
+		PopupWindow popupWin;
+		public LauncherListAdapter(final Context sContext, final ArrayList<PackageItem> itemsList, final PopupWindow mPopupWin){
+			super(sContext, 0, itemsList);
+			mContext=sContext;
+			popupWin=mPopupWin;
+		}
+
+		@Override
+		public View getView(int position, View convertView, ViewGroup parent) {
+			//ViewHolder holder;
+			
+			// Get the data item for this position
+			final PackageItem item = getItem(position);    
+			// Check if an existing view is being reused, otherwise inflate the view
+			if (convertView == null) {
+				convertView = LayoutInflater.from(getContext()).inflate(R.layout.floatdot_launcher_menuitem, parent, false);
+				ImageView mIcon = (ImageView) convertView.findViewById(android.R.id.icon);
+				TextView mTitle = (TextView) convertView.findViewById(android.R.id.text1);
+				ImageView mPoint = (ImageView) convertView.findViewById(android.R.id.button1);
+				// Populate the data into the template view using the data object
+				mIcon.setImageDrawable(item.packageIcon);
+				int mColor = item.isFavorite&&item.taskId==0?Color.WHITE:Color.GREEN;
+				mPoint.setImageDrawable(Util.makeCircle(mColor, Util.realDp(5, mContext)));
+				mTitle.setText(item.title);
+
+				convertView.setOnClickListener(new OnClickListener(){
+						@Override
+						public void onClick(View p1)
+						{
+							if(item.taskId==0 || !Util.moveToFront(mContext, item.taskId))
+								Util.startApp(mContext, item.packageName);
+							popupWin.dismiss();
+						}
+					});
+			}
+			// Lookup view for data population
+			
+			// Return the completed view to render on screen
+			return convertView;
+		}
+	}
+	static class ViewHolder {
+		TextView name;
+		ImageView icon;
+		ImageView dot;
+	}
 }
 
-class PackageItem implements Comparable<PackageItem>{
-	public Drawable packageIcon;
-	public String packageName;
-	public CharSequence title;
-	public int snapGravity;
-	public int taskId;
-	public boolean isFavorite;
-	
-	public PackageItem(PackageManager mPackageManager, String mPackageName, int mTaskId, int sGravity, boolean isThisFavorite){
-		
-		Drawable icon;
-		try{
-			icon = mPackageManager.getApplicationIcon(mPackageName);
-		} catch (Throwable t){
-			icon = new ColorDrawable(Color.BLACK);
-		}
-		packageIcon = icon;
-		try
-		{
-			title = mPackageManager.getApplicationInfo(mPackageName, 0).loadLabel(mPackageManager);
-		} catch (Throwable e)
-		{
-			title = mPackageName;
-		}
-		taskId = mTaskId;
-		snapGravity = sGravity;
-		packageName = mPackageName;
-		isFavorite = isThisFavorite;
-		// (packageName);
-		//= mAppInfo.loadIcon(
-	}
-	
-	public PackageItem(String mPackageName, String mTitle, int mTaskId, Drawable icon, int sGravity, boolean isThisFavorite){
-		packageName = mPackageName;
-		title = mTitle;
-		taskId = mTaskId;
-		packageIcon = icon;
-		snapGravity = sGravity;
-		isFavorite = isThisFavorite;
-		
-	}
-	public PackageItem(String mPackageName){
-		packageName = mPackageName;
-		packageIcon = new ColorDrawable(Color.BLACK);
-	}
-	
-	@Override
-	public int compareTo(PackageItem another) {
-		return this.packageName.toString().compareTo(another.packageName.toString());
-	}
-}
 
-class LauncherListAdapter extends ArrayAdapter<PackageItem>{
-	Context mContext;
-	PopupWindow popupWin;
-	public LauncherListAdapter(Context sContext, ArrayList<PackageItem> itemsList, PopupWindow mPopupWin){
-		super(sContext, 0, itemsList);
-		mContext=sContext;
-		popupWin=mPopupWin;
-	}
-	
-	@Override
-    public View getView(int position, View convertView, ViewGroup parent) {
-		// Get the data item for this position
-		final PackageItem item = getItem(position);    
-		// Check if an existing view is being reused, otherwise inflate the view
-		if (convertView == null) {
-			convertView = LayoutInflater.from(getContext()).inflate(R.layout.floatdot_launcher_menuitem, parent, false);
-		}
-		// Lookup view for data population
-		ImageView mIcon = (ImageView) convertView.findViewById(android.R.id.icon);
-		TextView mTitle = (TextView) convertView.findViewById(android.R.id.text1);
-		ImageView mPoint = (ImageView) convertView.findViewById(android.R.id.button1);
-		// Populate the data into the template view using the data object
-		mIcon.setImageDrawable(item.packageIcon);
-		int mColor = item.isFavorite&&item.taskId==0?Color.WHITE:Color.GREEN;
-		mPoint.setImageDrawable(Util.makeCircle(mColor, Util.realDp(5, mContext)));
-		
-		mTitle.setText(item.title);
-		
-		convertView.setOnClickListener(new OnClickListener(){
-				@Override
-				public void onClick(View p1)
-				{
-					if(item.taskId==0 || !Util.moveToFront(mContext, item.taskId))
-						Util.startApp(mContext, item.packageName);
-					popupWin.dismiss();
-				}
-		});
-		// Return the completed view to render on screen
-		return convertView;
-	}
-}
