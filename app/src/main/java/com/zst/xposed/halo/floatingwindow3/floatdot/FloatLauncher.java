@@ -42,14 +42,17 @@ public class FloatLauncher
 		SavedPackages = sContext.getSharedPreferences(Common.PREFERENCE_PACKAGES_FILE, Context.MODE_MULTI_PROCESS);
 		pm = mContext.getPackageManager();
 		mHandler = new Handler();
+		
 		//loadSavedPackages();
 		//fillMenu(itemsList);
 	}
 	
 	public void setupMenu(){
 		lv = new ListView(mContext);
+		//lv.setFastScrollEnabled(true);
 		adapter = new LauncherListAdapter(mContext, itemsList, popupWin);
 		lv.setAdapter(adapter);
+		
 		//new Thread(new Runnable(){
 		fillMenu();
 	}
@@ -75,12 +78,13 @@ public class FloatLauncher
 	}
 	
 	public void setupPopup(){
-//		popupWin.setClippingEnabled(true);
+		//popupWin.setClippingEnabled(true);
 		final ColorDrawable cd = new ColorDrawable(Color.parseColor("#AA333333"));
-		popupWin.setBackgroundDrawable(cd);
+		//Drawable rect = new Drawable
+		popupWin.setBackgroundDrawable(mContext.getResources().getDrawable( R.drawable.round_rect ));
 		popupWin.setOutsideTouchable(true);
 		popupWin.setWindowLayoutType(WindowManager.LayoutParams.TYPE_APPLICATION_ATTACHED_DIALOG);
-		popupWin.setAnimationStyle(android.R.style.Animation_Dialog);
+		popupWin.setAnimationStyle(android.R.style.Animation);
 		popupWin.setOnDismissListener(new PopupWindow.OnDismissListener(){
 				@Override
 				public void onDismiss()
@@ -102,12 +106,14 @@ public class FloatLauncher
 			setupMenu();
 		if(!mPopUpSet)
 			setupPopup();
+		
 		popupWin.setContentView(lv);
-		popupWin.setWidth(MINIMAL_WIDTH);
-		popupWin.setHeight(WindowManager.LayoutParams.WRAP_CONTENT);
+		popupWin.setWidth(MeasureSpec.makeMeasureSpec(MINIMAL_WIDTH,MeasureSpec.AT_MOST));
+		popupWin.setHeight(MeasureSpec.makeMeasureSpec(mScreenHeight/3,MeasureSpec.AT_MOST));
+		
 //		popupWin.setHeight(MINIMAL_HEIGHT);
 		int width =  MINIMAL_WIDTH; // View.MeasureSpec.getSize(popupWin.getWidth());
-//		int height = View.MeasureSpec.getSize(popupWin.getHeight());
+	//	int height = View.MeasureSpec.getSize(popupWin.getHeight());
 		boolean putLeft = false;
 		if(width>mScreenWidth-paramsF.x-offset){
 //			width = mScreenWidth-paramsF.x-offset;
@@ -116,17 +122,19 @@ public class FloatLauncher
 //			width=MINIMAL_WIDTH;
 			putLeft=true;
 		}
-//		if(height > mScreenHeight/3 || height == 0)
-//			height = mScreenHeight/3;
+	//	if(height > mScreenHeight/3*2)
+			//popupWin.setHeight(mScreenHeight/3*2);
+	//		height = mScreenHeight/3*2;
 //		if(height<MINIMAL_HEIGHT)
 //			height=MINIMAL_HEIGHT;
 //		popupWin.setWidth(MINIMAL_WIDTH);
-//		popupWin.setHeight(WindowManager.LayoutParams.WRAP_CONTENT);
+		//popupWin.setHeight(height);
 		
 		int x = putLeft? paramsF.x-width: paramsF.x+offset;
 		int y = paramsF.y-mScreenHeight/2; //-height/2;
 		
 		popupWin.showAtLocation(anchor, Gravity.CENTER_VERTICAL | Gravity.LEFT, x, y);
+		
 	}
 	
 	private void loadSavedPackages(){
@@ -345,10 +353,10 @@ public class FloatLauncher
 			//ViewHolder holder;
 			
 			// Get the data item for this position
-			
+			final PackageItem item = getItem(position);
 			// Check if an existing view is being reused, otherwise inflate the view
 			if (convertView == null) {
-				final PackageItem item = getItem(position);
+				
 				convertView = LayoutInflater.from(getContext()).inflate(R.layout.floatdot_launcher_menuitem, parent, false);
 				ImageView mIcon = (ImageView) convertView.findViewById(android.R.id.icon);
 				TextView mTitle = (TextView) convertView.findViewById(android.R.id.text1);
@@ -369,16 +377,21 @@ public class FloatLauncher
 						}
 					});
 			}
+			else{
+				ImageView mIcon = (ImageView) convertView.findViewById(android.R.id.icon);
+				TextView mTitle = (TextView) convertView.findViewById(android.R.id.text1);
+				ImageView mPoint = (ImageView) convertView.findViewById(android.R.id.button1);
+				// Populate the data into the template view using the data object
+				mIcon.setImageDrawable(item.packageIcon);
+				int mColor = item.isFavorite&&item.taskId==0?Color.WHITE:Color.GREEN;
+				mPoint.setImageDrawable(Util.makeCircle(mColor, Util.realDp(5, mContext)));
+				mTitle.setText(item.title);
+			}
 			// Lookup view for data population
 			
 			// Return the completed view to render on screen
 			return convertView;
 		}
-	}
-	static class ViewHolder {
-		TextView name;
-		ImageView icon;
-		ImageView dot;
 	}
 }
 
