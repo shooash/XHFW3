@@ -51,7 +51,7 @@ public class FloatLauncher
 		adapter = new LauncherListAdapter(mContext, itemsList, popupWin);
 		lv.setAdapter(adapter);
 		//new Thread(new Runnable(){
-		updateMenu = true;
+		fillMenu();
 	}
 	
 	public void fillMenu(){
@@ -100,8 +100,6 @@ public class FloatLauncher
 		refreshMinimalSize();
 		if(lv==null)
 			setupMenu();
-		if(updateMenu)
-			fillMenu();
 		if(!mPopUpSet)
 			setupPopup();
 		popupWin.setContentView(lv);
@@ -189,7 +187,8 @@ public class FloatLauncher
 		itemsList.remove(itemsIndex.indexOf(pkgName));
 		itemsIndex.remove(pkgName);
 		if(adapter!=null)
-			adapter.notifyDataSetChanged();
+			adapter.notifyDataSetInvalidated();
+		setupMenu();
 	}
 	
 	private void updateItem(String pkgName, int mTaskId){
@@ -202,12 +201,11 @@ public class FloatLauncher
 		//force it appear at top of the list
 		itemsList.remove(index);
 		itemsIndex.remove(index);
-		if(adapter!=null)
-			adapter.notifyDataSetChanged();
 		itemsList.add(0, pi);
 		itemsIndex.add(0, pkgName);
 		if(adapter!=null)
-			adapter.notifyDataSetChanged();
+			adapter.notifyDataSetInvalidated();
+		setupMenu();
 	}
 	
 	
@@ -233,7 +231,9 @@ public class FloatLauncher
 			if(taskId==0)
 				return;
 			addItem(pkgName, taskId, sGravity);
-			adapter.notifyDataSetChanged();
+			if(adapter!=null)
+				adapter.notifyDataSetInvalidated();
+			setupMenu();
 		}
 	};
 	
@@ -345,9 +345,10 @@ public class FloatLauncher
 			//ViewHolder holder;
 			
 			// Get the data item for this position
-			final PackageItem item = getItem(position);    
+			
 			// Check if an existing view is being reused, otherwise inflate the view
 			if (convertView == null) {
+				final PackageItem item = getItem(position);
 				convertView = LayoutInflater.from(getContext()).inflate(R.layout.floatdot_launcher_menuitem, parent, false);
 				ImageView mIcon = (ImageView) convertView.findViewById(android.R.id.icon);
 				TextView mTitle = (TextView) convertView.findViewById(android.R.id.text1);
