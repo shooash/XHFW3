@@ -22,6 +22,8 @@ public class FloatLauncher
 	int mScreenHeight;
 	int MINIMAL_WIDTH;
 	int MINIMAL_HEIGHT;
+	ListView lv = null;
+	boolean mPopUpSet;
 	ArrayList<PackageItem> itemsList = new ArrayList<PackageItem>();
 	ArrayList<String> itemsIndex = new ArrayList<String>();
 	ArrayList<String> savedPackages = new ArrayList<String>();
@@ -34,8 +36,40 @@ public class FloatLauncher
 		mPackageManager = mContext.getPackageManager();
 		regBroadcastReceiver();
 		SavedPackages = sContext.getSharedPreferences(Common.PREFERENCE_PACKAGES_FILE, Context.MODE_MULTI_PROCESS);
-		loadSavedPackages();
+		
+		//loadSavedPackages();
 		//fillMenu(itemsList);
+	}
+	
+	public void setupMenu(){
+		lv = new ListView(mContext);
+		LauncherListAdapter adapter = new LauncherListAdapter(mContext, itemsList, popupWin);
+		lv.setAdapter(adapter);
+		new Handler().post(new Runnable(){
+				@Override
+				public void run()
+				{
+					loadSavedPackages();
+					addSavedPackages();
+				}	
+			});
+	}
+	
+	public void setupPopup(){
+//		popupWin.setClippingEnabled(true);
+		final ColorDrawable cd = new ColorDrawable(Color.parseColor("#AA333333"));
+		popupWin.setBackgroundDrawable(cd);
+		popupWin.setOutsideTouchable(true);
+		popupWin.setWindowLayoutType(WindowManager.LayoutParams.TYPE_APPLICATION_ATTACHED_DIALOG);
+		popupWin.setAnimationStyle(android.R.style.Animation_Dialog);
+		popupWin.setOnDismissListener(new PopupWindow.OnDismissListener(){
+				@Override
+				public void onDismiss()
+				{
+					dismissedTime = SystemClock.uptimeMillis();
+				}
+			});
+		mPopUpSet = true;
 	}
 	
 	public void showMenu(View anchor, WindowManager.LayoutParams paramsF, int offset){
@@ -45,59 +79,52 @@ public class FloatLauncher
 		}
 		refreshScreenSize();
 		refreshMinimalSize();
-		ListView lv = new ListView(mContext);
-		LauncherListAdapter adapter = new LauncherListAdapter(mContext, itemsList, popupWin);
-		lv.setAdapter(adapter);
-		loadSavedPackages();
-		
+		if(lv==null)
+			setupMenu();
+		if(!mPopUpSet)
+			setupPopup();
 		popupWin.setContentView(lv);
-		popupWin.setWidth(WindowManager.LayoutParams.WRAP_CONTENT);
-		popupWin.setHeight(MINIMAL_HEIGHT);
+//		popupWin.setWidth(WindowManager.LayoutParams.WRAP_CONTENT);
+//		popupWin.setHeight(MINIMAL_HEIGHT);
 		int width = View.MeasureSpec.getSize(popupWin.getWidth());
 		int height = View.MeasureSpec.getSize(popupWin.getHeight());
 		boolean putLeft = false;
 		if(width>mScreenWidth-paramsF.x-offset || width == 0)
 			width = mScreenWidth-paramsF.x-offset;
-		if(height > mScreenHeight/3 || height == 0)
-			height = mScreenHeight/3;
 		if(width<MINIMAL_WIDTH){
 			width=MINIMAL_WIDTH;
 			putLeft=true;
 		}
+		if(height > mScreenHeight/3 || height == 0)
+			height = mScreenHeight/3;
 //		if(height<MINIMAL_HEIGHT)
 //			height=MINIMAL_HEIGHT;
 		popupWin.setWidth(MINIMAL_WIDTH);
 		popupWin.setHeight(WindowManager.LayoutParams.WRAP_CONTENT);
-		popupWin.setOutsideTouchable(true);
-		popupWin.setClippingEnabled(true);
-		ColorDrawable cd = new ColorDrawable(Color.parseColor("#AA333333"));
-		popupWin.setBackgroundDrawable(cd);
-		popupWin.setWindowLayoutType(WindowManager.LayoutParams.TYPE_APPLICATION_ATTACHED_DIALOG);
-		popupWin.setOnDismissListener(new PopupWindow.OnDismissListener(){
-				@Override
-				public void onDismiss()
-				{
-					dismissedTime = SystemClock.uptimeMillis();
-				}
-		});
+		
 		int x = putLeft? paramsF.x-width: paramsF.x+offset;
 		int y = paramsF.y/*+offset-Util.getStatusBarHeight(mContext)*/-mScreenHeight/2; //-height/2;
-		addSavedPackages();
+		
 		popupWin.showAtLocation(anchor, Gravity.CENTER_VERTICAL | Gravity.LEFT, x, y);
 	}
 	
 	private void loadSavedPackages(){
-		//TODO add pinned apps
-		Map<String, ?> mItems = SavedPackages.getAll();
-		if(!mItems.containsValue(Common.PACKAGE_LAUNCHER_SAVED))
+		final Set<String> mItems = new HashSet<String>(SavedPackages.getStringSet("launcher", null));
+		if(mItems==null)
 			return;
-		for(Map.Entry<String,?> item : mItems.entrySet()){
-//			if(!(item.getValue() instanceof int))
-//				continue;
-			if(Util.isFlag(item.getValue(), Common.PACKAGE_LAUNCHER_SAVED)
-				&&!savedPackages.contains(item.getKey()))
-				savedPackages.add(item.getKey());
-		}
+		savedPackages = new ArrayList<String>(mItems);
+		
+		//TODO add pinned apps
+//		Map<String, ?> mItems = SavedPackages.getAll();
+//		if(!mItems.containsValue(Common.PACKAGE_LAUNCHER_SAVED))
+//			return;
+//		for(Map.Entry<String,?> item : mItems.entrySet()){
+////			if(!(item.getValue() instanceof int))
+////				continue;
+//			if(Util.isFlag(item.getValue(), Common.PACKAGE_LAUNCHER_SAVED)
+//				&&!savedPackages.contains(item.getKey()))
+//				savedPackages.add(item.getKey());
+//		}
 	}
 	
 	private void addSavedPackages(){

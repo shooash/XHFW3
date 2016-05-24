@@ -158,24 +158,34 @@ public class LauncherListActivity extends Activity {
 	}
 
 	private Set<String> getSetStrings() {
-		Map<String, ?> pkgList = mPref.getAll();
-		Set<String> result = new HashSet<String>();
-		for(Map.Entry<String, ?> E : pkgList.entrySet()){
-			if(Util.isFlag(E.getValue(), Common.PACKAGE_LAUNCHER_SAVED))
-				result.add(E.getKey());
-		}
+		Set<String> result = new HashSet<String>(mPref.getStringSet("launcher", new HashSet<String>()));
+//		Map<String, ?> pkgList = mPref.getAll();
+//		Set<String> result = new HashSet<String>();
+//		for(Map.Entry<String, ?> E : pkgList.entrySet()){
+//			if(Util.isFlag(E.getValue(), Common.PACKAGE_LAUNCHER_SAVED))
+//				result.add(E.getKey());
+//		}
 		return result;
 	}
 
 	public void removeApp(String pkg) {
-		mPref.edit().remove(pkg).commit();
-		mPkgAdapter.update(getSetStrings());
+		Set<String> pkgs = new HashSet<String>(mPref.getStringSet("launcher", new HashSet<String>()));
+		pkgs.remove(pkg);
+		mPref.edit().putStringSet("launcher", pkgs).apply();
+//		mPref.edit().remove(pkg).commit();
+//		mPkgAdapter.update(getSetStrings());
 		updateList();
 	}
 
 	public void addApp(String pkg) {
-		int value = mPref.getInt(pkg, 0) | Common.PACKAGE_LAUNCHER_SAVED;
-		mPref.edit().putInt(pkg, value).commit();
+		Set<String> pkgs = new HashSet<String>(mPref.getStringSet("launcher", new HashSet<String>()));
+		if(pkgs.contains(pkg))
+			return;
+		pkgs.add(pkg);
+		mPref.edit().putStringSet("launcher", pkgs).apply();
+		
+//		int value = mPref.getInt(pkg, 0) | Common.PACKAGE_LAUNCHER_SAVED;
+//		mPref.edit().putInt(pkg, value).commit();
 		updateList();
 	}
 
