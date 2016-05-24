@@ -33,7 +33,7 @@ public class FloatLauncher
 	SharedPreferences SavedPackages;
 	PackageManager pm;
 	LauncherListAdapter adapter;
-	Handler mHandler;
+	
 	
 	public FloatLauncher(Context sContext){
 		mContext = sContext;
@@ -41,46 +41,28 @@ public class FloatLauncher
 		regBroadcastReceiver();
 		SavedPackages = sContext.getSharedPreferences(Common.PREFERENCE_PACKAGES_FILE, Context.MODE_MULTI_PROCESS);
 		pm = mContext.getPackageManager();
-		mHandler = new Handler();
-		
-		//loadSavedPackages();
-		//fillMenu(itemsList);
 	}
 	
 	public void setupMenu(){
 		lv = new ListView(mContext);
-		//lv.setFastScrollEnabled(true);
+		
 		adapter = new LauncherListAdapter(mContext, itemsList, popupWin);
 		lv.setAdapter(adapter);
 		
-		//new Thread(new Runnable(){
-		fillMenu();
-	}
-	
-	public void fillMenu(){
 		new Handler().post(new Runnable(){
 				@Override
 				public void run()
 				{
 					loadSavedPackages();
 					addSavedPackages();
-//					mHandler.post(new Runnable() {
-//							@Override
-//							public void run() {
-//								adapter.notifyDataSetChanged();
-//							}
-//						});
 					adapter.notifyDataSetChanged();
 				}	
 			});
-		//		}).start();
 		updateMenu = false;
 	}
 	
 	public void setupPopup(){
-		//popupWin.setClippingEnabled(true);
-		final ColorDrawable cd = new ColorDrawable(Color.parseColor("#AA333333"));
-		//Drawable rect = new Drawable
+		//final ColorDrawable cd = new ColorDrawable(Color.parseColor("#AA333333"));
 		popupWin.setBackgroundDrawable(mContext.getResources().getDrawable( R.drawable.round_rect ));
 		popupWin.setOutsideTouchable(true);
 		popupWin.setWindowLayoutType(WindowManager.LayoutParams.TYPE_APPLICATION_ATTACHED_DIALOG);
@@ -110,29 +92,13 @@ public class FloatLauncher
 		popupWin.setContentView(lv);
 		popupWin.setWidth(MeasureSpec.makeMeasureSpec(MINIMAL_WIDTH,MeasureSpec.AT_MOST));
 		popupWin.setHeight(MeasureSpec.makeMeasureSpec(mScreenHeight/3,MeasureSpec.AT_MOST));
-		
-//		popupWin.setHeight(MINIMAL_HEIGHT);
-		int width =  MINIMAL_WIDTH; // View.MeasureSpec.getSize(popupWin.getWidth());
-	//	int height = View.MeasureSpec.getSize(popupWin.getHeight());
+		int width =  MINIMAL_WIDTH;
 		boolean putLeft = false;
 		if(width>mScreenWidth-paramsF.x-offset){
-//			width = mScreenWidth-paramsF.x-offset;
-//			}
-//		if(width<MINIMAL_WIDTH){
-//			width=MINIMAL_WIDTH;
 			putLeft=true;
 		}
-	//	if(height > mScreenHeight/3*2)
-			//popupWin.setHeight(mScreenHeight/3*2);
-	//		height = mScreenHeight/3*2;
-//		if(height<MINIMAL_HEIGHT)
-//			height=MINIMAL_HEIGHT;
-//		popupWin.setWidth(MINIMAL_WIDTH);
-		//popupWin.setHeight(height);
-		
 		int x = putLeft? paramsF.x-width: paramsF.x+offset;
-		int y = paramsF.y-mScreenHeight/2; //-height/2;
-		
+		int y = paramsF.y-mScreenHeight/2+offset/2; //-height/2;
 		popupWin.showAtLocation(anchor, Gravity.CENTER_VERTICAL | Gravity.LEFT, x, y);
 		
 	}
@@ -140,18 +106,6 @@ public class FloatLauncher
 	private void loadSavedPackages(){
 		final Set<String> mItems = new HashSet<String>(SavedPackages.getStringSet("launcher", new HashSet<String>()));
 		savedPackages = new ArrayList<String>(mItems);
-		
-		//TODO add pinned apps
-//		Map<String, ?> mItems = SavedPackages.getAll();
-//		if(!mItems.containsValue(Common.PACKAGE_LAUNCHER_SAVED))
-//			return;
-//		for(Map.Entry<String,?> item : mItems.entrySet()){
-////			if(!(item.getValue() instanceof int))
-////				continue;
-//			if(Util.isFlag(item.getValue(), Common.PACKAGE_LAUNCHER_SAVED)
-//				&&!savedPackages.contains(item.getKey()))
-//				savedPackages.add(item.getKey());
-//		}
 	}
 	
 	private void addSavedPackages(){
@@ -181,7 +135,6 @@ public class FloatLauncher
 	
 	private void addItem(String pkgName, int taskId, int sGravity){
 		if(itemsIndex.contains(pkgName)){
-			//if(itemsList.get(itemsIndex.indexOf(pkgName)).taskId==0)
 			updateItem(pkgName, taskId);
 			return;
 		}
@@ -231,7 +184,7 @@ public class FloatLauncher
 				return;
 			}
 			String pkgName = sIntent.getStringExtra("packageName");
-			Log.d("Xposed", "FloatingLauncher broadcast package " + (pkgName==null?"null":pkgName));
+			//Log.d("Xposed", "FloatingLauncher broadcast package " + (pkgName==null?"null":pkgName));
 			if(pkgName==null) return;
 			
 			int sGravity = sIntent.getIntExtra("float-gravity", 0);
@@ -252,26 +205,6 @@ public class FloatLauncher
 		mContext.getApplicationContext().registerReceiver(br, mIntentFilter);
 	}
 	
-//	private void drawFocusFrame(){
-//		if(!mAeroFocusWindow) return;
-//		//hide previous outlines
-//		hideFocusFrame(mContext.getApplicationContext());
-//		if(!mWindowHolder.isSnapped) return;
-//		//send new params
-//		Intent mIntent = new Intent(Common.SHOW_OUTLINE);
-//		int[] array = {mWindowHolder.x, mWindowHolder.y, mWindowHolder.height, mWindowHolder.width};
-//		mIntent.putExtra(Common.INTENT_APP_PARAMS, array);
-//		mIntent.putExtra(Common.INTENT_APP_FOCUS, true);
-//		mWindowHolder.mActivity.getApplicationContext().sendBroadcast(mIntent);
-//		showFocusOutline = true;
-//	}
-//	
-//	private static void hideFocusFrame(Context mContext){
-//		mContext.sendBroadcast(new Intent(Common.SHOW_OUTLINE));
-//		showFocusOutline = false;
-//	}
-	
-	
 	
 	class PackageItem implements Comparable<PackageItem>{
 		public Drawable packageIcon;
@@ -283,21 +216,12 @@ public class FloatLauncher
 		
 		public PackageItem(final PackageManager mPackageManager, final String mPackageName, int mTaskId, int sGravity, boolean isThisFavorite){
 
-//			mHandler.post(new Runnable(){
-//					@Override
-//					public void run()
-//					{
-//						getIconLabel(mPackageManager, mPackageName);
-//					}
-//				});
 			getIconLabel(mPackageManager, mPackageName);
 			taskId = mTaskId;
 			snapGravity = sGravity;
 			packageName = mPackageName;
 			isFavorite = isThisFavorite;
-			
-			// (packageName);
-			//= mAppInfo.loadIcon(
+		
 		}
 
 		public PackageItem(final String mPackageName, final String mTitle, int mTaskId, final Drawable icon, int sGravity, boolean isThisFavorite){
@@ -329,8 +253,6 @@ public class FloatLauncher
 			{
 				title = mPackageName;
 			}
-//			if(adapter!=null)
-//				adapter.notifyDataSetChanged();
 		}
 
 		@Override
@@ -350,18 +272,14 @@ public class FloatLauncher
 
 		@Override
 		public View getView(int position, View convertView, ViewGroup parent) {
-			//ViewHolder holder;
-			
-			// Get the data item for this position
+		
 			final PackageItem item = getItem(position);
-			// Check if an existing view is being reused, otherwise inflate the view
+			
 			if (convertView == null) {
-				
 				convertView = LayoutInflater.from(getContext()).inflate(R.layout.floatdot_launcher_menuitem, parent, false);
 				ImageView mIcon = (ImageView) convertView.findViewById(android.R.id.icon);
 				TextView mTitle = (TextView) convertView.findViewById(android.R.id.text1);
 				ImageView mPoint = (ImageView) convertView.findViewById(android.R.id.button1);
-				// Populate the data into the template view using the data object
 				mIcon.setImageDrawable(item.packageIcon);
 				int mColor = item.isFavorite&&item.taskId==0?Color.WHITE:Color.GREEN;
 				mPoint.setImageDrawable(Util.makeCircle(mColor, Util.realDp(5, mContext)));
@@ -377,19 +295,15 @@ public class FloatLauncher
 						}
 					});
 			}
-			else{
+			else {
 				ImageView mIcon = (ImageView) convertView.findViewById(android.R.id.icon);
 				TextView mTitle = (TextView) convertView.findViewById(android.R.id.text1);
 				ImageView mPoint = (ImageView) convertView.findViewById(android.R.id.button1);
-				// Populate the data into the template view using the data object
 				mIcon.setImageDrawable(item.packageIcon);
 				int mColor = item.isFavorite&&item.taskId==0?Color.WHITE:Color.GREEN;
 				mPoint.setImageDrawable(Util.makeCircle(mColor, Util.realDp(5, mContext)));
 				mTitle.setText(item.title);
 			}
-			// Lookup view for data population
-			
-			// Return the completed view to render on screen
 			return convertView;
 		}
 	}
