@@ -80,7 +80,12 @@
         </activity>
 		<receiver android:name="com.zst.xposed.halo.floatingwindow3.floatdot.BootReceiver">  
 			<intent-filter>  
-				<action android:name="android.intent.action.BOOT_COMPLETED" />  
+				<action android:name="android.intent.action.BOOT_COMPLETED" />
+			</intent-filter>  
+		</receiver>
+		<receiver android:name="com.zst.xposed.halo.floatingwindow3.floatdot.CallReceiver">  
+			<intent-filter>
+				<action android:name="persistent.XHFWService" />
 			</intent-filter>  
 		</receiver>
 		<service android:name="com.zst.xposed.halo.floatingwindow3.floatdot.XHFWService" android:process=":remote" >
