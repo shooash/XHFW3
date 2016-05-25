@@ -118,7 +118,8 @@ public class MovableOverlayView extends RelativeLayout {
 		mTriangle = findViewByIdHelper(this, R.id.movable_corner, "movable_corner");
 		mQuadrant = findViewByIdHelper(this, R.id.movable_quadrant, "movable_quadrant");
 		mBorderOutline = (ImageView) findViewByIdHelper(this, R.id.movable_background, "movable_background");
-		mBorderOutline.bringToFront();
+		if(mBorderOutline!=null)
+			mBorderOutline.bringToFront();
 		
 		// set preferences values
 		mTitleBarIconType = mPref.getInt(Common.KEY_WINDOW_TITLEBAR_ICON_TYPE,
@@ -390,6 +391,12 @@ public class MovableOverlayView extends RelativeLayout {
 			max_button.setImageDrawable(mResource.getDrawable(R.drawable.movable_title_max));
 			min_button.setImageDrawable(mResource.getDrawable(R.drawable.movable_title_min));
 			more_button.setImageDrawable(mResource.getDrawable(R.drawable.movable_title_more));
+			break;
+		case Common.TITLEBAR_ICON_SSNJR2002:
+			close_button.setImageDrawable(mResource.getDrawable(R.drawable.movable_title_close_ssnjr));
+			max_button.setImageDrawable(mResource.getDrawable(R.drawable.movable_title_max_ssnjr));
+			min_button.setImageDrawable(mResource.getDrawable(R.drawable.movable_title_min_ssnjr));
+			more_button.setImageDrawable(mResource.getDrawable(R.drawable.movable_title_more_ssnjr));
 			break;
 		}
 		

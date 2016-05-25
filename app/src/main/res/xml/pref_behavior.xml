@@ -11,6 +11,10 @@
             android:key="window_blacklist"
             android:summary="@string/pref_blacklist_summary"
             android:title="@string/pref_blacklist_title" />
+		<Preference
+            android:key="window_maximized"
+            android:summary="@string/pref_maximized_summary"
+            android:title="@string/pref_maximized_title" />
         <ListPreference
             android:defaultValue="0"
             android:entries="@array/option_whiteblacklist_entries"

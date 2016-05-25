@@ -8,18 +8,22 @@ import com.zst.xposed.halo.floatingwindow3.prefs.*;
 public class Common {
 
 	/* Preference misc */
-	//public static final String THIS_PACKAGE_NAME = Common.class.getPackage().getName();
-	public static final String THIS_PACKAGE_NAME = "com.zst.xposed.halo.floatingwindow";//To keep backwards compatibility we have to use old package name
+	public static final String ORIGINAL_PACKAGE_NAME = "com.zst.xposed.halo.floatingwindow";//To keep backwards compatibility we have to use old package name
 	public static final String THIS_MOD_PACKAGE_NAME = Common.class.getPackage().getName();
 	public static final String PREFERENCE_MAIN_FILE = THIS_MOD_PACKAGE_NAME + "_general";
-	public static final String PREFERENCE_BLACKLIST_FILE = THIS_MOD_PACKAGE_NAME + "_blacklist";
-	public static final String PREFERENCE_WHITELIST_FILE = THIS_MOD_PACKAGE_NAME + "_whitelist";
-	public static final String PREFERENCE_STATUSBAR_LAUNCHER_FILE = THIS_MOD_PACKAGE_NAME + "_statusbar_launcher";
+	public static final String PREFERENCE_PACKAGES_FILE = THIS_MOD_PACKAGE_NAME + "_packages";
 	
+	/* packages types */
+	public static final int PACKAGE_WHITELIST = 1;
+	public static final int PACKAGE_BLACKLIST = 2;
+	public static final int PACKAGE_MAXIMIZE = 4;
+	public static final int PACKAGE_LAUNCHER_SAVED = 8;
+	public static final int PACKAGE_UNUSED = 16;
 
 	/* Preference keys */
 	public static final String KEY_ALPHA = "window_alpha";
 	public static final String KEY_DIM = "window_dim";
+	public static final String KEY_MAXIMIZE_ALL = "window_maximize_all";
 	public static final String KEY_PORTRAIT_WIDTH = "window_portrait_width";
 	public static final String KEY_PORTRAIT_HEIGHT = "window_portrait_height";
 	public static final String KEY_LANDSCAPE_WIDTH = "window_landscape_width";
@@ -81,6 +85,8 @@ public class Common {
 	public static final String KEY_FORCE_OPEN_APP_ABOVE_HALO = "window_force_open_app_above_halo";
 	public static final String KEY_BLACKLIST_APPS = "window_blacklist";
 	public static final String KEY_WHITELIST_APPS = "window_whitelist";
+	public static final String KEY_MAXIMIZED_APPS = "window_maximized";
+	public static final String KEY_MAXIMIZED_HELP = "window_maximized_help";
 	public static final String KEY_BLACKLIST_HELP = "window_blacklist_help";
 	public static final String KEY_WHITELIST_HELP = "window_whitelist_help";
 	public static final String KEY_WHITEBLACKLIST_OPTIONS = "window_whiteblacklist_options";
@@ -98,6 +104,7 @@ public class Common {
 	/* Preference defaults */
 	public static final float DEFAULT_ALPHA = 1f;
 	public static final float DEFAULT_DIM = 0.25f;
+	public static final boolean DEFAULT_MAXIMIZE_ALL = false;
 	public static final float DEFAULT_PORTRAIT_WIDTH = 0.95f;
 	public static final float DEFAULT_PORTRAIT_HEIGHT = 0.7f;
 	public static final float DEFAULT_LANDSCAPE_WIDTH = 0.7f;
@@ -136,7 +143,7 @@ public class Common {
 	public static final String DEFAULT_WINDOW_TRIANGLE_LONGPRESS_ACTION = "1";
 	public static final boolean DEFAULT_WINDOW_TRIANGLE_RESIZE_ENABLED = true;
 	public static final boolean DEFAULT_WINDOW_TRIANGLE_DRAGGING_ENABLED = false;
-	public static final boolean DEFAULT_WINDOW_QUADRANT_ENABLE = true;
+	public static final boolean DEFAULT_WINDOW_QUADRANT_ENABLE = false;
 	public static final String DEFAULT_WINDOW_QUADRANT_COLOR = "FFFFFF";
 	public static final float DEFAULT_WINDOW_QUADRANT_ALPHA = 0.5f;
 	public static final int DEFAULT_WINDOW_QUADRANT_SIZE = 30;
@@ -168,9 +175,9 @@ public class Common {
 
 	/* Xposed Constants */
 	public static final int FLAG_FLOATING_WINDOW = 0x00002001; //XHFWMOD NEW DEFAULT FLOATING FLAG not to confuse with official android flags
-	public static final String EXTRA_SNAP_SIDE = THIS_PACKAGE_NAME + ".EXTRA_SNAP_SIDE";
-	public static final String EXTRA_SNAP = THIS_PACKAGE_NAME + ".EXTRA_SNAP"; //int Gravity flags
-	public static final String REFRESH_APP_LAYOUT = THIS_PACKAGE_NAME + ".REFRESH_APP_LAYOUT";
+	public static final String EXTRA_SNAP_SIDE = ORIGINAL_PACKAGE_NAME + ".EXTRA_SNAP_SIDE";
+	public static final String EXTRA_SNAP = ORIGINAL_PACKAGE_NAME + ".EXTRA_SNAP"; //int Gravity flags
+	public static final String REFRESH_APP_LAYOUT = ORIGINAL_PACKAGE_NAME + ".REFRESH_APP_LAYOUT";
 	
 
 	/* Others */
@@ -180,11 +187,11 @@ public class Common {
 	public static final String XDA_THREAD = "http://forum.xda-developers.com/showthread.php?t=2419287";
 
 	/* SystemUI Broadcast */
-	public static final String STATUSBAR_TASKBAR_REFRESH = THIS_PACKAGE_NAME + ".STATUSBAR_TASKBAR_REFRESH";
-	public static final String STATUSBAR_TASKBAR_LAUNCH = THIS_PACKAGE_NAME + ".STATUSBAR_TASKBAR_LAUNCH";
-	public static final String SHOW_OUTLINE = THIS_PACKAGE_NAME + ".SHOW_OUTLINE";
-	public static final String REMOVE_NOTIFICATION_RESTORE = THIS_PACKAGE_NAME + ".REMOVE_NOTIFICATION_RESTORE.";
-	public static final String SEND_MULTIWINDOW_SWIPE = THIS_PACKAGE_NAME + ".SEND_MULTIWINDOW_SWIPE.";
+	public static final String STATUSBAR_TASKBAR_REFRESH = ORIGINAL_PACKAGE_NAME + ".STATUSBAR_TASKBAR_REFRESH";
+	public static final String STATUSBAR_TASKBAR_LAUNCH = ORIGINAL_PACKAGE_NAME + ".STATUSBAR_TASKBAR_LAUNCH";
+	public static final String SHOW_OUTLINE = ORIGINAL_PACKAGE_NAME + ".SHOW_OUTLINE";
+	public static final String REMOVE_NOTIFICATION_RESTORE = ORIGINAL_PACKAGE_NAME + ".REMOVE_NOTIFICATION_RESTORE.";
+	public static final String SEND_MULTIWINDOW_SWIPE = ORIGINAL_PACKAGE_NAME + ".SEND_MULTIWINDOW_SWIPE.";
 	public static final String INTENT_APP_TOKEN = "token";
 	public static final String INTENT_APP_ID = "id";
 	public static final String INTENT_APP_PARAMS = "layout_paramz";
@@ -195,16 +202,42 @@ public class Common {
 	/*Float dot commons*/
 	public static final String FLOAT_DOT_PACKAGE = Common.class.getPackage().getName();
 	public static final String FLOAT_DOT_SERVICE_ACTION = "service.XHFWService";
-	public static final String REFRESH_FLOAT_DOT_POSITION = THIS_PACKAGE_NAME + ".REFRESH_FLOAT_DOT";
+	public static final String REFRESH_FLOAT_DOT_POSITION = ORIGINAL_PACKAGE_NAME + ".REFRESH_FLOAT_DOT";
 	public static final String INTENT_FLOAT_DOT_EXTRA = "float_dot_extra";
 	public static final String INTENT_FLOAT_DOT_BOOL = "float_dot_bool";
-	public static final String SHOW_MULTIWINDOW_DRAGGER = THIS_PACKAGE_NAME + ".SHOW_MULTIWINDOW_DRAGGER";
+	public static final String SHOW_MULTIWINDOW_DRAGGER = ORIGINAL_PACKAGE_NAME + ".SHOW_MULTIWINDOW_DRAGGER";
 
 	/* Titlebar themes */
 	public static final int TITLEBAR_ICON_NONE = 0;
 	public static final int TITLEBAR_ICON_ORIGINAL = 1;
 	public static final int TITLEBAR_ICON_BachMinuetInG = 2;
+	public static final int TITLEBAR_ICON_SSNJR2002 = 3;
 	public static final int TITLEBAR_ICON_DEFAULT = TITLEBAR_ICON_BachMinuetInG;
+
+	/*Floating dot themes */
+	public static final String KEY_FLOATDOT_LAUNCHER_ENABLED = "floatdot_launcher_enabled";
+	public static final boolean DEFAULT_FLOATDOT_LAUNCHER_ENABLED = true;
+	public static final String KEY_FLOATDOT_COLOR_OUTER1 = "floatdot_color_outer1";
+	public static final String DEFAULT_FLOATDOT_COLOR_OUTER1 = "000000";
+	public static final String KEY_FLOATDOT_COLOR_INNER1 = "floatdot_color_inner1";
+	public static final String DEFAULT_FLOATDOT_COLOR_INNER1 = "008080";
+	public static final String KEY_FLOATDOT_COLOR_OUTER2 = "floatdot_color_outer2";
+	public static final String DEFAULT_FLOATDOT_COLOR_OUTER2 = "000000";
+	public static final String KEY_FLOATDOT_COLOR_INNER2 = "floatdot_color_inner2";
+	public static final String DEFAULT_FLOATDOT_COLOR_INNER2 = "00FF00";
+	public static final String KEY_FLOATDOT_SIZE = "floatdot_size";
+	public static final int DEFAULT_FLOATDOT_SIZE = 26;
+	public static final String KEY_FLOATDOT_SINGLE_COLOR_SNAP = "floatdot_single_color_snap";
+	public static final boolean DEFAULT_FLOATDOT_SINGLE_COLOR_SNAP = false;
+	public static final String KEY_FLOATDOT_SINGLE_COLOR_LAUNCHER = "floatdot_single_color_launcher";
+	public static final boolean DEFAULT_FLOATDOT_SINGLE_COLOR_LAUNCHER = false;
+	public static final String KEY_FLOATDOT_ALPHA = "floatdot_alpha";
+	public static final float DEFAULT_FLOATDOT_ALPHA = 0.7f;
+	public static final String UPDATE_FLOATDOT_PARAMS = "update_floatdot_params";
+	public static final String KEY_FLOATDOT_LAUNCHER_X = "floatdot_launcher_x";
+	public static final String KEY_FLOATDOT_LAUNCHER_Y = "floatdot_launcher_y";
+	public static final int DEFAULT_FLOATDOT_LAUNCHER_X = 80;
+	public static final int DEFAULT_FLOATDOT_LAUNCHER_Y = 20;
 
 	
 

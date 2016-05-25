@@ -38,7 +38,14 @@ public class SystemUIOutliner {
 	}
 	
 	private static void focusChangeContextFinder(LoadPackageParam l) throws Throwable {
-		Class<?> hookClass = findClass("com.android.systemui.SystemUIService", l.classLoader);
+		Class<?> hookClass = null;
+		try{
+			hookClass = findClass("com.android.systemui.SystemUIService", l.classLoader);
+			} catch(Throwable t){
+				XposedBridge.log(t);
+				return;
+			}
+		if(hookClass==null) return;
 		XposedBridge.hookAllMethods(hookClass, "onCreate", new XC_MethodHook() {
 			@Override
 			protected void afterHookedMethod(MethodHookParam param) throws Throwable {

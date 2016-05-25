@@ -48,6 +48,13 @@ public class BehaviorFragment extends PreferenceFragment {
 					return false;
 				}
 			});
+		findPreference("window_maximized").setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+				@Override
+				public boolean onPreferenceClick(Preference preference) {
+					getActivity().startActivity(new Intent(getActivity(), MaximizedActivity.class));
+					return false;
+				}
+			});
 		findPreference(Common.KEY_KEYBOARD_MODE).setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
 				@Override
 				public boolean onPreferenceClick(Preference preference) {

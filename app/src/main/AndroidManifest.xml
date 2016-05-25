@@ -2,14 +2,15 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.zst.xposed.halo.floatingwindow3"
     android:installLocation="internalOnly"
-    android:versionCode="312"
-    android:versionName="3.12beta">
+    android:versionCode="317"
+    android:versionName="3.17">
 
 	<uses-sdk
         android:minSdkVersion="17"
         android:targetSdkVersion="21" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.REORDER_TASKS" />
+	<uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <application
         android:allowBackup="true"
@@ -50,12 +51,38 @@
             </intent-filter>
         </activity>
 		<activity
+            android:name="com.zst.xposed.halo.floatingwindow3.prefs.MaximizedActivity"
+            android:label="@string/app_maximized" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+            </intent-filter>
+        </activity>
+		<activity
             android:name="com.zst.xposed.halo.floatingwindow3.prefs.TitleBarSettingsActivity"
             android:label="@string/pref_movable_sub_titlebar_title" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
             </intent-filter>
         </activity>
+		<activity
+			android:name="com.zst.xposed.halo.floatingwindow3.prefs.FloatDotActivity"
+			android:label="@string/pref_floatdot_title" >
+		<intent-filter>
+			<action android:name="android.intent.action.MAIN" />
+		</intent-filter>
+        </activity>
+		<activity
+			android:name="com.zst.xposed.halo.floatingwindow3.prefs.LauncherListActivity"
+			android:label="@string/pref_launcher_title" >
+			<intent-filter>
+				<action android:name="android.intent.action.MAIN" />
+			</intent-filter>
+        </activity>
+		<receiver android:name="com.zst.xposed.halo.floatingwindow3.floatdot.BootReceiver">  
+			<intent-filter>  
+				<action android:name="android.intent.action.BOOT_COMPLETED" />  
+			</intent-filter>  
+		</receiver>
 		<service android:name="com.zst.xposed.halo.floatingwindow3.floatdot.XHFWService" android:process=":remote" >
 			<intent-filter>
 				<action android:name="service.XHFWService" />

@@ -37,6 +37,23 @@ public class OverlayFragment extends PreferenceFragment {
 					return false;
 				}
 			});
+		findPreference("floatdot_theme").setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+				@Override
+				public boolean onPreferenceClick(Preference preference) {
+					Intent intent = new Intent();
+					intent.setClass(getActivity(), FloatDotActivity.class);
+					startActivityForResult(intent, 0); 
+					
+					return false;
+				}
+			});
+		findPreference("launcher_list").setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+				@Override
+				public boolean onPreferenceClick(Preference preference) {
+					getActivity().startActivity(new Intent(getActivity(), LauncherListActivity.class));
+					return false;
+				}
+			});
 		mPref = getActivity().getSharedPreferences(Common.PREFERENCE_MAIN_FILE,
 												   PreferenceActivity.MODE_WORLD_READABLE);
 	}

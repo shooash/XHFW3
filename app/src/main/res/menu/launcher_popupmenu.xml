@@ -1,0 +1,23 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    
+	<item
+        android:id="@+id/lang_java"
+        android:showAsAction="ifRoom|withText"
+        android:title="Java"
+        android:visible="true"/>
+    <item
+        android:id="@+id/lang_android"
+        android:showAsAction="ifRoom|withText"
+        android:title="Android"
+        android:visible="true"/>
+    <item
+        android:id="@+id/lang_ruby"
+        android:showAsAction="ifRoom|withText"
+        android:title="Ruby"
+        android:visible="true"/>
+    <item
+        android:id="@+id/lang_python"
+        android:showAsAction="ifRoom|withText"
+        android:title="Python"
+        android:visible="true"/>
+</menu>

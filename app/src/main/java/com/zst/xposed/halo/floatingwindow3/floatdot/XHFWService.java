@@ -14,56 +14,143 @@ import android.os.*;
 import org.w3c.dom.*;
 import android.content.res.*;
 import com.zst.xposed.halo.floatingwindow3.*;
+import android.graphics.*;
 
 public class XHFWService extends Service {
 	Context mContext;
-	static final String SERVICE_NAME = Common.FLOAT_DOT_SERVICE_ACTION;
-	public static final String SHOW_MULTIWINDOW_DRAGGER = Common.SHOW_MULTIWINDOW_DRAGGER;
-	public static final String INTENT_FLOAT_DOT_BOOL = Common.INTENT_FLOAT_DOT_BOOL;
 	static Class<?> classSvcMgr;
-	public FloatingDot fd = null;
+	public FloatDot fd = null;
+	private FloatDot ld = null;
 	private int cachedRotation = 0;
+	private FloatLauncher mFloatLauncher;
+	private SharedPreferences mPref;
+	//Colors: snapdragger_dot_outer, snapdragger_dot_inner, launher_dot_outer, launcher_dot_inner
+	private int[] mColors = new int[4];
+	private int mDotsSize = Common.DEFAULT_FLOATDOT_SIZE;
+	private boolean isLauncherDotEnabled;
 
 	@Override
 	public void onCreate()
 	{
 		// TODO: Implement this method
 		//fd = new FloatingDot(getApplicationContext());
+		mContext = this;
+		mPref = getSharedPreferences(Common.PREFERENCE_MAIN_FILE, MODE_MULTI_PROCESS);
+		isLauncherDotEnabled = mPref.getBoolean(Common.KEY_FLOATDOT_LAUNCHER_ENABLED, Common.DEFAULT_FLOATDOT_LAUNCHER_ENABLED);
+//		mPref.registerOnSharedPreferenceChangeListener(new SharedPreferences.OnSharedPreferenceChangeListener(){
+//
+//				@Override
+//				public void onSharedPreferenceChanged(SharedPreferences prefs, String key)
+//				{
+//					if(key.equals(Common.KEY_FLOATDOT_COLOR_OUTER1)&&fd!=null){
+//						fd.setColor(Color.parseColor("#" + prefs.getString(Common.KEY_FLOATDOT_COLOR_OUTER1, Common.DEFAULT_FLOATDOT_COLOR_OUTER1)), false);
+//						fd.redrawView();
+//					}
+//					else if(key.equals(Common.KEY_FLOATDOT_COLOR_INNER1)&&fd!=null){
+//						fd.setColor(Color.parseColor("#" + prefs.getString(Common.KEY_FLOATDOT_COLOR_INNER1, Common.DEFAULT_FLOATDOT_COLOR_INNER1)), true);
+//						fd.redrawView();
+//					}
+//					else if(key.equals(Common.KEY_FLOATDOT_COLOR_OUTER2)&&ld!=null){
+//						ld.setColor(Color.parseColor("#" + prefs.getString(Common.KEY_FLOATDOT_COLOR_OUTER2, Common.DEFAULT_FLOATDOT_COLOR_OUTER2)), false);
+//						ld.redrawView();
+//					}
+//					else if(key.equals(Common.KEY_FLOATDOT_COLOR_INNER2)&&ld!=null){
+//						ld.setColor(Color.parseColor("#" + prefs.getString(Common.KEY_FLOATDOT_COLOR_INNER2, Common.DEFAULT_FLOATDOT_COLOR_INNER2)), true);
+//						ld.redrawView();
+//					}
+//					else if(key.equals(Common.KEY_FLOATDOT_SIZE)){
+//						if(fd!=null) {
+//							fd.setSize(prefs.getInt(key, Common.DEFAULT_FLOATDOT_SIZE));
+//							fd.redrawView();
+//							}
+//						if(ld!=null) {
+//							ld.setSize(prefs.getInt(key, Common.DEFAULT_FLOATDOT_SIZE));
+//							ld.redrawView();
+//							}
+//					}
+//					else if(key.equals(Common.KEY_FLOATDOT_SINGLE_COLOR_SNAP)&&fd!=null){
+//						if(prefs.getBoolean(key, Common.DEFAULT_FLOATDOT_SINGLE_COLOR_SNAP))
+//							fd.setColor(fd.mColor);
+//						else
+//							fd.setColor(Color.parseColor("#" + prefs.getString(Common.KEY_FLOATDOT_COLOR_INNER1, Common.DEFAULT_FLOATDOT_COLOR_INNER1)), true);
+//						fd.redrawView();
+//					}
+//					else if(key.equals(Common.KEY_FLOATDOT_SINGLE_COLOR_LAUNCHER)&&ld!=null){
+//						if(prefs.getBoolean(key, Common.DEFAULT_FLOATDOT_SINGLE_COLOR_LAUNCHER))
+//							ld.setColor(ld.mColor);
+//						else
+//							ld.setColor(Color.parseColor("#" + prefs.getString(Common.KEY_FLOATDOT_COLOR_INNER2, Common.DEFAULT_FLOATDOT_COLOR_INNER2)), true);
+//						ld.redrawView();
+//					}
+//					//TODO add disable launcher dot
+//				}
+//				
+//			
+//		});
+		mFloatLauncher = new FloatLauncher(mContext);
+		cachedRotation = Util.getDisplayRotation(mContext.getApplicationContext());
+		
+		loadColors();
+		if(isLauncherDotEnabled) setupLauncherDot();
+		registerBroadcast();
 		super.onCreate();
 	}
 	
-	/*public XHFWService(Context sContext){
-		mContext = sContext;
-		/*Intent i = new Intent(mContext,XHFWService.class);
-		i.setAction("service.XHFWService");
-		mContext.startService(i);*/
-	/*}*/
+	private void setupLauncherDot(){
+		Point mScreenSize = Util.getScreenSize(mContext.getApplicationContext());
+		int x = mScreenSize.x/100*mPref.getInt(Common.KEY_FLOATDOT_LAUNCHER_X, Common.DEFAULT_FLOATDOT_LAUNCHER_X);
+		int y = mScreenSize.y/100*mPref.getInt(Common.KEY_FLOATDOT_LAUNCHER_Y, Common.DEFAULT_FLOATDOT_LAUNCHER_Y);
+		if(ld!=null)
+			ld.removeDot();
+		ld = new FloatDot(mContext, mFloatLauncher, mDotsSize, x, y, mColors[2], mColors[3]);
+		ld.setAlpha(mPref.getFloat(Common.KEY_FLOATDOT_ALPHA, Common.DEFAULT_FLOATDOT_ALPHA));
+		ld.putDragger();
+		ld.showDragger(true);
+	}
+	
+	private void saveLauncherPosition(int x, int y){
+		if(x==0||y==0) return;
+		final Point mScreenSize = Util.getScreenSize(mContext);
+		SharedPreferences.Editor editor = mPref.edit();
+		editor.putInt(Common.KEY_FLOATDOT_LAUNCHER_X, 100*x/mScreenSize.x);
+		editor.putInt(Common.KEY_FLOATDOT_LAUNCHER_Y, 100*y/mScreenSize.y);
+		editor.apply();
+	}
+
+	@Override
+	public void onDestroy()
+	{
+		if(ld!=null) {
+			saveLauncherPosition(ld.mCoordinates.x, ld.mCoordinates.y);
+			ld.removeDot();
+			}
+		if(fd!=null) fd.removeDot();
+		super.onDestroy();
+	}
+	
 	
 	
 	@Override
 	public IBinder onBind(Intent intent){
-		
-		//fd.putDragger();
-		//toggle(true);
-		mContext = this;
-		cachedRotation = Util.getDisplayRotation(this);
-		
+		loadColors();
+		Point mScreenSize = Util.getScreenSize(mContext);
 		if(fd==null) 
 		{
-			fd = new FloatingDot(mContext);
+			fd = new FloatDot(mContext, mFloatLauncher, mDotsSize, mScreenSize.x/2, mScreenSize.y/2, mColors[0], mColors[1]);
+			fd.enableCommunication();
+			fd.setAlpha(mPref.getFloat(Common.KEY_FLOATDOT_ALPHA, Common.DEFAULT_FLOATDOT_ALPHA));
 			fd.putDragger();
-			registerBroadcast();
 			}
-		//fd.sendPosition();
-		//Log.i("XHFWService", "position sent");
-		//Toast.makeText(mContext, "toogleDragger", Toast.LENGTH_SHORT).show();
 		return mBinder;
 	}
 
 	@Override
 	public boolean onUnbind(Intent intent)
 	{
-		if(fd!=null) fd.hideDragger();
+		if(fd!=null) fd.removeDot();
+		if(ld!=null){
+			saveLauncherPosition(ld.mCoordinates.x, ld.mCoordinates.y);
+		}
 		unregisterReceiver(br);
 		return super.onUnbind(intent);
 	}
@@ -77,21 +164,92 @@ public class XHFWService extends Service {
 		super.onConfigurationChanged(newConfig);
 	}
 	
+	private void loadColors(){
+		mDotsSize = mPref.getInt(Common.KEY_FLOATDOT_SIZE, Common.DEFAULT_FLOATDOT_SIZE);
+		mColors[0] = Color.parseColor("#" + mPref.getString(Common.KEY_FLOATDOT_COLOR_OUTER1, Common.DEFAULT_FLOATDOT_COLOR_OUTER1));
+		if(mPref.getBoolean(Common.KEY_FLOATDOT_SINGLE_COLOR_SNAP, Common.DEFAULT_FLOATDOT_SINGLE_COLOR_SNAP))
+			mColors[1] = mColors[0];
+		else
+			mColors[1] = Color.parseColor("#" + mPref.getString(Common.KEY_FLOATDOT_COLOR_INNER1, Common.DEFAULT_FLOATDOT_COLOR_INNER1));
+		mColors[2] = Color.parseColor("#" + mPref.getString(Common.KEY_FLOATDOT_COLOR_OUTER2, Common.DEFAULT_FLOATDOT_COLOR_OUTER2));
+		if(mPref.getBoolean(Common.KEY_FLOATDOT_SINGLE_COLOR_LAUNCHER, Common.DEFAULT_FLOATDOT_SINGLE_COLOR_LAUNCHER))
+			mColors[3] = mColors[2];
+		else
+			mColors[3] = Color.parseColor("#" + mPref.getString(Common.KEY_FLOATDOT_COLOR_INNER2, Common.DEFAULT_FLOATDOT_COLOR_INNER2));
+	}
+	
 	BroadcastReceiver br = new BroadcastReceiver(){
-
 		@Override
 		public void onReceive(Context sContext, Intent sIntent)
 		{
-			if(!sIntent.getAction().equals(SHOW_MULTIWINDOW_DRAGGER)) return;
-			boolean show = sIntent.getBooleanExtra(INTENT_FLOAT_DOT_BOOL, false);
-			fd.showDragger(show);
+			if(sIntent.getAction().equals(Common.UPDATE_FLOATDOT_PARAMS)){
+				if(sIntent.hasExtra(Common.KEY_FLOATDOT_LAUNCHER_ENABLED)){
+					isLauncherDotEnabled = sIntent.getBooleanExtra(Common.KEY_FLOATDOT_LAUNCHER_ENABLED, Common.DEFAULT_FLOATDOT_LAUNCHER_ENABLED);
+					if(ld==null&&isLauncherDotEnabled)
+						setupLauncherDot();
+					if(ld!=null&&!isLauncherDotEnabled){
+						ld.removeDot();
+						ld = null;
+					}
+					return;
+				}			
+				String mColor = sIntent.getStringExtra("color");
+				int item = sIntent.getIntExtra("item", 0);
+				int size = sIntent.getIntExtra("size", 0);
+				float alpha = sIntent.getFloatExtra("alpha", 0);
+				if(size!=0){
+					if(fd!=null){
+						fd.setSize(size);
+						fd.redrawView();
+					}
+					if(ld!=null){
+						ld.setSize(size);
+						ld.redrawView();
+					}
+					return;
+				}
+				if(alpha!=0){
+					if(fd!=null){
+						fd.setAlpha(alpha);
+						fd.redrawView();
+					}
+					if(ld!=null){
+						ld.setAlpha(alpha);
+						ld.redrawView();
+					}
+					return;
+				}
+				if(mColor!=null)
+					mColors[item]=Color.parseColor("#" + mColor);
+				switch(item){
+					case 0:
+					case 1:
+						if(fd!=null){
+							fd.setColor(mColors[0], mColors[1]);
+							fd.redrawView();
+						}
+						break;
+					case 2:
+					case 3:
+						if(ld!=null){
+							ld.setColor(mColors[2], mColors[3]);
+							ld.redrawView();
+						}
+						break;
+				}
+			}
+				
+			if(!sIntent.getAction().equals(Common.SHOW_MULTIWINDOW_DRAGGER)) return;
+			boolean show = sIntent.getBooleanExtra(Common.INTENT_FLOAT_DOT_BOOL, false);
+			if(fd!=null) fd.showDragger(show);
+			if(ld!=null) ld.showDragger(!show);
 		}
 	};
 	
 	private void registerBroadcast(){
-		
 		IntentFilter i = new IntentFilter();
-		i.addAction(SHOW_MULTIWINDOW_DRAGGER);
+		i.addAction(Common.SHOW_MULTIWINDOW_DRAGGER);
+		i.addAction(Common.UPDATE_FLOATDOT_PARAMS);
 		registerReceiver(br,i);
 	}
 	

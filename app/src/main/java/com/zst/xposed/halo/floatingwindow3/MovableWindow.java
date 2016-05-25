@@ -24,8 +24,8 @@ public class MovableWindow
 
     public static void DEBUG(String tag){
 //        XposedBridge.log(tag + " Package:[" + (mWindowHolder==null?"null":mWindowHolder.packageName + "] isSnapped: [" + mWindowHolder.isSnapped 
-//						 + "] isMaximized: [" + mWindowHolder.isMaximized + "]")
-//							+ "] isMovable:[" + isMovable );
+//						 + "] isMaximized: [" + mWindowHolder.isMaximized)
+//							+ "] isMovable:[" + isMovable + "]");
 //		if(mWindowHolder!=null) 
 //			XposedBridge.log("      window:[" + mWindowHolder.width + ":" + mWindowHolder.height
 //				+ "] at [" + mWindowHolder.x + ":" + mWindowHolder.y + "]");
@@ -67,6 +67,7 @@ public class MovableWindow
     public static boolean mAeroSnapChangeTitleBarVisibility;
     public static boolean mAeroSnapEnabled;
 	public static boolean mAeroFocusWindow;
+	public static boolean mResized;
     static int mAeroSnapDelay;
     static boolean mAeroSnapSwipeApp;
     static int mPreviousForceAeroSnap;
@@ -94,6 +95,7 @@ public class MovableWindow
                 if(!isMovable) return;
 				if(mWindowHolder==null) initWindow(mActivity);
                 else mWindowHolder.setWindow(mActivity);
+				setCommonLayout();
 				/* reconnect XHFWService if needed */
                 connectService();
                 DEBUG("onCreate");
@@ -105,11 +107,13 @@ public class MovableWindow
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                 DEBUG("onStartSTART");
                 if(!isMovable || mWindowHolder==null) return;
+				showFocusOutline = false; //is was actualy disabled because the window lost focus
                 mWindowHolder.setWindow((Activity) param.thisObject);
                 mWindowHolder.syncLayout();
 				setOverlayView();
                 showTitleBar();
                 DEBUG("onStartEND");
+				
             }
         });
 		
@@ -141,6 +145,7 @@ public class MovableWindow
 		XposedBridge.hookAllMethods(Activity.class, "onPause", new XC_MethodHook() {
 				@Override
 				protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+					if(!isMovable || mWindowHolder==null) return;		
 					DEBUG("onPause mWindows.size:" + mWindowHolder.mWindows.size());
 					hideFocusFrame(((Activity)param.thisObject).getApplicationContext());
 					return;
@@ -155,8 +160,11 @@ public class MovableWindow
 					/* remove from window stack */
 					mWindowHolder.mWindows.remove(((Activity)param.thisObject).getWindow());
 					if(mWindowHolder.mWindows.size()<1) {
+						sendRemovedPackageInfo(mWindowHolder.packageName, (Activity)param.thisObject, false);
+						//mWindowHolder.mActivity.getApplicationContext().unbindService(XHFWServiceConnection);
 						mWindowHolder = null;
 						isMovable=false;
+						
 					}
 					hideFocusFrame(((Activity)param.thisObject).getApplicationContext());
 					return;
@@ -210,21 +218,24 @@ public class MovableWindow
 									screenY = event.getRawY();
 									leftFromScreen = (screenX - viewX);
 									topFromScreen = (screenY - viewY);
-									if(moveRangeAboveLimit(event)){
-										if(mWindowHolder.isSnapped) unsnap();
-										move(leftFromScreen.intValue(), topFromScreen.intValue());
-										if (mAeroSnap != null) {
-											mAeroSnap.dispatchTouchEvent(event);
-										}
-										mChangedPreviousRange=false;
-										}
+									if((mWindowHolder.isSnapped || mWindowHolder.isMaximized) && !moveRangeAboveLimit(event))
+										break;
+									unsnap();
+									move(leftFromScreen.intValue(), topFromScreen.intValue());
+//									if (mAeroSnap != null) 
+//										mAeroSnap.dispatchTouchEvent(event);
 								}
 							}
 							break;
-					}
+						case MotionEvent.ACTION_UP:
+							mChangedPreviousRange=false;
+							break;
+						}
 					ActionBar ab = a.getActionBar();
 					int height = (ab != null) ? ab.getHeight() : Util.dp(48, a.getApplicationContext());
-					if (viewY < height && mAeroSnap != null && mActionBarDraggable) {
+					if (viewY < height && mAeroSnap != null 
+						&& mActionBarDraggable && !mWindowHolder.isSnapped 
+						&& !mWindowHolder.isMaximized) {
 						mAeroSnap.dispatchTouchEvent(event);
 					}
 
@@ -241,7 +252,13 @@ public class MovableWindow
 	
 	private static void injectGenerateLayout(final XC_LoadPackage.LoadPackageParam lpparam)
 	throws Throwable {
-		Class<?> cls = XposedHelpers.findClass(MainXposed.mCompatibility.Internal_PhoneWindow, lpparam.classLoader);
+		Class<?> cls = null;
+		try{
+			cls = XposedHelpers.findClass(MainXposed.mCompatibility.Internal_PhoneWindow, lpparam.classLoader);
+		} catch(Throwable t){
+			XposedBridge.log(t);
+			return;
+		}
 		if(cls==null) return;
 		XposedBridge.hookAllMethods(cls, "generateLayout", new XC_MethodHook() {
 				protected void afterHookedMethod(MethodHookParam param) throws Throwable {
@@ -255,6 +272,7 @@ public class MovableWindow
 					//TODO add to settings an option to force titlebar to overlay windows 
 					//(but that will overlap actionbar)
 					//setOverlayView();
+					putOverlayView();
 					mWindowHolder.pushToWindow(window);
 				}
 			});
@@ -322,6 +340,7 @@ public class MovableWindow
 		connectService();
 		/* set initial layout */
 		setInitLayout();
+		sendPackageInfo();
         return true;
     }
 
@@ -339,9 +358,9 @@ public class MovableWindow
 		 
     }
 	
-    private static void setInitLayout(){
-        mWindowHolder.mWindow.addFlags(WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
-        //mWindowHolder.mWindow.setWindowAnimations(android.R.style.Animation_Dialog);
+	private static void setCommonLayout(){
+		mWindowHolder.mWindow.addFlags(WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
+        mWindowHolder.mWindow.setWindowAnimations(android.R.style.Animation_Dialog);
         mWindowHolder.mWindow.clearFlags(WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER);
         switch(MainXposed.mPref.getInt(Common.KEY_KEYBOARD_MODE, Common.DEFAULT_KEYBOARD_MODE)){
             case 2:
@@ -351,6 +370,9 @@ public class MovableWindow
                 mWindowHolder.mWindow.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
                 break;
         }
+	}
+	
+    private static void setInitLayout(){
         switch(Util.getScreenOrientation(mWindowHolder.mActivity)){
             case Configuration.ORIENTATION_LANDSCAPE:
                 mWindowHolder.width = (int) (mScreenWidth * MainXposed.mPref.getFloat(Common.KEY_LANDSCAPE_WIDTH, Common.DEFAULT_LANDSCAPE_WIDTH));
@@ -362,15 +384,42 @@ public class MovableWindow
                 mWindowHolder.height = (int) (mScreenHeight * MainXposed.mPref.getFloat(Common.KEY_PORTRAIT_HEIGHT, Common.DEFAULT_PORTRAIT_HEIGHT));
                 break;
         }
-		mWindowHolder.position((mScreenWidth-mWindowHolder.width)/2, (mScreenHeight-mWindowHolder.height)/2);
+		//mWindowHolder.position((mScreenWidth-mWindowHolder.width)/2, (mScreenHeight-mWindowHolder.height)/2);
+		setInitGravity(MainXposed.mPref.getInt(Common.KEY_GRAVITY, Common.DEFAULT_GRAVITY));
 		if(mAeroSnap!=null&&mWindowHolder.isSnapped) {
 			mWindowHolder.isSnapped=false;
 			mAeroSnap.forceSnapGravity(mWindowHolder.SnapGravity);
 			}
-		else {
+		else if(MainXposed.mPref.getBoolean(Common.KEY_MAXIMIZE_ALL, Common.DEFAULT_MAXIMIZE_ALL) || MainXposed.isMaximizedlisted(mWindowHolder.packageName)){
+			maximize();
+		} else {
 			mWindowHolder.syncLayout();
 			}
     }
+	
+	private static void setInitGravity(int startGravity){
+		if(startGravity == Gravity.CENTER){
+			mWindowHolder.position((mScreenWidth-mWindowHolder.width)/2, (mScreenHeight-mWindowHolder.height)/2);
+			return;
+			}
+		int x;
+		int y;
+		if(Util.isFlag(startGravity, Gravity.LEFT))
+			x = 0;
+		else if(Util.isFlag(startGravity, Gravity.RIGHT))
+			x = mScreenWidth-mWindowHolder.width;
+		else
+			x = (mScreenWidth-mWindowHolder.width)/2;
+		
+		if(Util.isFlag(startGravity, Gravity.TOP))
+			y = 0;
+		else if(Util.isFlag(startGravity, Gravity.BOTTOM))
+			y = mScreenHeight-mWindowHolder.height;
+		else
+			y = (mScreenHeight-mWindowHolder.height)/2;
+		
+		mWindowHolder.position(x,y);
+	}
 	
 
 	/***********************************************************/
@@ -381,9 +430,9 @@ public class MovableWindow
 		DEBUG("showTitleBar");
 		if(mOverlayView == null || mWindowHolder==null) return;
 
-		if(mWindowHolder.mWindow.isFloating()) {
+		if(mWindowHolder.mWindow.isFloating())
 			return;
-			}
+			
 		if(mWindowHolder.isSnapped||mWindowHolder.isMaximized) showTitleBar(false);
 		else showTitleBar(true);
 	}
@@ -436,9 +485,15 @@ public class MovableWindow
 	public static void putOverlayView(){
 		/*  We don't touch floating dialogs  */
 		if (mWindowHolder==null || mWindowHolder.mWindow.isFloating()) return;	
-		FrameLayout decor_view = (FrameLayout) mWindowHolder.mWindow.peekDecorView().getRootView();
+		FrameLayout decor_view;
+		try{
+			decor_view = (FrameLayout) mWindowHolder.mWindow.peekDecorView().getRootView();
+		} catch(Throwable t){
+			decor_view=null;
+		}
+		if (decor_view == null) return;
 		mOverlayView = (MovableOverlayView) decor_view.getTag(Common.LAYOUT_OVERLAY_TAG);
-		decor_view.bringChildToFront(mOverlayView);
+		if (mOverlayView != null)  decor_view.bringChildToFront(mOverlayView);
 	}
 	
 	private static void setTagInternalForView(View view, int key, Object object) {
@@ -485,6 +540,7 @@ public class MovableWindow
 				if(coordinates == null) return;
 				mFloatDotCoordinates=coordinates;
 				if(mAeroSnap==null||mWindowHolder==null||!mWindowHolder.isSnapped) return;
+				mResized = true;
 				mAeroSnap.updateSnap(mWindowHolder.SnapGravity);
 			}
 		}
@@ -516,7 +572,8 @@ public class MovableWindow
 	}
 
 	private static void changeFocusApp(Activity a) {
-		if(XHFWInterfaceLink==null) {connectService();}
+		if(XHFWInterfaceLink==null) 
+			connectService();
 		try		{
 			XHFWInterfaceLink.bringToFront(a.getTaskId());
 		}
@@ -525,11 +582,12 @@ public class MovableWindow
 			XposedBridge.log("changeFocusApp failed");
 		}
 		toggleDragger();
-		drawFocusFrame();
+		//drawFocusFrame();
 	}
 	
 	private static void drawFocusFrame(){
 		if(!mAeroFocusWindow) return;
+		if(showFocusOutline&&!mResized) return;
 		//hide previous outlines
 		hideFocusFrame(mWindowHolder.mActivity.getApplicationContext());
 		if(!mWindowHolder.isSnapped) return;
@@ -540,6 +598,7 @@ public class MovableWindow
 		mIntent.putExtra(Common.INTENT_APP_FOCUS, true);
 		mWindowHolder.mActivity.getApplicationContext().sendBroadcast(mIntent);
 		showFocusOutline = true;
+		mResized = false;
 	}
 	
 	private static void hideFocusFrame(Context mContext){
@@ -583,7 +642,23 @@ public class MovableWindow
 			DEBUG("getFloatingDotCoordinates [" + mFloatDotCoordinates[0] +":"+mFloatDotCoordinates[1]+"]");
 			if(mWindowHolder.isSnapped)
 				mAeroSnap.updateSnap(mWindowHolder.SnapGravity);
+			mResized=true;
 		} catch (RemoteException e) {}
+	}
+	
+	public static void sendRemovedPackageInfo(String packageName, Context mContext, boolean mCompletely){
+		Intent mIntent = new Intent(Common.ORIGINAL_PACKAGE_NAME + ".APP_REMOVED");
+		mIntent.putExtra("packageName", packageName);
+		mIntent.putExtra("removeCompletely", mCompletely);
+		mContext.getApplicationContext().sendBroadcast(mIntent);
+	}
+	
+	private static void sendPackageInfo(){
+		Intent mIntent = new Intent(Common.ORIGINAL_PACKAGE_NAME + ".APP_LAUNCHED");
+		mIntent.putExtra("packageName", mWindowHolder.packageName);
+		mIntent.putExtra("float-gravity", mWindowHolder.SnapGravity);
+		mIntent.putExtra("float-taskid", mWindowHolder.mActivity.getTaskId());
+		mWindowHolder.mActivity.getApplicationContext().sendBroadcast(mIntent);
 	}
 
 	/***********************************************************/

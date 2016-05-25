@@ -12,6 +12,8 @@ import android.support.v4.view.ViewPager;
 import com.zst.xposed.halo.floatingwindow3.prefs.*;
 import android.app.*;
 import android.graphics.drawable.*;
+import android.widget.*;
+import android.view.*;
 
 public class MainPreference extends Activity {
 	
@@ -72,5 +74,13 @@ public class MainPreference extends Activity {
 		ActionBar bar = getActionBar();
 		bar.setBackgroundDrawable(new ColorDrawable(0xFFAA0000)); 
 		
+		
+		testSettings(true);
+		
+	}
+	
+	private void testSettings(boolean mVis){
+		TextView notActiveTitle = (TextView) findViewById(R.id.notActiveTitle);
+		notActiveTitle.setVisibility(mVis?View.VISIBLE:View.GONE);
 	}
 }

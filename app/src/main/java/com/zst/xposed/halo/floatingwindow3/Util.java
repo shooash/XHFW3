@@ -19,6 +19,10 @@ import android.os.Build;
 import android.app.*;
 import android.view.*;
 import android.content.res.*;
+import de.robv.android.xposed.*;
+import android.util.*;
+import android.content.*;
+import android.preference.*;
 
 
 public class Util
@@ -40,6 +44,8 @@ public class Util
 		} catch (Exception e) {
 			dpi = "0";
 			//failed, set to zero.
+		} catch(Throwable t){
+			if(dpi.equals("")) dpi="0";
 		}
 		float scale = Integer.parseInt(dpi);
 		if (scale == 0) {
@@ -137,5 +143,87 @@ public class Util
 	 * we need this to speed up our resizing */
 	// params.privateFlags |= 0x00000040; //PRIVATE_FLAG_NO_MOVE_ANIMATION
 	
-
+	public static String getFailsafeStringFromObject(String result, Object mObject, String mItem){
+		if(mObject==null) return null;
+		try{
+			result = (String) XposedHelpers.getObjectField(mObject, mItem);
+		} catch (Throwable t){
+			XposedBridge.log(t);
+			return null;
+		}
+		return result;
+	}
+	
+	public static Object getFailsafeObjectFromObject(Object mObject, String mItem){
+		if(mObject==null) return null;
+		Object result = null;
+		try{
+			result = XposedHelpers.getObjectField(mObject, mItem);
+		} catch (Throwable t){
+			XposedBridge.log(t);
+			return null;
+		}
+		return result;
+	}
+	
+	public static Integer getFailsafeIntFromObject(Object mObject, String mItem){
+		if(mObject==null) return null;
+		Integer result = null;
+		try{
+			result = (Integer) XposedHelpers.getIntField(mObject, mItem);
+		} catch (Throwable t){
+			XposedBridge.log(t);
+			return null;
+		}
+		return result;
+	}
+	
+	
+	public static boolean getFailsafeObjectFromMethod(Object result, Object mObject, String mItem){
+		if(mObject==null) return false;
+		try{
+			result = XposedHelpers.callMethod(mObject, mItem);
+		} catch (Throwable t){
+			XposedBridge.log(t);
+			return false;
+		}
+		return (result!=null);
+		}
+	
+	public static int getStatusBarHeight(Context mContext){
+		int result = 0;
+		int resourceId = mContext.getResources().getIdentifier("status_bar_height", "dimen", "android");
+		if (resourceId > 0)
+			result = mContext.getResources().getDimensionPixelSize(resourceId);
+		return result;
+	}
+	
+	public static boolean moveToFront(Context mContext, int taskId){
+		ActivityManager mActivityManager = (ActivityManager) mContext
+			.getSystemService(Context.ACTIVITY_SERVICE);
+		try {
+			mActivityManager.moveTaskToFront(taskId, ActivityManager.MOVE_TASK_NO_USER_ACTION);
+		} catch (Exception e) {
+			Log.e("Xposed", "Cannot move task to front", e);
+			return false;
+		}
+		return true;
+	}
+	
+	public static void startApp(Context mContext, String mPackageName){
+		final Intent intent = new Intent(mContext.getPackageManager()
+										  .getLaunchIntentForPackage(mPackageName));
+		if(intent==null) return;
+		SharedPreferences mSPrefs = mContext.getSharedPreferences(Common.PREFERENCE_MAIN_FILE, mContext.MODE_WORLD_READABLE);
+		int floatFlag = mSPrefs.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW);
+		intent.addFlags(floatFlag);
+		mContext.startActivity(intent);
+	}
+	
+	public static Point getScreenSize(Context mContext){
+		final WindowManager mWindowManager = (WindowManager) mContext.getApplicationContext().getSystemService(Context.WINDOW_SERVICE);
+		final DisplayMetrics metrics = new DisplayMetrics();
+		mWindowManager.getDefaultDisplay().getMetrics(metrics);
+		return new Point(metrics.widthPixels, metrics.heightPixels);
+	}
 }

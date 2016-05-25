@@ -40,6 +40,17 @@
             android:summary="Choose appearance"
             android:title="Theme" />
 	</PreferenceCategory>
+
+    <PreferenceCategory android:title="@string/pref_floatdot_title">
+		<Preference
+            android:key="floatdot_theme"
+            android:summary="Change those tiny launcher dots"
+            android:title="FloatDot Theme" />
+		<Preference
+			android:key="launcher_list"
+			android:summary="@string/pref_launcher_summary"
+			android:title="@string/pref_launcher_title" />
+	</PreferenceCategory>
 	
 	<PreferenceCategory android:title="Triangle">
         <SwitchPreference

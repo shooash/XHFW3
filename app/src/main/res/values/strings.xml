@@ -6,6 +6,7 @@
 	<string name="app_description">Halo Floating Windows from Paranoid Android with Movable &amp; Resizable feature.(zst123)</string>
     <string name="app_blacklist">Blacklist</string>
     <string name="app_whitelist">Whitelist</string>
+	<string name="app_maximized">Maximized List</string>
     <string name="app_testing">Testing</string>
     <string name="app_statusbar_taskbar">Statusbar Taskbar</string>
 
@@ -68,6 +69,8 @@
     <string name="pref_width_landscape_summary">Width of Popup in Landscape</string>
     <string name="pref_height_landscape_title">Landscape Height</string>
     <string name="pref_height_landscape_summary">Height of Popup in Landscape</string>
+	<string name="pref_all_maximized_title">Start All Movable Windows Maximized</string>
+    <string name="pref_all_maximized_summary">Maximize everything from start</string>
 
     <!-- 3rd Preference Screen -->
     <string name="pref_behave_top_title">Popup Behavior</string>
@@ -94,7 +97,13 @@
     <string name="pref_whitelist_title">Whitelist Apps</string>
     <string name="pref_whitelist_summary">Choose a list of apps to always open in floating mode</string>
     <string name="pref_whitelist_dialog">Newly whitelisted apps needs to be force-closed for changes to take effect.\n\nYou may single press on the app icon for the app info to open. After which, you may select Force Stop.\n\nNote that blacklisting has a higher priority over whitelisting if you were to select the same app in both lists.</string>
-    <string name="pref_whiteblacklist_title">Whitelist/Blacklist Options</string>
+	<string name="pref_maximized_title">Maximized Apps</string>
+    <string name="pref_maximized_summary">Choose a list of apps to always open maximized</string>
+    <string name="pref_maximized_dialog">Newly auto maximized apps need to be force-closed for changes to take effect.\n\nYou may single press on the app icon for the app info to open. After which, you may select Force Stop.</string>
+	<string name="pref_launcher_title">FloatDot Launcher Apps</string>
+    <string name="pref_launcher_summary">Choose a list of apps to show in launcher menu</string>
+    <string name="pref_launcher_dialog">To reopen apps as movable you might need to force-close them for changes to take effect.\n\nYou may single press on the app icon for the app info to open. After which, you may select Force Stop.</string>
+	<string name="pref_whiteblacklist_title">Whitelist/Blacklist Options</string>
     <string name="pref_whiteblacklist_summary">Choose a different behavior to use the black and whitelist</string>
 	<string name="pref_force_snap_title">Autosnap windows</string>
 	<string name="pref_force_snap_summary">If new windows should automaticaly snap side by side</string>
@@ -269,6 +278,8 @@
     <string name="tbic_theme_original_s">The icons originally used in the very first version</string>
     <string name="tbic_theme_clearer_t">Clearer Icons</string>
     <string name="tbic_theme_clearer_s">Icons created by BachMinuetInG from XDA</string>
+	<string name="tbic_theme_ssnjr_t">Remix Icons</string>
+    <string name="tbic_theme_ssnjr_s">Icons created by SSNJR2002 from XDA</string>
 
     <!-- ColorPicker -->
     <string name="apply">Apply</string>
@@ -299,5 +310,19 @@
     <string name="pref_statusbar_taskbar_pin_apps_title">Pin Apps</string>
     <string name="pref_statusbar_taskbar_number_summary">Choose the maximum applications to be show in the notification\n(Requires SystemUI restart)</string>
     <string name="pref_statusbar_taskbar_number_title">Max Number of Apps</string>
+	
+	<!-- FloatDot -->
+	<string name="floatdot_color_outer1_title">FloatDot Snap Color</string>
+	<string name="floatdot_color_inner1_title">FloatDot Snap Inner Color</string>
+	<string name="floatdot_color_outer2_title">FloatDot Launcher Color</string>
+	<string name="floatdot_color_inner2_title">FloatDot Launcher Inner Color</string>
+	<string name="pref_floatdot_single_color_snap_title">Single Color for FloatDot Snap</string>
+	<string name="pref_floatdot_single_color_snap_summary">Do not use double circles</string>
+	<string name="pref_floatdot_single_color_launcher_title">Single Color for FloatDot Launcher</string>
+	<string name="pref_floatdot_single_color_launcher_summary">Do not use double circles</string>
+	<string name="pref_floatdot_size_title">Floating Dots\' Size</string>
+	<string name="pref_floatdot_alpha_title">Transparency</string>
+	<string name="pref_floatdot_launcher_title">Enable FloatDot Launcher</string>
+    <string name="pref_floatdot_title">FloatDot settings</string>
     
 </resources>

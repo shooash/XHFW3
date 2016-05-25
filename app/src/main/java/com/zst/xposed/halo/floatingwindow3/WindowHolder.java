@@ -11,6 +11,7 @@ import de.robv.android.xposed.XSharedPreferences;
 import android.view.*;
 
 import java.util.ArrayList;
+import android.os.*;
 
 public class WindowHolder{
     public boolean isSnapped = false;
@@ -151,10 +152,33 @@ public class WindowHolder{
         mWParams.height = height;
         mWParams.dimAmount = dim;
         mWParams.gravity = Gravity.TOP | Gravity.LEFT;
-		mWindow.getCallback().onWindowAttributesChanged(mWParams);
+		//mWindow.getCallback().onWindowAttributesChanged(mWParams);
         //Util.addPrivateFlagNoMoveAnimationToLayoutParam(mWParams);
         mWindow.setAttributes(mWParams);
     }
+	
+	public void asyncPushToWindow(final Window sWindow){
+		/*FIX for floating dialogs that shouldn't be treated as movable or halo windows*/
+		if(mWindow.isFloating()) return;
+		sWindow.setLayout(width, height);
+		new Handler().post(new Runnable(){
+				@Override
+				public void run()
+				{
+					WindowManager.LayoutParams mWParams = sWindow.getAttributes();
+					mWParams.x = x;
+					mWParams.y = y;
+					mWParams.alpha = alpha;
+//					mWParams.width = width;
+//					mWParams.height = height;
+					mWParams.dimAmount = dim;
+					//sWindow.getCallback().onWindowAttributesChanged(mWParams);
+					Util.addPrivateFlagNoMoveAnimationToLayoutParam(mWParams);
+					sWindow.setAttributes(mWParams);
+				}
+		});
+    }
+	
 	
 //	public void pushToPhoneWindow(Window sWindow){
 //		/*FIX for floating dialogs that shouldn't be treated as movable or halo windows*/
@@ -175,6 +199,7 @@ public class WindowHolder{
     public void pushToWindow(Window sWindow){
 		/*FIX for floating dialogs that shouldn't be treated as movable or halo windows*/
         if(sWindow==null || sWindow.isFloating()) return;
+		//sWindow.setLayout(width, height);
         WindowManager.LayoutParams mWParams = sWindow.getAttributes();
         mWParams.x = x;
         mWParams.y = y;
@@ -183,7 +208,8 @@ public class WindowHolder{
         mWParams.height = height;
 		mWParams.dimAmount = dim;
         mWParams.gravity = Gravity.TOP | Gravity.LEFT;
-		sWindow.getCallback().onWindowAttributesChanged(mWParams);
+		//sWindow.getCallback().onWindowAttributesChanged(mWParams);
+		//Util.addPrivateFlagNoMoveAnimationToLayoutParam(mWParams);
         sWindow.setAttributes(mWParams);
     }
 	
@@ -196,7 +222,8 @@ public class WindowHolder{
         mWParams.height = height;
 		mWParams.dimAmount = dim;
         mWParams.gravity = Gravity.TOP | Gravity.LEFT;
-		sWindow.getCallback().onWindowAttributesChanged(mWParams);
+		//sWindow.getCallback().onWindowAttributesChanged(mWParams);
+		//Util.addPrivateFlagNoMoveAnimationToLayoutParam(mWParams);
         sWindow.setAttributes(mWParams);
     }
 
@@ -233,9 +260,17 @@ public class WindowHolder{
 	}
 	
 	public void syncLayout(){
-		for(Window w : mWindows){
-			pushToWindow(w);
+		if(!isIncreasing()){
+			for(Window w : mWindows){
+				pushToWindow(w);
+			}
 		}
+		else {
+			for(int i = mWindows.size()-1;i>=0;i--)
+				pushToWindow(mWindows.get(i));
+		}
+		
+		
 	}
 	
 	public void syncLayoutForce(){
@@ -259,6 +294,13 @@ public class WindowHolder{
         SnapGravity = newFlag;
         return newFlag;
     }
+	
+	private boolean isIncreasing(){
+		WindowManager.LayoutParams lp = mWindow.getAttributes();
+		if(height>lp.height||width>lp.width)
+			return true;
+		return false;
+	}
 
 }
 
