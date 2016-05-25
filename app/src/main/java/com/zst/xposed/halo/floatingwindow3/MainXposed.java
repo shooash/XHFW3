@@ -14,29 +14,18 @@ public class MainXposed implements IXposedHookLoadPackage, IXposedHookZygoteInit
 	public static XModuleResources sModRes = null;
 	public static XSharedPreferences mPref = null;
 	public static XSharedPreferences mPackagesList = null;
-//	public static XSharedPreferences mBlacklist;
-//	public static XSharedPreferences mWhitelist;
-//	public static XSharedPreferences mMaximizedlist;
 	public static Compatibility.Hooks mCompatibility =  new Compatibility.Hooks();
-	//public final List<String> mMovablePackages = new ArrayList<String>();
+	
 
 	
 	@Override
 	public void initZygote(StartupParam startupParam) throws Throwable {
-		
-//		mBlacklist = new XSharedPreferences(Common.THIS_MOD_PACKAGE_NAME, Common.PREFERENCE_BLACKLIST_FILE);
-//		mWhitelist = new XSharedPreferences(Common.THIS_MOD_PACKAGE_NAME, Common.PREFERENCE_WHITELIST_FILE);
-//		mMaximizedlist = new XSharedPreferences(Common.THIS_MOD_PACKAGE_NAME, Common.PREFERENCE_MAXIMIZED_FILE);
-		
 		try{
 		sModRes = XModuleResources.createInstance(startupParam.modulePath, null);
 			}catch(Throwable t){
 				XposedBridge.log("ModuleResources init failed");
 				XposedBridge.log(t);
 			}
-//		mPref.reload();
-		
-
 	}
 	
 	@Override
