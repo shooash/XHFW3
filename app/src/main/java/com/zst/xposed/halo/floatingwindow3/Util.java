@@ -23,6 +23,7 @@ import de.robv.android.xposed.*;
 import android.util.*;
 import android.content.*;
 import android.preference.*;
+import java.io.*;
 
 
 public class Util
@@ -211,8 +212,20 @@ public class Util
 	}
 	
 	public static void startApp(Context mContext, String mPackageName){
-		final Intent intent = new Intent(mContext.getPackageManager()
+		if(mPackageName==null||mContext==null)
+			return;
+		final Intent intent;
+		try{
+		intent = new Intent(mContext.getApplicationContext().getPackageManager()
 										  .getLaunchIntentForPackage(mPackageName));
+			} catch (Throwable t){
+				Log.e("Xposed", "startApp failed for package: " + mPackageName);
+//				intent = new Intent(Intent.ACTION_MAIN);
+//				//intent.setComponent(new ComponentName("com.package.address","com.package.address.MainActivity"));
+//				intent.setPackage(mPackageName);
+//				intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+				return;
+			}
 		if(intent==null) return;
 		SharedPreferences mSPrefs = mContext.getSharedPreferences(Common.PREFERENCE_MAIN_FILE, mContext.MODE_WORLD_READABLE);
 		int floatFlag = mSPrefs.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW);
@@ -225,5 +238,30 @@ public class Util
 		final DisplayMetrics metrics = new DisplayMetrics();
 		mWindowManager.getDefaultDisplay().getMetrics(metrics);
 		return new Point(metrics.widthPixels, metrics.heightPixels);
+	}
+
+	public static void finishApp(String packageName)
+	{
+		Process suProcess;
+		try
+		{
+			suProcess = Runtime.getRuntime().exec("su");
+		} catch (IOException e)
+		{return;}
+		DataOutputStream os = new DataOutputStream(suProcess.getOutputStream());
+
+		try
+		{
+			os.writeBytes("adb shell" + "\n");
+			os.flush();
+
+			os.writeBytes("am force-stop " + packageName + "\n");
+			os.flush();
+		} catch (IOException e)
+		{}
+
+		
+//		am.killBackgroundProcesses(packageName);
+//		am.get
 	}
 }
