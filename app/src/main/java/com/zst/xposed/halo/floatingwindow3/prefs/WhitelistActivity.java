@@ -161,7 +161,7 @@ public class WhitelistActivity extends Activity {
 		Map<String, ?> pkgList = mPref.getAll();
 		Set<String> result = new HashSet<String>();
 		for(Map.Entry<String, ?> E : pkgList.entrySet()){
-			if(Util.isFlag(E.getValue(), Common.PACKAGE_WHITELIST))
+			if(E.getValue() instanceof Integer && Util.isFlag(E.getValue(), Common.PACKAGE_WHITELIST))
 				result.add(E.getKey());
 		}
 		return result;

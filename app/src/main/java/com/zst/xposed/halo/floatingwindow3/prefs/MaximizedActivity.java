@@ -161,7 +161,7 @@ public class MaximizedActivity extends Activity {
 		Map<String, ?> pkgList = mPref.getAll();
 		Set<String> result = new HashSet<String>();
 		for(Map.Entry<String, ?> E : pkgList.entrySet()){
-			if(Util.isFlag(E.getValue(), Common.PACKAGE_MAXIMIZE))
+			if(E.getValue() instanceof Integer && Util.isFlag(E.getValue(), Common.PACKAGE_MAXIMIZE))
 				result.add(E.getKey());
 		}
 		return result;
