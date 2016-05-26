@@ -647,6 +647,8 @@ public class MovableWindow
 	}
 	
 	public static void sendRemovedPackageInfo(String packageName, Context mContext, boolean mCompletely){
+		if(mWindowHolder.isHiddenFromRecents)
+			return;
 		Intent mIntent = new Intent(Common.ORIGINAL_PACKAGE_NAME + ".APP_REMOVED");
 		mIntent.putExtra("packageName", packageName);
 		mIntent.putExtra("removeCompletely", mCompletely);
@@ -654,6 +656,8 @@ public class MovableWindow
 	}
 	
 	private static void sendPackageInfo(){
+		if(mWindowHolder.isHiddenFromRecents)
+			return;
 		Intent mIntent = new Intent(Common.ORIGINAL_PACKAGE_NAME + ".APP_LAUNCHED");
 		mIntent.putExtra("packageName", mWindowHolder.packageName);
 		mIntent.putExtra("float-gravity", mWindowHolder.SnapGravity);

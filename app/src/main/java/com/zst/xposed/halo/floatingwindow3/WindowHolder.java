@@ -12,11 +12,13 @@ import android.view.*;
 
 import java.util.ArrayList;
 import android.os.*;
+import android.content.*;
 
 public class WindowHolder{
     public boolean isSnapped = false;
     public boolean isMaximized = false;
     public boolean serviceConnected = false;
+	public boolean isHiddenFromRecents = false;
     public int SnapGravity = 0; //Gravity flag, eg TOP | LEFT for TopLeft window
     public float dim;
     public float alpha;
@@ -49,7 +51,13 @@ public class WindowHolder{
         isMaximized=(SnapGravity == Gravity.FILL);
         setWindow(mActivity);
         //updateWindow();
-        packageName = mActivity.getPackageName();
+		packageName = mActivity.getCallingPackage();
+        if(packageName==null)
+			packageName = mActivity.getPackageName();
+		int flags = mActivity.getIntent().getFlags();
+		
+		isHiddenFromRecents = Util.isFlag(flags, Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
+					|| Util.isFlag(flags, Intent.FLAG_ACTIVITY_NO_HISTORY);
     }
 	
 	/* constructor to clone values*/
