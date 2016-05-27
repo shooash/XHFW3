@@ -13,6 +13,7 @@ import android.content.pm.*;
 import android.content.pm.PackageManager.*;
 import android.app.*;
 import android.os.*;
+import android.widget.AdapterView.*;
 
 
 public class FloatLauncher
@@ -65,8 +66,48 @@ public class FloatLauncher
 	
 	public void setupMenu(){
 		lv = new ListView(mContext);
+		lv.setOnItemClickListener(new OnItemClickListener(){
+
+				@Override
+				public void onItemClick(AdapterView<?> p1, View v, int pos, long p4)
+				{
+					LauncherListAdapter.ViewHolder holder = (LauncherListAdapter.ViewHolder) v.getTag();
+					if(holder.taskId==0 || !Util.moveToFront(mContext, holder.taskId))
+						Util.startApp(mContext, holder.packageName);
+					popupWin.dismiss();
+				}
+				
 		
+			});
+		lv.setOnItemLongClickListener(new OnItemLongClickListener(){
+
+				@Override
+				public boolean onItemLongClick(AdapterView<?> p1, View v, int p3, long p4)
+				{
+					int y = MeasureSpec.getSize(popupWin.getHeight())/2 - MeasureSpec.getSize(v.getHeight())*3/2 - (int) v.getY();
+					LauncherListAdapter.ViewHolder holder = (LauncherListAdapter.ViewHolder) v.getTag();
+					showSubMenu(mAnchor, mContext, position[0], position[1], Util.realDp(50, mContext),- y, holder.packageName, new String[]{"Close", "Restart as non-movable"}, new int[]{ACTION_CLOSE, ACTION_UNHALOFY});
+					return true;
+					
+				}
+
+			
+		});
+//		convertView.setOnLongClickListener(new OnLongClickListener(){
+//
+//				@Override
+//				public boolean onLongClick(final View v)
+//				{	
+//					int y = MeasureSpec.getSize(popupWin.getHeight())/2 - MeasureSpec.getSize(v.getHeight())*3/2 - (int) v.getY();
+//
+//					showSubMenu(mAnchor, mContext, position[0], position[1], Util.realDp(50, mContext),- y, item.packageName, new String[]{"Close", "Restart as non-movable"}, new int[]{ACTION_CLOSE, ACTION_UNHALOFY});
+//					return true;
+//				}
+//			});
 		adapter = new LauncherListAdapter(mContext, itemsList, popupWin);
+		
+		
+		
 		lv.setAdapter(adapter);
 		
 		new Handler().post(new Runnable(){
@@ -168,6 +209,8 @@ public class FloatLauncher
 		}
 		itemsList.add(0, new PackageItem(pm, pkgName, taskId, sGravity, savedPackages.contains(pkgName)));
 		itemsIndex.add(0, pkgName);
+		if(adapter!=null)
+			adapter.notifyDataSetChanged();
 	}
 	
 	private void removeItem(String pkgName){
@@ -176,7 +219,7 @@ public class FloatLauncher
 		itemsList.remove(itemsIndex.indexOf(pkgName));
 		itemsIndex.remove(pkgName);
 		if(adapter!=null)
-			adapter.notifyDataSetInvalidated();
+			adapter.notifyDataSetChanged();
 		setupMenu();
 	}
 	
@@ -193,7 +236,7 @@ public class FloatLauncher
 		itemsList.add(0, pi);
 		itemsIndex.add(0, pkgName);
 		if(adapter!=null)
-			adapter.notifyDataSetInvalidated();
+			adapter.notifyDataSetChanged();
 		setupMenu();
 	}
 	
@@ -250,12 +293,14 @@ public class FloatLauncher
 					switch(actions[pos]){
 						case ACTION_CLOSE:
 							Util.finishApp(packageName);
+							removeItem(packageName);
 							break;
 						case ACTION_HALOFY:
 							Util.restartTopAppAsFloating(mContext, mFloatFlag);
 							break;
 						case ACTION_UNHALOFY:
 							Util.restartAppAsFullScreen(mContext, mFloatFlag, packageName);
+							updateItem(packageName, 0);
 							break;
 					}
 //						Util.restartTopAppAsFullScreen(mContext, mFloatFlag);
@@ -367,18 +412,20 @@ public class FloatLauncher
 	class LauncherListAdapter extends ArrayAdapter<PackageItem>{
 		Context mContext;
 		PopupWindow popupWin;
+		ArrayList<PackageItem> items;
 		public LauncherListAdapter(final Context sContext, final ArrayList<PackageItem> itemsList, final PopupWindow mPopupWin){
 			super(sContext, 0, itemsList);
 			mContext=sContext;
 			popupWin=mPopupWin;
+			items = itemsList;
 		}
 
 		@Override
 		public View getView(int pos, View convertView, ViewGroup parent) {
 		
-			final PackageItem item = getItem(pos);
 			
-			if (convertView == null) {
+			//if (convertView == null) {
+				final PackageItem item = getItem(pos);
 				convertView = LayoutInflater.from(getContext()).inflate(R.layout.floatdot_launcher_menuitem, parent, false);
 				final ImageView mIcon = (ImageView) convertView.findViewById(android.R.id.icon);
 				final TextView mTitle = (TextView) convertView.findViewById(android.R.id.text1);
@@ -388,47 +435,37 @@ public class FloatLauncher
 				int mColor = item.isFavorite&&item.taskId==0?Color.WHITE:Color.GREEN;
 				mPoint.setImageDrawable(Util.makeCircle(mColor, Util.realDp(5, mContext)));
 				mTitle.setText(item.title);
-
-				convertView.setOnClickListener(new OnClickListener(){
-						@Override
-						public void onClick(View p1)
-						{
-							if(item.taskId==0 || !Util.moveToFront(mContext, item.taskId))
-								Util.startApp(mContext, item.packageName);
-							popupWin.dismiss();
-						}
-					});
-				convertView.setOnLongClickListener(new OnLongClickListener(){
-
-						@Override
-						public boolean onLongClick(final View v)
-						{	
-							int y = MeasureSpec.getSize(popupWin.getHeight())/2 - MeasureSpec.getSize(v.getHeight())*3/2 - (int) v.getY();
-							
-							showSubMenu(mAnchor, mContext, position[0], position[1], Util.realDp(50, mContext),- y, item.packageName, new String[]{"Close", "Restart as non-movable"}, new int[]{ACTION_CLOSE, ACTION_UNHALOFY});
-							return true;
-						}
-				});
+				final ViewHolder holder = new ViewHolder();
 				
-			}
-			else {
-				ImageView mIcon = (ImageView) convertView.findViewById(android.R.id.icon);
-				TextView mTitle = (TextView) convertView.findViewById(android.R.id.text1);
-				ImageView mPoint = (ImageView) convertView.findViewById(android.R.id.button1);
-				mIcon.setImageDrawable(item.packageIcon);
-				int mColor = item.isFavorite&&item.taskId==0?Color.WHITE:Color.GREEN;
-				mPoint.setImageDrawable(Util.makeCircle(mColor, Util.realDp(5, mContext)));
-				mTitle.setText(item.title);
-			}
+				holder.packageName = item.packageName;
+				holder.taskId = item.taskId;
+				holder.position = pos;
+				holder.title = mTitle;
+				holder.point = mPoint;
+				holder.icon = mIcon;
+				convertView.setTag(holder);
+		//	}
+			//else {
+				//ViewHolder vHolder = (ViewHolder) convertView.getTag();
+		//		ImageView mIcon = (ImageView) convertView.findViewById(android.R.id.icon);
+//				TextView mTitle = (TextView) convertView.findViewById(android.R.id.text1);
+//				ImageView mPoint = (ImageView) convertView.findViewById(android.R.id.button1);
+		//		pos = vHolder.position;
+	//			mIcon = vHolder.icon;
+				//int mColor = itemsList.get(pos).isFavorite&&itemsList.get(pos).taskId==0?Color.WHITE:Color.GREEN;
+				//vHolder.point.setImageDrawable(Util.makeCircle(mColor, Util.realDp(5, mContext)));
+				//mTitle.setText(item.title);
+			//}
 			return convertView;
 		}
 		
-		class Holder{
+		class ViewHolder{
 			ImageView icon;
 			TextView title;
 			ImageView point;
 			int position;
 			String packageName;
+			int taskId;
 		}
 	}
 	

@@ -232,7 +232,7 @@ public class Util
 		if(intent==null) return;
 		SharedPreferences mSPrefs = mContext.getSharedPreferences(Common.PREFERENCE_MAIN_FILE, mContext.MODE_WORLD_READABLE);
 		int floatFlag = mSPrefs.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW);
-		intent.addFlags(floatFlag);
+		intent.addFlags(floatFlag | Intent.FLAG_ACTIVITY_NEW_TASK);
 		mContext.startActivity(intent);
 	}
 	
@@ -311,7 +311,7 @@ public class Util
 			//intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
 //			intent.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
 //			intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
-		//	intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+			intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 			intent.addCategory("restarted");
 			mContext.getApplicationContext().startActivity(intent);
 		} catch (Throwable t){
@@ -331,10 +331,11 @@ public class Util
 			intent.setFlags(intent.getFlags()&~FloatFlag);
 			intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
 			intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
-			intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+			//intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+			//intent.addFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
 //			intent.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
 //			intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
-		//	intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+			intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 			intent.addCategory("restarted");
 			mContext.getApplicationContext().startActivity(intent);
 //			if(packageName.startsWith("com.android.chrome"))

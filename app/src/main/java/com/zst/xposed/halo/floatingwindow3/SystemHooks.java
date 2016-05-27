@@ -94,8 +94,13 @@ public class SystemHooks
 					if(param.args==null || param.args.length<MainXposed.mCompatibility.TaskRecord_Intent+1 || param.args[MainXposed.mCompatibility.TaskRecord_Intent]==null || !(param.args[MainXposed.mCompatibility.TaskRecord_Intent] instanceof Intent)) return;
 					Intent mIntent = (Intent) Util.getFailsafeObjectFromObject(param.thisObject, "intent");
 					//(Intent) param.args[MainXposed.mCompatibility.TaskRecord_Intent];
-					if(mIntent!=null)
-						isMovable = Util.isFlag(mIntent.getFlags(), MainXposed.mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW));
+					if(mIntent==null)
+						return;
+					isMovable = Util.isFlag(mIntent.getFlags(), MainXposed.mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW));
+					if(mIntent.hasCategory("restarted")){
+						removePackage(packageName);
+						mIntent.removeCategory("restarted");
+					}
 					isMovable = isMovable || isPackageMovable(packageName);
 					Integer taskID = Util.getFailsafeIntFromObject(param.thisObject, "taskId");
 					if(taskID==null)
@@ -112,6 +117,13 @@ public class SystemHooks
 					if(packageName == null)
 						return;
 //					isMovable = false;
+					Intent mIntent = (Intent) Util.getFailsafeObjectFromObject(param.thisObject, "intent");
+					//(Intent) param.args[MainXposed.mCompatibility.TaskRecord_Intent];
+				
+					if(mIntent!=null && mIntent.hasCategory("restarted")){
+						removePackage(packageName);
+						mIntent.removeCategory("restarted");
+					}
 					if ((packageName.startsWith("com.android.systemui"))||(packageName.equals("android"))) return;
 					Integer taskID = Util.getFailsafeIntFromObject(param.thisObject, "taskId");
 					if(taskID==null)
