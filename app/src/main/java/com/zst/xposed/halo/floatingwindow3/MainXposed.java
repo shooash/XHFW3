@@ -21,7 +21,8 @@ public class MainXposed implements IXposedHookLoadPackage, IXposedHookZygoteInit
 	@Override
 	public void initZygote(StartupParam startupParam) throws Throwable {
 		try{
-		sModRes = XModuleResources.createInstance(startupParam.modulePath, null);
+		if(sModRes==null)
+		 sModRes = XModuleResources.createInstance(startupParam.modulePath, null);
 			}catch(Throwable t){
 				XposedBridge.log("ModuleResources init failed");
 				XposedBridge.log(t);
