@@ -7,8 +7,8 @@ android {
         applicationId "com.zst.xposed.halo.floatingwindow3"
         minSdkVersion 17
         targetSdkVersion 21
-        versionCode 317
-        versionName "3.17"
+        versionCode 318
+        versionName "3.18"
     }
     buildTypes {
         release {

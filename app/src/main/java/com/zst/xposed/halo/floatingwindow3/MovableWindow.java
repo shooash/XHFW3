@@ -524,6 +524,9 @@ public class MovableWindow
 	public static void connectService(){
 		DEBUG("connectService");
 		if(XHFWInterfaceLink == null){
+			Intent serviceStart = new Intent("persistent.XHFWService");
+			serviceStart.setPackage(Common.FLOAT_DOT_PACKAGE);
+			mWindowHolder.mActivity.getApplicationContext().sendBroadcast(serviceStart);
 			Intent intent = new Intent(Common.FLOAT_DOT_SERVICE_ACTION);
 			intent.setPackage(Common.FLOAT_DOT_PACKAGE);
 			mWindowHolder.mActivity.getApplicationContext().bindService(intent, XHFWServiceConnection, Service.BIND_AUTO_CREATE);

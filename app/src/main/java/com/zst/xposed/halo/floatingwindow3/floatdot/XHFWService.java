@@ -161,7 +161,10 @@ public class XHFWService extends Service {
 	{
 		//int curRotation = Util.getDisplayRotation(this);
 		//fd.rotatePosition(curRotation-cachedRotation);
-		fd.rotatePositionByOrientation();
+		if(fd!=null)
+			fd.rotatePositionByOrientation();
+		if(ld!=null)
+			ld.rotatePositionByOrientation();
 		super.onConfigurationChanged(newConfig);
 	}
 	

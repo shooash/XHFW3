@@ -11,38 +11,29 @@ import java.util.*;
 
 public class MainXposed implements IXposedHookLoadPackage, IXposedHookZygoteInit {
 	
-	public static XModuleResources sModRes;
-	public static XSharedPreferences mPref;
-	public static XSharedPreferences mPackagesList;
-//	public static XSharedPreferences mBlacklist;
-//	public static XSharedPreferences mWhitelist;
-//	public static XSharedPreferences mMaximizedlist;
+	public static XModuleResources sModRes = null;
+	public static XSharedPreferences mPref = null;
+	public static XSharedPreferences mPackagesList = null;
 	public static Compatibility.Hooks mCompatibility =  new Compatibility.Hooks();
-	//public final List<String> mMovablePackages = new ArrayList<String>();
+	
 
 	
 	@Override
 	public void initZygote(StartupParam startupParam) throws Throwable {
-		mPref = new XSharedPreferences(Common.THIS_MOD_PACKAGE_NAME, Common.PREFERENCE_MAIN_FILE);
-//		mBlacklist = new XSharedPreferences(Common.THIS_MOD_PACKAGE_NAME, Common.PREFERENCE_BLACKLIST_FILE);
-//		mWhitelist = new XSharedPreferences(Common.THIS_MOD_PACKAGE_NAME, Common.PREFERENCE_WHITELIST_FILE);
-//		mMaximizedlist = new XSharedPreferences(Common.THIS_MOD_PACKAGE_NAME, Common.PREFERENCE_MAXIMIZED_FILE);
-		mPackagesList = new XSharedPreferences(Common.THIS_MOD_PACKAGE_NAME, Common.PREFERENCE_PACKAGES_FILE);
 		try{
 		sModRes = XModuleResources.createInstance(startupParam.modulePath, null);
 			}catch(Throwable t){
 				XposedBridge.log("ModuleResources init failed");
 				XposedBridge.log(t);
 			}
-//		mPref.reload();
-		
-
 	}
 	
 	@Override
 	public void handleLoadPackage(final LoadPackageParam lpparam) throws Throwable {
-	
-	if(mPref==null) return;
+	if(mPref==null) 
+			mPref = new XSharedPreferences(Common.THIS_MOD_PACKAGE_NAME, Common.PREFERENCE_MAIN_FILE);
+	if(mPackagesList==null)
+			mPackagesList = new XSharedPreferences(Common.THIS_MOD_PACKAGE_NAME, Common.PREFERENCE_PACKAGES_FILE);
 	mPref.reload();
 	mPackagesList.reload();
 	if(!mPref.getBoolean(Common.KEY_MOVABLE_WINDOW, Common.DEFAULT_MOVABLE_WINDOW)) return;
