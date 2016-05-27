@@ -6,6 +6,7 @@ import android.graphics.*;
 import android.content.*;
 import android.util.*;
 import android.os.*;
+import android.view.View.*;
 
 public class FloatDot
 {
@@ -66,9 +67,12 @@ public class FloatDot
 		mContext = sContext;
 		mCircleDiameter = Util.realDp(mCircleDiameter, mContext);
 		mFloatLauncher = sFloatLauncher;
+		
 		TOUCH_SENSITIVITY = mCircleDiameter/2;
 		image = new ImageView(mContext);
+		
 	}
+	
 	
 	public void setColor(int sColor, int sColorInner){
 		mColor = sColor;
@@ -143,6 +147,7 @@ public class FloatDot
 		setLayout();
 		registerListener();
 		mWindowManager.addView(image, paramsF);
+		mFloatLauncher.setAnchor(image);
 		mViewOn = true;
 	}
 	
@@ -151,6 +156,19 @@ public class FloatDot
 			mWindowManager.removeView(image);
 			} catch(Throwable t){}
 	}
+	
+	public void registerContextMenuOnFloatDot(){
+		image.setOnLongClickListener(new OnLongClickListener() {
+				@Override
+				public boolean onLongClick(View p1)
+				{
+					mFloatLauncher.showSubMenu(image, mContext, mCoordinates.x, mCoordinates.y-mScreenHeight/2, mCircleDiameter, 0, null, new String[]{"Restart Top Activity as Movable"}, new int[] {mFloatLauncher. ACTION_HALOFY});
+					return true;
+				}
+
+
+			});
+		}
 	
 	public void updateDot(){
 		boolean show = image.getVisibility()==View.VISIBLE;
@@ -173,7 +191,7 @@ public class FloatDot
 	private void menuLauncher(View anchor) {
 		if(mFloatLauncher.dismissedTime+500>SystemClock.uptimeMillis())
 			return;
-		mFloatLauncher.showMenu(anchor, paramsF, mCircleDiameter);
+		mFloatLauncher.showMenu(paramsF, mCircleDiameter);
 	}
 
 	//private void fillMenu(PopupMenu menu)

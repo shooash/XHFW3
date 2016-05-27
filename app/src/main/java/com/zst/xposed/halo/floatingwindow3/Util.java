@@ -24,6 +24,9 @@ import android.util.*;
 import android.content.*;
 import android.preference.*;
 import java.io.*;
+import java.util.*;
+import android.app.usage.*;
+import android.os.Handler;
 
 
 public class Util
@@ -263,5 +266,88 @@ public class Util
 		
 //		am.killBackgroundProcesses(packageName);
 //		am.get
+	}
+	
+	public static String getTopAppPackageName(Context mContext){
+		/* returns null if fails */
+		String packageName = null;
+		try{
+			if(Build.VERSION.SDK_INT<21){
+				ActivityManager am = (ActivityManager) mContext.getApplicationContext().getSystemService(Activity.ACTIVITY_SERVICE);
+				packageName = am.getRunningTasks(1).get(0).topActivity.getPackageName();
+			}
+			else {
+				UsageStatsManager usm = (UsageStatsManager) mContext.getApplicationContext().getSystemService(Context.USAGE_STATS_SERVICE);
+				long endTime = System.currentTimeMillis();
+				long beginTime = endTime - 1000 * 60 * 5;
+				List<UsageStats> stats = usm.queryUsageStats(UsageStatsManager.INTERVAL_DAILY, beginTime, endTime);
+				if(stats!=null){
+					SortedMap<Long, UsageStats> sMap = new TreeMap<Long, UsageStats>();
+					for(UsageStats stat : stats) {
+						sMap.put(stat.getLastTimeUsed(), stat);
+					}
+					if(sMap != null && !sMap.isEmpty()){
+						packageName = sMap.get(sMap.lastKey()).getPackageName();
+						//packageName1 = sMap.get(sMap.lastKey()-1).getPackageName();
+					}
+				}
+			}
+		} catch (Throwable t){
+			Log.e("Xposed", "XHFW unable to get top app packageName", t);
+		}
+		
+		return packageName;
+		}
+	
+	public static void  restartTopAppAsFloating(Context mContext, int FloatFlag){
+			String packageName = getTopAppPackageName(mContext);
+			if(packageName==null) return;
+		try{
+			Intent intent = mContext.getApplicationContext().getPackageManager().getLaunchIntentForPackage(packageName);
+			intent.addFlags(FloatFlag);
+			intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
+			intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
+		//	intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+			//intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+//			intent.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
+//			intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
+		//	intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+			intent.addCategory("restarted");
+			mContext.getApplicationContext().startActivity(intent);
+		} catch (Throwable t){
+			Log.e("Xposed", "restartTopAppAsFloating failed", t);
+		}
+	}
+	
+	public static void  restartTopAppAsFullScreen(Context mContext, int FloatFlag){
+		String packageName = getTopAppPackageName(mContext);
+		restartAppAsFullScreen(mContext, FloatFlag, packageName);
+		}
+		
+	public static void restartAppAsFullScreen(final Context mContext, final int FloatFlag, String packageName){
+		if(packageName==null) return;
+		try{
+			final Intent intent = mContext.getApplicationContext().getPackageManager().getLaunchIntentForPackage(packageName);
+			intent.setFlags(intent.getFlags()&~FloatFlag);
+			intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
+			intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
+			intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+//			intent.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
+//			intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
+		//	intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+			intent.addCategory("restarted");
+			mContext.getApplicationContext().startActivity(intent);
+//			if(packageName.startsWith("com.android.chrome"))
+//				new Handler().postDelayed(new Runnable(){
+//						@Override
+//						public void run()
+//						{
+//							mContext.getApplicationContext().startActivity(intent);
+//						}
+//					}, 1000);
+				
+		} catch (Throwable t){
+			Log.e("Xposed", "restartTopAppAsFloating failed", t);
+		}
 	}
 }

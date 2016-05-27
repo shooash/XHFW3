@@ -87,7 +87,7 @@ public class XHFWService extends Service {
 //				
 //			
 //		});
-		mFloatLauncher = new FloatLauncher(mContext);
+		mFloatLauncher = new FloatLauncher(mContext, mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW));
 		cachedRotation = Util.getDisplayRotation(mContext.getApplicationContext());
 		
 		loadColors();
@@ -105,6 +105,7 @@ public class XHFWService extends Service {
 		ld = new FloatDot(mContext, mFloatLauncher, mDotsSize, x, y, mColors[2], mColors[3]);
 		ld.setAlpha(mPref.getFloat(Common.KEY_FLOATDOT_ALPHA, Common.DEFAULT_FLOATDOT_ALPHA));
 		ld.putDragger();
+		ld.registerContextMenuOnFloatDot();
 		ld.showDragger(true);
 	}
 	

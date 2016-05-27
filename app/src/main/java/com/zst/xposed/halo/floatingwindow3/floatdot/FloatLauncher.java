@@ -14,6 +14,7 @@ import android.content.pm.PackageManager.*;
 import android.app.*;
 import android.os.*;
 
+
 public class FloatLauncher
 {
 	Context mContext;
@@ -29,18 +30,37 @@ public class FloatLauncher
 	ArrayList<String> itemsIndex = new ArrayList<String>();
 	ArrayList<String> savedPackages = new ArrayList<String>();
 	public PopupWindow popupWin = new PopupWindow();
+	PopupWindow subPopupMenu = new PopupWindow();
+	ListView subListView = null;
 	public long dismissedTime;
 	SharedPreferences SavedPackages;
 	PackageManager pm;
 	LauncherListAdapter adapter;
+	WindowManager.LayoutParams mParams;
+	Handler mHandler = new Handler();
+	View mAnchor;
+	int[] position = new int[3];
+	int mFloatFlag = Common.FLAG_FLOATING_WINDOW;
+	boolean subMenuVisible;
+	
+	final int ACTION_CLOSE = 1;
+	final int ACTION_HALOFY = 2;
+	final int ACTION_UNHALOFY = 3;
 	
 	
-	public FloatLauncher(Context sContext){
+	public FloatLauncher(Context sContext, int flag){
 		mContext = sContext;
 		mPackageManager = mContext.getPackageManager();
 		regBroadcastReceiver();
 		SavedPackages = sContext.getSharedPreferences(Common.PREFERENCE_PACKAGES_FILE, Context.MODE_MULTI_PROCESS);
 		pm = mContext.getPackageManager();
+		mFloatFlag = flag;
+		refreshScreenSize();
+		refreshMinimalSize();
+	}
+	
+	public void setAnchor(View anchor){
+		mAnchor = anchor;
 	}
 	
 	public void setupMenu(){
@@ -58,6 +78,7 @@ public class FloatLauncher
 					adapter.notifyDataSetChanged();
 				}	
 			});
+		
 		updateMenu = false;
 	}
 	
@@ -74,10 +95,14 @@ public class FloatLauncher
 					dismissedTime = SystemClock.uptimeMillis();
 				}
 			});
+		
 		mPopUpSet = true;
 	}
 	
-	public void showMenu(View anchor, WindowManager.LayoutParams paramsF, int offset){
+	public void showMenu(WindowManager.LayoutParams paramsF, int offset){
+		if(subMenuVisible)
+			return;
+		mParams = paramsF;
 		if(popupWin.isShowing()) {
 			popupWin.dismiss();
 			return;
@@ -97,10 +122,11 @@ public class FloatLauncher
 		if(width>mScreenWidth-paramsF.x-offset){
 			putLeft=true;
 		}
-		int x = putLeft? paramsF.x-width: paramsF.x+offset;
-		int y = paramsF.y-mScreenHeight/2+offset/2; //-height/2;
-		popupWin.showAtLocation(anchor, Gravity.CENTER_VERTICAL | Gravity.LEFT, x, y);
-		
+		position[0] = putLeft? paramsF.x-width: paramsF.x+offset;
+		position[1] = paramsF.y-mScreenHeight/2+offset/2; //-height/2;
+		position[2] = offset;
+		popupWin.showAtLocation(mAnchor, Gravity.CENTER_VERTICAL | Gravity.LEFT, position[0], position[1]);
+
 	}
 	
 	private void loadSavedPackages(){
@@ -134,6 +160,8 @@ public class FloatLauncher
 	}
 	
 	private void addItem(String pkgName, int taskId, int sGravity){
+		if(pkgName==null||pkgName.equals(""))
+			return;
 		if(itemsIndex.contains(pkgName)){
 			updateItem(pkgName, taskId);
 			return;
@@ -206,6 +234,55 @@ public class FloatLauncher
 	}
 	
 	
+	public void showSubMenu(final View anchor, final Context sContext, final int x, final int y, final int x_offset, final int y_offset, final String packageName, final String[] labels, final int[] actions){
+		setAnchor(anchor);
+		subListView = new ListView(mContext);
+		ArrayList<String> list = new ArrayList<>(Arrays.asList(labels));	
+
+		subListView.setAdapter(new SubMenuListAdapter(mContext, list));	
+		subListView.setOnItemClickListener(new AdapterView.OnItemClickListener(){
+				@Override
+				public void onItemClick(AdapterView<?> adapterview, View p2, int pos, long p4)
+				{
+					//Util.finishApp(packageName);
+					if(pos>=actions.length)
+						return;
+					switch(actions[pos]){
+						case ACTION_CLOSE:
+							Util.finishApp(packageName);
+							break;
+						case ACTION_HALOFY:
+							Util.restartTopAppAsFloating(mContext, mFloatFlag);
+							break;
+						case ACTION_UNHALOFY:
+							Util.restartAppAsFullScreen(mContext, mFloatFlag, packageName);
+							break;
+					}
+//						Util.restartTopAppAsFullScreen(mContext, mFloatFlag);
+					subPopupMenu.dismiss();
+				}
+			});
+		subPopupMenu.setOnDismissListener(new PopupWindow.OnDismissListener(){
+
+				@Override
+				public void onDismiss()
+				{
+					subMenuVisible = false;
+				}
+				
+			
+		});
+		subPopupMenu.setContentView(subListView);
+		subPopupMenu.setWidth(MeasureSpec.makeMeasureSpec(MINIMAL_WIDTH,MeasureSpec.AT_MOST));
+		subPopupMenu.setHeight(WindowManager.LayoutParams.WRAP_CONTENT);
+		subPopupMenu.setBackgroundDrawable(mContext.getResources().getDrawable( R.drawable.round_rect ));
+		subPopupMenu.setOutsideTouchable(true);
+		subPopupMenu.setWindowLayoutType(WindowManager.LayoutParams.TYPE_APPLICATION_ATTACHED_DIALOG);
+		subPopupMenu.setAnimationStyle(android.R.style.Animation);
+		subPopupMenu.showAtLocation(anchor, Gravity.LEFT, x + x_offset, y + y_offset);
+		subMenuVisible = true;
+	}
+	
 	class PackageItem implements Comparable<PackageItem>{
 		public Drawable packageIcon;
 		public String packageName;
@@ -261,6 +338,32 @@ public class FloatLauncher
 		}
 	}
 
+	class SubMenuListAdapter extends ArrayAdapter<String>{
+		Context mContext;
+		PopupWindow popupWin;
+		public SubMenuListAdapter(final Context sContext, final ArrayList<String> itemsList){
+			super(sContext, 0, itemsList);
+			mContext=sContext;
+		}
+
+		@Override
+		public View getView(int position, View convertView, ViewGroup parent) {
+			final String item = getItem(position);
+			convertView = LayoutInflater.from(getContext()).inflate(R.layout.floatdot_submenu_item, parent, false);
+			TextView mTitle = (TextView) convertView.findViewById(android.R.id.text1);
+			mTitle.setText(item);
+			return convertView;
+			}
+		}
+		
+	class subMenuItem {
+		public int action;
+		public String label;
+		public subMenuItem(String mLabel, int mAction){
+			action = mAction;
+			label = mLabel;
+		}
+	}
 	class LauncherListAdapter extends ArrayAdapter<PackageItem>{
 		Context mContext;
 		PopupWindow popupWin;
@@ -271,15 +374,16 @@ public class FloatLauncher
 		}
 
 		@Override
-		public View getView(int position, View convertView, ViewGroup parent) {
+		public View getView(int pos, View convertView, ViewGroup parent) {
 		
-			final PackageItem item = getItem(position);
+			final PackageItem item = getItem(pos);
 			
 			if (convertView == null) {
 				convertView = LayoutInflater.from(getContext()).inflate(R.layout.floatdot_launcher_menuitem, parent, false);
-				ImageView mIcon = (ImageView) convertView.findViewById(android.R.id.icon);
-				TextView mTitle = (TextView) convertView.findViewById(android.R.id.text1);
-				ImageView mPoint = (ImageView) convertView.findViewById(android.R.id.button1);
+				final ImageView mIcon = (ImageView) convertView.findViewById(android.R.id.icon);
+				final TextView mTitle = (TextView) convertView.findViewById(android.R.id.text1);
+				final ImageView mPoint = (ImageView) convertView.findViewById(android.R.id.button1);
+				
 				mIcon.setImageDrawable(item.packageIcon);
 				int mColor = item.isFavorite&&item.taskId==0?Color.WHITE:Color.GREEN;
 				mPoint.setImageDrawable(Util.makeCircle(mColor, Util.realDp(5, mContext)));
@@ -294,6 +398,18 @@ public class FloatLauncher
 							popupWin.dismiss();
 						}
 					});
+				convertView.setOnLongClickListener(new OnLongClickListener(){
+
+						@Override
+						public boolean onLongClick(final View v)
+						{	
+							int y = MeasureSpec.getSize(popupWin.getHeight())/2 - MeasureSpec.getSize(v.getHeight())*3/2 - (int) v.getY();
+							
+							showSubMenu(mAnchor, mContext, position[0], position[1], Util.realDp(50, mContext),- y, item.packageName, new String[]{"Close", "Restart as non-movable"}, new int[]{ACTION_CLOSE, ACTION_UNHALOFY});
+							return true;
+						}
+				});
+				
 			}
 			else {
 				ImageView mIcon = (ImageView) convertView.findViewById(android.R.id.icon);
@@ -306,7 +422,16 @@ public class FloatLauncher
 			}
 			return convertView;
 		}
+		
+		class Holder{
+			ImageView icon;
+			TextView title;
+			ImageView point;
+			int position;
+			String packageName;
+		}
 	}
+	
 }
 
 

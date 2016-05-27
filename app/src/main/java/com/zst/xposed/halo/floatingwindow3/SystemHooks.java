@@ -32,6 +32,10 @@ public class SystemHooks
 					Intent mIntent = (Intent) Util.getFailsafeObjectFromObject(param.thisObject, "intent");
 					if(mIntent==null)
 						return;
+					if(mIntent.hasCategory("restarted")){
+						removePackage(packageName);
+						mIntent.removeCategory("restarted");
+						}
 					/* stop if need to force non movable */
 					if(mPackagesTasksList.containsKey(packageName) && !isPackageMovable(packageName)){
 						removeFloatingFlag(mIntent);
@@ -358,6 +362,10 @@ public class SystemHooks
 //					}
 					Intent mIntent = (Intent) Util.getFailsafeObjectFromObject(activityRecord, "intent");
 					if(mIntent!=null){
+						if(mIntent.hasCategory("restarted")){
+							removePackage(mIntent.getPackage());
+							mIntent.removeCategory("restarted");
+						}
 						isMovable = isMovable || Util.isFlag(mIntent.getFlags(), MainXposed.mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW));
 						MovableWindow.DEBUG("startActivityLocked in flagtest [" + isMovable + "]");
 						}
@@ -379,10 +387,11 @@ public class SystemHooks
 				String packageName = Util.getFailsafeStringFromObject(null, activityRecord, "packageName");
 				if(packageName==null)
 					return;
+				
 				isMovable = isMovable || MovableWindow.isMovable || isPackageMovable(packageName);
 				Intent mIntent = (Intent) Util.getFailsafeObjectFromObject(activityRecord, "intent");
 				if(mIntent!=null)
-					isMovable = Util.isFlag(mIntent.getFlags(), MainXposed.mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW));
+					isMovable = isMovable || Util.isFlag(mIntent.getFlags(), MainXposed.mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW));
 				
 				if (!isMovable) return;
 				XposedHelpers.setBooleanField(activityRecord, "fullscreen", false);
