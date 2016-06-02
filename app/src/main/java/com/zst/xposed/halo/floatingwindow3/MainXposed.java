@@ -45,10 +45,10 @@ public class MainXposed implements IXposedHookLoadPackage, IXposedHookZygoteInit
 		try {
 			Class<?> classActivityRecord = findClass("com.android.server.am.ActivityRecord", lpparam.classLoader);
 			if (classActivityRecord != null)
-				SystemHooks.hookActivityRecord(classActivityRecord);
+				AndroidHooks.hookActivityRecord(classActivityRecord);
 			Class<?> classTaskRecord = findClass("com.android.server.am.TaskRecord", lpparam.classLoader);
 			if (classTaskRecord != null)
-				SystemHooks.hookTaskRecord(classTaskRecord);
+				AndroidHooks.hookTaskRecord(classTaskRecord);
 				else
 					XposedBridge.log("Failed to get class TaskRecord");
 //			Class<?> AMS = findClass("com.android.server.am.ActivityManagerService", lpparam.classLoader);
@@ -62,7 +62,7 @@ public class MainXposed implements IXposedHookLoadPackage, IXposedHookZygoteInit
 		try {
 			Class<?> classWMS = findClass("com.android.server.wm.WindowManagerService", lpparam.classLoader);
 			if(classWMS!=null)
-				SystemHooks.removeAppStartingWindow(classWMS);
+				AndroidHooks.removeAppStartingWindow(classWMS);
 		} catch(ClassNotFoundError e){
 			XposedBridge.log("Class com.android.server.wm.WindowManagerService not found in MainXposed");
 		}catch (Throwable e){
@@ -72,7 +72,7 @@ public class MainXposed implements IXposedHookLoadPackage, IXposedHookZygoteInit
 		try{
 			Class<?> classActivityStack = findClass("com.android.server.am.ActivityStack", lpparam.classLoader);
 			if(classActivityStack!=null)
-				SystemHooks.hookActivityStack(classActivityStack);
+				AndroidHooks.hookActivityStack(classActivityStack);
 		} catch(ClassNotFoundError e){
 			XposedBridge.log("Class com.android.server.am.ActivityStack not found in MainXposed");
 		}catch (Throwable e){
