@@ -27,14 +27,12 @@ public class SystemHooks
 					String packageName = Util.getFailsafeStringFromObject(null, param.thisObject, "packageName");
 					if(packageName==null)
 						return;
-					isMovable = false;
 					if (packageName.startsWith("com.android.systemui")|| packageName.equals("android")) return;
 					Intent mIntent = (Intent) Util.getFailsafeObjectFromObject(param.thisObject, "intent");
 					if(mIntent==null)
 						return;
 					if(mIntent.hasCategory("restarted")){
 						removePackage(packageName);
-						mIntent.removeCategory("restarted");
 						}
 					/* stop if need to force non movable */
 					if(mPackagesTasksList.containsKey(packageName) && !isPackageMovable(packageName)){
@@ -73,7 +71,14 @@ public class SystemHooks
 					Intent mIntent = (Intent) Util.getFailsafeObjectFromObject(param.thisObject, "intent");
 					if(mIntent == null)
 						return;
-					isMovable = Util.isFlag(mIntent.getFlags(), MainXposed.mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW));
+					String packageName = Util.getFailsafeStringFromObject(null, param.thisObject, "packageName");
+					if(packageName!=null && mIntent.hasCategory("restarted")){
+						removePackage(packageName);
+						//mIntent.removeCategory("restarted");
+					}
+					if(!isMovable)
+						removeFloatingFlag(mIntent);
+					//isMovable = Util.isFlag(mIntent.getFlags(), MainXposed.mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW));
 					MovableWindow.DEBUG("takeFromHistory " + isMovable);
 				}
 			});
@@ -99,7 +104,7 @@ public class SystemHooks
 					isMovable = Util.isFlag(mIntent.getFlags(), MainXposed.mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW));
 					if(mIntent.hasCategory("restarted")){
 						removePackage(packageName);
-						mIntent.removeCategory("restarted");
+						//mIntent.removeCategory("restarted");
 					}
 					isMovable = isMovable || isPackageMovable(packageName);
 					Integer taskID = Util.getFailsafeIntFromObject(param.thisObject, "taskId");
@@ -166,7 +171,7 @@ public class SystemHooks
 	
 	private static Intent setIntentFlags(Intent mIntent){
 		int flags = mIntent.getFlags();
-		flags = flags | MainXposed.mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW);
+		if(isMovable) flags = flags | MainXposed.mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW);
 		flags = flags | Intent.FLAG_ACTIVITY_NO_USER_ACTION;
 		flags &= ~Intent.FLAG_ACTIVITY_TASK_ON_HOME;
 
@@ -233,6 +238,10 @@ public class SystemHooks
 	}
 	
 	private static boolean checkInheritFloatingFlag(String packageName, Object activityStack, Intent mIntent) throws Throwable {
+		if(mIntent.hasCategory("restarted")){
+			mIntent.removeCategory("restarted");
+			return false;
+		}
 		//if(activityStack==null) return false;
 		ArrayList<?> taskHistory = (ArrayList<?>) Util.getFailsafeObjectFromObject(activityStack, MainXposed.mCompatibility.ActivityRecord_TaskHistory);
 		if(taskHistory==null || taskHistory.size()==0)
@@ -324,6 +333,17 @@ public class SystemHooks
 //				boolean isHalo;
 				protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
 					// Find the first activity that is not finishing.
+					final Object prevActivity = XposedHelpers.getObjectField(param.thisObject, "mResumedActivity");
+					previous = prevActivity;
+//					final Intent mIntent = (Intent) Util.getFailsafeObjectFromObject(previous, "intent");
+//					if(mIntent!=null && mIntent.hasCategory("restarted")){
+//						String packageName = Util.getFailsafeStringFromObject(null, previous, "packageName");
+//						if(packageName!=null){
+//							removePackage(packageName);
+//							mIntent.removeCategory("restarted");
+//						}
+//					}
+//					isMovable = isMovable || (mIntent!=null&&Util.isFlag(mIntent.getFlags(), MainXposed.mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW)));
 					if (!isMovable) return;
 					//if (mIsPreviousActivityHome) return;
 
@@ -338,12 +358,11 @@ public class SystemHooks
 //						// if getPackage returns null
 //					}
 //					if (!isHalo) return;
-
+					
+//					if(previous!=null)
+//						XposedHelpers.setBooleanField(previous, "fullscreen", false);
 					appPauseEnabled = MainXposed.mPref.getBoolean(Common.KEY_APP_PAUSE, Common.DEFAULT_APP_PAUSE);
 					if (appPauseEnabled) return;
-
-					final Object prevActivity = XposedHelpers.getObjectField(param.thisObject, "mResumedActivity");
-					previous = prevActivity;
 					XposedHelpers.setObjectField(param.thisObject, "mResumedActivity", null);
 				}
 				protected void afterHookedMethod(MethodHookParam param) throws Throwable {
@@ -376,7 +395,8 @@ public class SystemHooks
 					if(mIntent!=null){
 						if(mIntent.hasCategory("restarted")){
 							removePackage(mIntent.getPackage());
-							mIntent.removeCategory("restarted");
+							//mIntent.removeCategory("restarted");
+							isMovable = false;
 						}
 						isMovable = isMovable || Util.isFlag(mIntent.getFlags(), MainXposed.mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW));
 						MovableWindow.DEBUG("startActivityLocked in flagtest [" + isMovable + "]");

@@ -23,15 +23,15 @@ public class MovableWindow
 {
 
     public static void DEBUG(String tag){
-//        XposedBridge.log(tag + " Package:[" + (mWindowHolder==null?"null":mWindowHolder.packageName + "] isSnapped: [" + mWindowHolder.isSnapped 
-//						 + "] isMaximized: [" + mWindowHolder.isMaximized)
-//							+ "] isMovable:[" + isMovable + "]");
-//		if(mWindowHolder!=null) 
-//			XposedBridge.log("      window:[" + mWindowHolder.width + ":" + mWindowHolder.height
-//				+ "] at [" + mWindowHolder.x + ":" + mWindowHolder.y + "]");
-//		if(mWindowHolderCached!=null) 
-//			XposedBridge.log("      window:[" + mWindowHolderCached.width + ":" + mWindowHolderCached.height
-//							 + "] at [" + mWindowHolderCached.x + ":" + mWindowHolderCached.y + "]");
+        XposedBridge.log(tag + " Package:[" + (mWindowHolder==null?"null":mWindowHolder.packageName + "] isSnapped: [" + mWindowHolder.isSnapped 
+						 + "] isMaximized: [" + mWindowHolder.isMaximized)
+							+ "] isMovable:[" + isMovable + "]");
+		if(mWindowHolder!=null) 
+			XposedBridge.log("      window:[" + mWindowHolder.width + ":" + mWindowHolder.height
+				+ "] at [" + mWindowHolder.x + ":" + mWindowHolder.y + "]");
+		if(mWindowHolderCached!=null) 
+			XposedBridge.log("      window:[" + mWindowHolderCached.width + ":" + mWindowHolderCached.height
+							 + "] at [" + mWindowHolderCached.x + ":" + mWindowHolderCached.y + "]");
 		
     }
 
@@ -92,7 +92,10 @@ public class MovableWindow
                 Activity mActivity = (Activity) param.thisObject;
                 isMovable = /* isMovable || */
 					(Util.isFlag(mActivity.getIntent().getFlags(), MainXposed.mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW)));
-                if(!isMovable) return;
+                if(!isMovable) {
+					mWindowHolder=null;
+					return;
+					}
 				if(mWindowHolder==null) initWindow(mActivity);
                 else mWindowHolder.setWindow(mActivity);
 				setCommonLayout();
@@ -105,6 +108,12 @@ public class MovableWindow
         XposedBridge.hookAllMethods(Activity.class, "onStart", new XC_MethodHook() {
             @Override
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+				Activity mActivity = (Activity) param.thisObject;
+				isMovable = /* isMovable || */
+					(Util.isFlag(mActivity.getIntent().getFlags(), MainXposed.mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW)));
+				if(!isMovable) {
+					mWindowHolder=null;
+				}
                 DEBUG("onStartSTART");
                 if(!isMovable || mWindowHolder==null) return;
 				showFocusOutline = false; //is was actualy disabled because the window lost focus
@@ -147,7 +156,14 @@ public class MovableWindow
 				protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
 					if(!isMovable || mWindowHolder==null) return;		
 					DEBUG("onPause mWindows.size:" + mWindowHolder.mWindows.size());
-					hideFocusFrame(((Activity)param.thisObject).getApplicationContext());
+					Activity mActivity = (Activity) param.thisObject;
+					hideFocusFrame(mActivity.getApplicationContext());
+					
+					isMovable = /* isMovable || */
+						(Util.isFlag(mActivity.getIntent().getFlags(), MainXposed.mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW)));
+					if(!isMovable) {
+						mWindowHolder=null;
+					}
 					return;
 				}
 			});
@@ -164,7 +180,6 @@ public class MovableWindow
 						//mWindowHolder.mActivity.getApplicationContext().unbindService(XHFWServiceConnection);
 						mWindowHolder = null;
 						isMovable=false;
-						
 					}
 					hideFocusFrame(((Activity)param.thisObject).getApplicationContext());
 					return;
@@ -263,17 +278,22 @@ public class MovableWindow
 		XposedBridge.hookAllMethods(cls, "generateLayout", new XC_MethodHook() {
 				protected void afterHookedMethod(MethodHookParam param) throws Throwable {
 					MovableWindow.DEBUG("GenerateLayout");
-					if (!isMovable) return;
+					
+//					if(mWindowHolder!= null)
+//						isMovable = isMovable &&
+//						(Util.isFlag(mWindowHolder.mActivity.getIntent().getFlags(), MainXposed.mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW)));
+//					
+					if (!isMovable||mWindowHolder==null) return;
 					Window window = (Window) param.thisObject;
 					String name = window.getContext().getPackageName();
 					if (name.startsWith("com.android.systemui")||name.equals("android")) return;
 					if(window.isFloating()) return; //MODAL fix
-					if(mWindowHolder==null) return;
 					//TODO add to settings an option to force titlebar to overlay windows 
 					//(but that will overlap actionbar)
 					//setOverlayView();
 					putOverlayView();
 					mWindowHolder.pushToWindow(window);
+					MovableWindow.DEBUG("GenerateLayout end");
 				}
 			});
 	}

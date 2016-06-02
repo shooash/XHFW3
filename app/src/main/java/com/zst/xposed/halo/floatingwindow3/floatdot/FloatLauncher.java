@@ -47,6 +47,8 @@ public class FloatLauncher
 	final int ACTION_CLOSE = 1;
 	final int ACTION_HALOFY = 2;
 	final int ACTION_UNHALOFY = 3;
+	final int ACTION_HALOFY_TOP = 4;
+	final int ACTION_UNHALOFY_TOP = 5;
 	
 	
 	public FloatLauncher(Context sContext, int flag){
@@ -86,7 +88,7 @@ public class FloatLauncher
 				{
 					int y = MeasureSpec.getSize(popupWin.getHeight())/2 - MeasureSpec.getSize(v.getHeight())*3/2 - (int) v.getY();
 					LauncherListAdapter.ViewHolder holder = (LauncherListAdapter.ViewHolder) v.getTag();
-					showSubMenu(mAnchor, mContext, position[0], position[1], Util.realDp(50, mContext),- y, holder.packageName, new String[]{"Close", "Restart as non-movable"}, new int[]{ACTION_CLOSE, ACTION_UNHALOFY});
+					showSubMenu(mAnchor, mContext, position[0], position[1], Util.realDp(50, mContext),- y, holder.packageName, new String[]{"Close", "Restart as movable", "Restart as fullscreen"}, new int[]{ACTION_CLOSE, ACTION_HALOFY, ACTION_UNHALOFY});
 					return true;
 					
 				}
@@ -140,7 +142,8 @@ public class FloatLauncher
 		mPopUpSet = true;
 	}
 	
-	public void showMenu(WindowManager.LayoutParams paramsF, int offset){
+	public void showMenu(View anchor, WindowManager.LayoutParams paramsF, int offset){
+		mAnchor = anchor;
 		if(subMenuVisible)
 			return;
 		mParams = paramsF;
@@ -219,7 +222,7 @@ public class FloatLauncher
 		itemsList.remove(itemsIndex.indexOf(pkgName));
 		itemsIndex.remove(pkgName);
 		if(adapter!=null)
-			adapter.notifyDataSetChanged();
+			adapter.notifyDataSetInvalidated();
 		setupMenu();
 	}
 	
@@ -236,7 +239,7 @@ public class FloatLauncher
 		itemsList.add(0, pi);
 		itemsIndex.add(0, pkgName);
 		if(adapter!=null)
-			adapter.notifyDataSetChanged();
+			adapter.notifyDataSetInvalidated();
 		setupMenu();
 	}
 	
@@ -285,26 +288,44 @@ public class FloatLauncher
 		subListView.setAdapter(new SubMenuListAdapter(mContext, list));	
 		subListView.setOnItemClickListener(new AdapterView.OnItemClickListener(){
 				@Override
-				public void onItemClick(AdapterView<?> adapterview, View p2, int pos, long p4)
+				public void onItemClick(AdapterView<?> adapterview, View p2, final int pos, long p4)
 				{
 					//Util.finishApp(packageName);
 					if(pos>=actions.length)
 						return;
-					switch(actions[pos]){
-						case ACTION_CLOSE:
-							Util.finishApp(packageName);
-							removeItem(packageName);
-							break;
-						case ACTION_HALOFY:
-							Util.restartTopAppAsFloating(mContext, mFloatFlag);
-							break;
-						case ACTION_UNHALOFY:
-							Util.restartAppAsFullScreen(mContext, mFloatFlag, packageName);
-							updateItem(packageName, 0);
-							break;
-					}
+					mHandler.post(new Runnable(){
+
+							@Override
+							public void run()
+							{
+								subPopupMenu.dismiss();
+								popupWin.dismiss();
+								switch(actions[pos]){
+									case ACTION_CLOSE:
+										removeItem(packageName);
+										Util.finishApp(packageName);
+										break;
+									case ACTION_HALOFY:
+										Util.restartAppAsFloating(mContext, mFloatFlag, packageName);
+										break;
+									case ACTION_UNHALOFY:
+										removeItem(packageName);
+										Util.restartAppAsFullScreen(mContext, mFloatFlag, packageName);
+										break;
+									case ACTION_HALOFY_TOP:
+										Util.restartTopAppAsFloating(mContext, mFloatFlag);
+										break;
+									case ACTION_UNHALOFY_TOP:
+										removeItem(packageName);
+										Util.restartTopAppAsFullScreen(mContext, mFloatFlag);
+										break;
+								}
+								
+							}
+					});
+					
 //						Util.restartTopAppAsFullScreen(mContext, mFloatFlag);
-					subPopupMenu.dismiss();
+					
 				}
 			});
 		subPopupMenu.setOnDismissListener(new PopupWindow.OnDismissListener(){

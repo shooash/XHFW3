@@ -162,7 +162,7 @@ public class FloatDot
 				@Override
 				public boolean onLongClick(View p1)
 				{
-					mFloatLauncher.showSubMenu(image, mContext, mCoordinates.x, mCoordinates.y-mScreenHeight/2, mCircleDiameter, 0, null, new String[]{"Restart Top Activity as Movable"}, new int[] {mFloatLauncher. ACTION_HALOFY});
+					mFloatLauncher.showSubMenu(image, mContext, mCoordinates.x, mCoordinates.y-mScreenHeight/2, mCircleDiameter, 0, null, new String[]{"Restart Top Activity as Movable", "Restart top activity as fullscreen"}, new int[] {mFloatLauncher.ACTION_HALOFY_TOP, mFloatLauncher.ACTION_UNHALOFY_TOP});
 					return true;
 				}
 
@@ -191,7 +191,7 @@ public class FloatDot
 	private void menuLauncher(View anchor) {
 		if(mFloatLauncher.dismissedTime+500>SystemClock.uptimeMillis())
 			return;
-		mFloatLauncher.showMenu(paramsF, mCircleDiameter);
+		mFloatLauncher.showMenu(anchor, paramsF, mCircleDiameter);
 	}
 
 	//private void fillMenu(PopupMenu menu)
