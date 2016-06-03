@@ -238,7 +238,7 @@ public class Common {
 	public static final String KEY_FLOATDOT_LAUNCHER_Y = "floatdot_launcher_y";
 	public static final int DEFAULT_FLOATDOT_LAUNCHER_X = 80;
 	public static final int DEFAULT_FLOATDOT_LAUNCHER_Y = 20;
-
+	public static final String UPDATE_FLOATLAUNCHER_PARAMS = "update_floatlauncher_params";
 	public static final String RESTART_ACTIVITY = THIS_MOD_PACKAGE_NAME + "restart_activity";
 
 	

@@ -28,7 +28,8 @@ public class FloatLauncher
 	boolean updateMenu;
 	boolean mPopUpSet;
 	ArrayList<PackageItem> itemsList = new ArrayList<PackageItem>();
-	ArrayList<String> itemsIndex = new ArrayList<String>();
+	//ArrayList<String> itemsIndex = new ArrayList<String>();
+	Map<String, PackageItem> itemsIndex = new HashMap<>();
 	ArrayList<String> savedPackages = new ArrayList<String>();
 	public PopupWindow popupWin = new PopupWindow();
 	PopupWindow subPopupMenu = new PopupWindow();
@@ -95,32 +96,14 @@ public class FloatLauncher
 
 			
 		});
-//		convertView.setOnLongClickListener(new OnLongClickListener(){
-//
-//				@Override
-//				public boolean onLongClick(final View v)
-//				{	
-//					int y = MeasureSpec.getSize(popupWin.getHeight())/2 - MeasureSpec.getSize(v.getHeight())*3/2 - (int) v.getY();
-//
-//					showSubMenu(mAnchor, mContext, position[0], position[1], Util.realDp(50, mContext),- y, item.packageName, new String[]{"Close", "Restart as non-movable"}, new int[]{ACTION_CLOSE, ACTION_UNHALOFY});
-//					return true;
-//				}
-//			});
+
 		adapter = new LauncherListAdapter(mContext, itemsList, popupWin);
-		
-		
+		adapter.setNotifyOnChange(true);
 		
 		lv.setAdapter(adapter);
+		loadSavedPackages();
+		addSavedPackages();
 		
-		new Handler().post(new Runnable(){
-				@Override
-				public void run()
-				{
-					loadSavedPackages();
-					addSavedPackages();
-					adapter.notifyDataSetChanged();
-				}	
-			});
 		
 		updateMenu = false;
 	}
@@ -160,14 +143,21 @@ public class FloatLauncher
 		
 		popupWin.setContentView(lv);
 		popupWin.setWidth(MeasureSpec.makeMeasureSpec(MINIMAL_WIDTH,MeasureSpec.AT_MOST));
-		popupWin.setHeight(MeasureSpec.makeMeasureSpec(mScreenHeight/3,MeasureSpec.AT_MOST));
+		//popupWin.setHeight(MeasureSpec.makeMeasureSpec(mScreenHeight/3,MeasureSpec.AT_MOST));
+		//popupWin.setHeight(WindowManager.LayoutParams.WRAP_CONTENT);
+		lv.measure(MeasureSpec.UNSPECIFIED, MeasureSpec.UNSPECIFIED);
+		int rows = adapter.getCount();
+		int height = lv.getMeasuredHeight() * rows;
+		if(height>mScreenHeight/3)
+			height = mScreenHeight/3;
+		popupWin.setHeight(height);
 		int width =  MINIMAL_WIDTH;
 		boolean putLeft = false;
 		if(width>mScreenWidth-paramsF.x-offset){
 			putLeft=true;
 		}
 		position[0] = putLeft? paramsF.x-width: paramsF.x+offset;
-		position[1] = paramsF.y-mScreenHeight/2+offset/2; //-height/2;
+		position[1] = paramsF.y-mScreenHeight/2; //-height/2;
 		position[2] = offset;
 		popupWin.showAtLocation(mAnchor, Gravity.CENTER_VERTICAL | Gravity.LEFT, position[0], position[1]);
 
@@ -181,7 +171,8 @@ public class FloatLauncher
 	private void addSavedPackages(){
 		for(String pkg : savedPackages)
 		{
-			if(!(itemsIndex.contains(pkg)))
+			//if(!(itemsIndex.contains(pkg)))
+			if(!itemsIndex.containsKey(pkg))
 				addItem(pkg, 0, 0);
 			}
 	}
@@ -206,43 +197,66 @@ public class FloatLauncher
 	private void addItem(String pkgName, int taskId, int sGravity){
 		if(pkgName==null||pkgName.equals(""))
 			return;
-		if(itemsIndex.contains(pkgName)){
+		if(itemsIndex.containsKey(pkgName)){
 			updateItem(pkgName, taskId);
 			return;
 		}
-		itemsList.add(0, new PackageItem(pm, pkgName, taskId, sGravity, savedPackages.contains(pkgName)));
-		itemsIndex.add(0, pkgName);
-		if(adapter!=null)
-			adapter.notifyDataSetChanged();
+		PackageItem pi = new PackageItem(pm, pkgName, taskId, sGravity, savedPackages.contains(pkgName));
+		adapter.insert(pi, 0);
+		//itemsList.add(0, new PackageItem(pm, pkgName, taskId, sGravity, savedPackages.contains(pkgName)));
+		itemsIndex.put(pkgName, pi);
+//		if(adapter!=null)
+//			adapter.notifyDataSetChanged();
 	}
 	
 	private void removeItem(String pkgName){
-		if(!itemsIndex.contains(pkgName))
+		if(!itemsIndex.containsKey(pkgName))
 			return;
-		itemsList.remove(itemsIndex.indexOf(pkgName));
+//		itemsList.remove(itemsIndex.indexOf(pkgName));
+//		itemsIndex.remove(pkgName);
+//		setupMenu();
+//		if(adapter!=null)
+//			adapter.notifyDataSetChanged();
+		adapter.remove(itemsIndex.get(pkgName));
 		itemsIndex.remove(pkgName);
-		if(adapter!=null)
-			adapter.notifyDataSetInvalidated();
-		setupMenu();
 	}
 	
 	private void updateItem(String pkgName, int mTaskId){
-		if(!itemsIndex.contains(pkgName)||itemsList.size()==0)
+		
+		if(!itemsIndex.containsKey(pkgName))
 			return;
-		int index = itemsIndex.indexOf(pkgName);
-		PackageItem pi = itemsList.get(index);
+		PackageItem pi = itemsIndex.get(pkgName);
+//		int index = itemsIndex.indexOf(pkgName);
+		//PackageItem pi = itemsList.get(index);
+//		PackageItem pi  = adapter.getItem(index);
+		adapter.remove(pi);
+		itemsIndex.remove(pi);
 		pi.taskId = mTaskId;
 		pi.isFavorite = false;
 		//force it appear at top of the list
-		itemsList.remove(index);
-		itemsIndex.remove(index);
-		itemsList.add(0, pi);
-		itemsIndex.add(0, pkgName);
-		if(adapter!=null)
-			adapter.notifyDataSetInvalidated();
-		setupMenu();
+		//itemsList.remove(index);
+//		itemsIndex.remove(index);
+		//itemsList.add(0, pi);
+//		itemsIndex.add(0, pkgName);
+		itemsIndex.put(pkgName, pi);
+		adapter.insert(pi, 0);
+		//setupMenu();
+		//if(adapter!=null)
+		//	adapter.notifyDataSetChanged();
 	}
 	
+	private void refreshAll(){
+		SavedPackages = mContext.getSharedPreferences(Common.PREFERENCE_PACKAGES_FILE, Context.MODE_MULTI_PROCESS);
+		popupWin = new PopupWindow();
+		itemsIndex = new HashMap<>();
+		itemsList = new ArrayList<PackageItem>();
+		savedPackages = new ArrayList<String>();
+		lv = null;
+		adapter = null;
+		refreshScreenSize();
+		refreshMinimalSize();
+		mPopUpSet = false;
+	}
 	
 	final BroadcastReceiver br = new BroadcastReceiver(){
 
@@ -255,20 +269,29 @@ public class FloatLauncher
 					removeItem(sIntent.getStringExtra("packageName"));
 				else
 					updateItem(sIntent.getStringExtra("packageName"), 0);
+				setupMenu();
 				return;
 			}
-			String pkgName = sIntent.getStringExtra("packageName");
-			//Log.d("Xposed", "FloatingLauncher broadcast package " + (pkgName==null?"null":pkgName));
-			if(pkgName==null) return;
+			else if(sIntent.getAction().equals(Common.ORIGINAL_PACKAGE_NAME + ".APP_LAUNCHED")){
+				String pkgName = sIntent.getStringExtra("packageName");
+				//Log.d("Xposed", "FloatingLauncher broadcast package " + (pkgName==null?"null":pkgName));
+				if(pkgName==null) return;
+
+				int sGravity = sIntent.getIntExtra("float-gravity", 0);
+				int taskId = sIntent.getIntExtra("float-taskid", 0);
+				if(taskId==0)
+					return;
+				addItem(pkgName, taskId, sGravity);
+				setupMenu();
+//				if(adapter!=null)
+//					adapter.notifyDataSetChanged();
+				
+			}
+			else if(sIntent.getAction().equals(Common.UPDATE_FLOATLAUNCHER_PARAMS)){
+				popupWin.dismiss();
+				refreshAll();
+			}
 			
-			int sGravity = sIntent.getIntExtra("float-gravity", 0);
-			int taskId = sIntent.getIntExtra("float-taskid", 0);
-			if(taskId==0)
-				return;
-			addItem(pkgName, taskId, sGravity);
-			if(adapter!=null)
-				adapter.notifyDataSetInvalidated();
-			setupMenu();
 		}
 	};
 	
@@ -276,6 +299,7 @@ public class FloatLauncher
 		IntentFilter mIntentFilter = new IntentFilter();
 		mIntentFilter.addAction(Common.ORIGINAL_PACKAGE_NAME + ".APP_LAUNCHED");
 		mIntentFilter.addAction(Common.ORIGINAL_PACKAGE_NAME + ".APP_REMOVED");
+		mIntentFilter.addAction(Common.UPDATE_FLOATLAUNCHER_PARAMS);
 		mContext.getApplicationContext().registerReceiver(br, mIntentFilter);
 	}
 	
@@ -444,10 +468,11 @@ public class FloatLauncher
 		@Override
 		public View getView(int pos, View convertView, ViewGroup parent) {
 		
-			
-			//if (convertView == null) {
-				final PackageItem item = getItem(pos);
+			if (convertView == null) //{
 				convertView = LayoutInflater.from(getContext()).inflate(R.layout.floatdot_launcher_menuitem, parent, false);
+				
+				
+				final PackageItem item = getItem(pos);
 				final ImageView mIcon = (ImageView) convertView.findViewById(android.R.id.icon);
 				final TextView mTitle = (TextView) convertView.findViewById(android.R.id.text1);
 				final ImageView mPoint = (ImageView) convertView.findViewById(android.R.id.button1);
@@ -462,10 +487,10 @@ public class FloatLauncher
 				holder.taskId = item.taskId;
 				holder.position = pos;
 				holder.title = mTitle;
-				holder.point = mPoint;
-				holder.icon = mIcon;
+//				holder.point = mPoint;
+//				holder.icon = mIcon;
 				convertView.setTag(holder);
-		//	}
+			//}
 			//else {
 				//ViewHolder vHolder = (ViewHolder) convertView.getTag();
 		//		ImageView mIcon = (ImageView) convertView.findViewById(android.R.id.icon);

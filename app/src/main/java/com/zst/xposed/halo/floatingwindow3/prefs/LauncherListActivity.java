@@ -28,6 +28,7 @@ import android.widget.ProgressBar;
 import android.widget.AdapterView.OnItemClickListener;
 import java.util.*;
 import com.zst.xposed.halo.floatingwindow3.*;
+import android.content.*;
 
 public class LauncherListActivity extends Activity {
 
@@ -175,6 +176,7 @@ public class LauncherListActivity extends Activity {
 //		mPref.edit().remove(pkg).commit();
 //		mPkgAdapter.update(getSetStrings());
 		updateList();
+		sendRefreshCommand();
 	}
 
 	public void addApp(String pkg) {
@@ -187,10 +189,17 @@ public class LauncherListActivity extends Activity {
 //		int value = mPref.getInt(pkg, 0) | Common.PACKAGE_LAUNCHER_SAVED;
 //		mPref.edit().putInt(pkg, value).commit();
 		updateList();
+		sendRefreshCommand();
 	}
 
 	private void updateList() {
 		mPkgAdapter.update(getSetStrings());
+	}
+	
+	private void sendRefreshCommand(){
+		Intent mIntent = new Intent(Common.UPDATE_FLOATLAUNCHER_PARAMS);
+		mIntent.setPackage(Common.THIS_MOD_PACKAGE_NAME);
+		getApplicationContext().sendBroadcast(mIntent);
 	}
 
 }
