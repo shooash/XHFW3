@@ -292,7 +292,7 @@ public class Util
 	}
 	
 	public static String getTopAppPackageName(Context mContext){
-		if(!isUsageAccessGranted(mContext))
+		if(Build.VERSION.SDK_INT>20&&!isUsageAccessGranted(mContext))
 		{
 			Intent mIntent = new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS);
 			mIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
