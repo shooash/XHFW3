@@ -232,7 +232,7 @@ public class FloatLauncher
 		adapter.remove(pi);
 		itemsIndex.remove(pi);
 		pi.taskId = mTaskId;
-		pi.isFavorite = false;
+		pi.isFavorite = (mTaskId==0);
 		//force it appear at top of the list
 		//itemsList.remove(index);
 //		itemsIndex.remove(index);
