@@ -239,6 +239,8 @@ public class Common {
 	public static final int DEFAULT_FLOATDOT_LAUNCHER_X = 80;
 	public static final int DEFAULT_FLOATDOT_LAUNCHER_Y = 20;
 
+	public static final String RESTART_ACTIVITY = THIS_MOD_PACKAGE_NAME + "restart_activity";
+
 	
 
 	

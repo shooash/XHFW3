@@ -23,15 +23,15 @@ public class MovableWindow
 {
 
     public static void DEBUG(String tag){
-        XposedBridge.log(tag + " Package:[" + (mWindowHolder==null?"null":mWindowHolder.packageName + "] isSnapped: [" + mWindowHolder.isSnapped 
-						 + "] isMaximized: [" + mWindowHolder.isMaximized)
-							+ "] isMovable:[" + isMovable + "]");
-		if(mWindowHolder!=null) 
-			XposedBridge.log("      window:[" + mWindowHolder.width + ":" + mWindowHolder.height
-				+ "] at [" + mWindowHolder.x + ":" + mWindowHolder.y + "]");
-		if(mWindowHolderCached!=null) 
-			XposedBridge.log("      window:[" + mWindowHolderCached.width + ":" + mWindowHolderCached.height
-							 + "] at [" + mWindowHolderCached.x + ":" + mWindowHolderCached.y + "]");
+//        XposedBridge.log(tag + " Package:[" + (mWindowHolder==null?"null":mWindowHolder.packageName + "] isSnapped: [" + mWindowHolder.isSnapped 
+//						 + "] isMaximized: [" + mWindowHolder.isMaximized)
+//							+ "] isMovable:[" + isMovable + "]");
+//		if(mWindowHolder!=null) 
+//			XposedBridge.log("      window:[" + mWindowHolder.width + ":" + mWindowHolder.height
+//				+ "] at [" + mWindowHolder.x + ":" + mWindowHolder.y + "]");
+//		if(mWindowHolderCached!=null) 
+//			XposedBridge.log("      window:[" + mWindowHolderCached.width + ":" + mWindowHolderCached.height
+//							 + "] at [" + mWindowHolderCached.x + ":" + mWindowHolderCached.y + "]");
 		
     }
 
@@ -90,9 +90,9 @@ public class MovableWindow
 				
                 DEBUG("onCreate start ");
                 Activity mActivity = (Activity) param.thisObject;
-                isMovable = /* isMovable || */
-					(Util.isFlag(mActivity.getIntent().getFlags(), MainXposed.mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW)));
-                if(!isMovable) {
+				isMovable = /* isMovable || */
+					   (Util.isFlag(mActivity.getIntent().getFlags(), MainXposed.mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW)));
+				if(!isMovable){
 					mWindowHolder=null;
 					return;
 					}
@@ -108,14 +108,14 @@ public class MovableWindow
         XposedBridge.hookAllMethods(Activity.class, "onStart", new XC_MethodHook() {
             @Override
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                DEBUG("onStartSTART");
 				Activity mActivity = (Activity) param.thisObject;
 				isMovable = /* isMovable || */
 					(Util.isFlag(mActivity.getIntent().getFlags(), MainXposed.mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW)));
 				if(!isMovable) {
 					mWindowHolder=null;
 				}
-                DEBUG("onStartSTART");
-                if(!isMovable || mWindowHolder==null) return;
+				if(!isMovable || mWindowHolder==null) return;
 				showFocusOutline = false; //is was actualy disabled because the window lost focus
                 mWindowHolder.setWindow((Activity) param.thisObject);
                 mWindowHolder.syncLayout();
@@ -202,6 +202,27 @@ public class MovableWindow
 					return;
 				}
 			});
+			
+//		XposedBridge.hookAllMethods(Activity.class, "onNewIntent", new XC_MethodHook() {
+//				@Override
+//				protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+//					DEBUG("onNewIntent ");
+//					Intent newIntent = (Intent) param.args[0];
+//					boolean newIsMovable = false;
+//					if(newIntent==null)
+//						return;
+//					//if(!newIntent.hasCategory("restarted"))
+//					//	return;
+//					
+//					newIsMovable = /* isMovable || */
+//					   (Util.isFlag(newIntent.getFlags(), MainXposed.mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW)));
+//					DEBUG("onNewIntent new isMovable:" + newIsMovable + " old isMovable:" + isMovable);
+//					if(isMovable==newIsMovable)
+//						return;
+//					isMovable=newIsMovable;
+//					((Activity) param.thisObject).recreate();
+//					}
+//					});
 		
 			
 		XposedBridge.hookAllMethods(Activity.class, "dispatchTouchEvent", new XC_MethodHook() {
@@ -566,6 +587,15 @@ public class MovableWindow
 				mResized = true;
 				mAeroSnap.updateSnap(mWindowHolder.SnapGravity);
 			}
+			if (intent.getAction().equals(Common.RESTART_ACTIVITY)){
+				if(mWindowHolder==null) 
+					return;
+				Activity sActivity = mWindowHolder.mActivity;
+				mWindowHolder=null;
+				isMovable=false;
+				//sActivity.recreate();
+				sActivity.finish();
+			}
 		}
 	};
 	
@@ -574,6 +604,7 @@ public class MovableWindow
 	public static boolean registerLayoutBroadcastReceiver() {
 		IntentFilter filters = new IntentFilter();
 		filters.addAction(Common.REFRESH_FLOAT_DOT_POSITION);
+		filters.addAction(Common.RESTART_ACTIVITY);
 		try{
 			mWindowHolder.mActivity.getApplicationContext().registerReceiver(mBroadcastReceiver, filters);
 		} catch(Throwable e){
