@@ -15,7 +15,7 @@ public class MWRegister
 	}
 	public static boolean forceAddPackage(final String packageName, final boolean movable){
 		registered.put(packageName, movable);
-		XposedBridge.log("MWRegister added package " + packageName + " stack size is " + registered.size());
+		//XposedBridge.log("MWRegister added package " + packageName + " stack size is " + registered.size());
 		return movable;
 	}
 	
