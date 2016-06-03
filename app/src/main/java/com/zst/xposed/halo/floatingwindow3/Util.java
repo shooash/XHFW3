@@ -27,6 +27,7 @@ import java.io.*;
 import java.util.*;
 import android.app.usage.*;
 import android.os.Handler;
+import android.provider.*;
 
 
 public class Util
@@ -291,6 +292,13 @@ public class Util
 	}
 	
 	public static String getTopAppPackageName(Context mContext){
+		if(!isUsageAccessGranted(mContext))
+		{
+			Intent mIntent = new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS);
+			mIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+			mContext.getApplicationContext().startActivity(mIntent);
+			return null;
+		}
 		/* returns null if fails */
 		String packageName = null;
 		try{
@@ -388,5 +396,11 @@ public class Util
 		} catch (Throwable t){
 			Log.e("Xposed", "restartTopAppAsFloating failed", t);
 		}
+	}
+	
+	public static boolean isUsageAccessGranted(Context mContext){
+		AppOpsManager appOps = (AppOpsManager) mContext.getSystemService(Context.APP_OPS_SERVICE);
+		int mode = appOps.checkOpNoThrow("android:get_usage_stats", android.os.Process.myUid(), Common.THIS_MOD_PACKAGE_NAME);
+		return mode == AppOpsManager.MODE_ALLOWED;
 	}
 }
