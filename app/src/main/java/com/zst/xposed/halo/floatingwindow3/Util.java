@@ -409,7 +409,10 @@ public class Util
 	
 	public static boolean isUsageAccessGranted(Context mContext){
 		AppOpsManager appOps = (AppOpsManager) mContext.getSystemService(Context.APP_OPS_SERVICE);
-		int mode = appOps.checkOpNoThrow("android:get_usage_stats", android.os.Process.myUid(), Common.THIS_MOD_PACKAGE_NAME);
+		int mode = 0;
+		if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.KITKAT) {
+			mode = appOps.checkOpNoThrow("android:get_usage_stats", android.os.Process.myUid(), Common.THIS_MOD_PACKAGE_NAME);
+		}
 		return mode == AppOpsManager.MODE_ALLOWED;
 	}
 
