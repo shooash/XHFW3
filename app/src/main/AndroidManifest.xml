@@ -2,8 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.zst.xposed.halo.floatingwindow3"
     android:installLocation="internalOnly"
-    android:versionCode="318"
-    android:versionName="3.18">
+    android:versionCode="319"
+    android:versionName="3.19">
 
 	<uses-sdk
         android:minSdkVersion="17"
