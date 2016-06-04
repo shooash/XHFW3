@@ -62,6 +62,8 @@ public class MovableWindow
     public static boolean mMaximizeChangeTitleBarVisibility;
     public static boolean mActionBarDraggable;
     public static boolean mMinimizeToStatusbar;
+	private static boolean mRestartReceiverRegistered = false;
+	private static Activity mCurrentActivity = null;
 
     public static AeroSnap mAeroSnap = null;
     public static boolean mAeroSnapChangeTitleBarVisibility;
@@ -89,15 +91,17 @@ public class MovableWindow
             protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
 				
                 DEBUG("onCreate start ");
-                Activity mActivity = (Activity) param.thisObject;
+                mCurrentActivity = (Activity) param.thisObject;
 				isMovable = /* isMovable || */
-					   (Util.isFlag(mActivity.getIntent().getFlags(), MainXposed.mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW)));
+					   (Util.isFlag(mCurrentActivity.getIntent().getFlags(), MainXposed.mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW)));
+				if(!mRestartReceiverRegistered)
+					mRestartReceiverRegistered = registerRestartBroadcastReceiver(mCurrentActivity);
 				if(!isMovable){
 					mWindowHolder=null;
 					return;
 					}
-				if(mWindowHolder==null) initWindow(mActivity);
-                else mWindowHolder.setWindow(mActivity);
+				if(mWindowHolder==null) initWindow(mCurrentActivity);
+                else mWindowHolder.setWindow(mCurrentActivity);
 				setCommonLayout();
 				/* reconnect XHFWService if needed */
                 connectService();
@@ -109,9 +113,11 @@ public class MovableWindow
             @Override
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                 DEBUG("onStartSTART");
-				Activity mActivity = (Activity) param.thisObject;
+				mCurrentActivity = (Activity) param.thisObject;
+				if(!mRestartReceiverRegistered)
+					mRestartReceiverRegistered = registerRestartBroadcastReceiver(mCurrentActivity);
 				isMovable = /* isMovable || */
-					(Util.isFlag(mActivity.getIntent().getFlags(), MainXposed.mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW)));
+					(Util.isFlag(mCurrentActivity.getIntent().getFlags(), MainXposed.mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW)));
 				if(!isMovable) {
 					mWindowHolder=null;
 				}
@@ -587,15 +593,15 @@ public class MovableWindow
 				mResized = true;
 				mAeroSnap.updateSnap(mWindowHolder.SnapGravity);
 			}
-			if (intent.getAction().equals(Common.RESTART_ACTIVITY)){
-				if(mWindowHolder==null) 
-					return;
-				Activity sActivity = mWindowHolder.mActivity;
-				mWindowHolder=null;
-				isMovable=false;
-				//sActivity.recreate();
-				sActivity.finish();
-			}
+//			if (intent.getAction().equals(Common.RESTART_ACTIVITY)){
+//				if(mWindowHolder==null) 
+//					return;
+//				Activity sActivity = mWindowHolder.mActivity;
+//				mWindowHolder=null;
+//				isMovable=false;
+//				//sActivity.recreate();
+//				sActivity.finish();
+//			}
 		}
 	};
 	
@@ -604,7 +610,7 @@ public class MovableWindow
 	public static boolean registerLayoutBroadcastReceiver() {
 		IntentFilter filters = new IntentFilter();
 		filters.addAction(Common.REFRESH_FLOAT_DOT_POSITION);
-		filters.addAction(Common.RESTART_ACTIVITY);
+	//	filters.addAction(Common.RESTART_ACTIVITY);
 		try{
 			mWindowHolder.mActivity.getApplicationContext().registerReceiver(mBroadcastReceiver, filters);
 		} catch(Throwable e){
@@ -613,8 +619,6 @@ public class MovableWindow
 		}
 		return true;
 	}
-	
-	
 
 	private static void unregisterLayoutBroadcastReceiver() {
 		if(mWindowHolder==null) return;
@@ -623,6 +627,39 @@ public class MovableWindow
 		} catch(Throwable e){
 			XposedBridge.log(mWindowHolder.packageName + " failed to unregister receiver.");
 		}
+	}
+	
+	
+
+
+	public static boolean registerRestartBroadcastReceiver(final Activity sActivity) {
+	final BroadcastReceiver restartBroadcastReceiver = new BroadcastReceiver() {
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			if (intent.getAction().equals(Common.RESTART_ACTIVITY)){
+//				if(mWindowHolder==null) 
+//					return;
+//				Activity sActivity = mWindowHolder.mActivity;
+				mWindowHolder=null;
+				isMovable=false;
+				//sActivity.recreate();
+				//sActivity.finish();
+				if(mCurrentActivity!=null)
+					mCurrentActivity.finish();
+			}
+		}
+	};
+	
+		IntentFilter filters = new IntentFilter();
+		filters.addAction(Common.RESTART_ACTIVITY);
+		try{
+			sActivity.getApplicationContext().registerReceiver(restartBroadcastReceiver, filters);
+		} catch(Throwable e){
+			DEBUG("Check registerRestartBroadcastReceiver error");
+			return false;
+		}
+		
+		return true;
 	}
 
 	private static void changeFocusApp(Activity a) {

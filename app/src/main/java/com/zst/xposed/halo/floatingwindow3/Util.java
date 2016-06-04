@@ -256,7 +256,7 @@ public class Util
 		if(intent==null) return;
 		//SharedPreferences mSPrefs = mContext.getSharedPreferences(Common.PREFERENCE_MAIN_FILE, mContext.MODE_WORLD_READABLE);
 		//int floatFlag = mSPrefs.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW);
-		intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+		//intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 		mContext.startActivity(intent);
 	}
 	public static Point getScreenSize(Context mContext){
@@ -337,18 +337,24 @@ public class Util
 	public static void restartAppAsFloating(final Context mContext, final int FloatFlag, final String packageName){
 		if(packageName==null) return;
 		try{
-			Intent intent = mContext.getApplicationContext().getPackageManager().getLaunchIntentForPackage(packageName);
-			intent.addFlags(FloatFlag);
-			intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
-			intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
-			intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-			intent.addFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
-			//intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-//			intent.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
-//			intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
-			intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-			intent.addCategory("restarted");
-			mContext.getApplicationContext().startActivity(intent);
+			postRestartActivity(mContext, packageName);
+			
+			new Handler().postDelayed(new Runnable(){
+					@Override
+					public void run()
+					{
+						final Intent intent = mContext.getApplicationContext().getPackageManager().getLaunchIntentForPackage(packageName);
+						intent.addFlags(FloatFlag);
+					//	intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
+						intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
+//						intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+//						intent.addFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
+						intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+						intent.addCategory(Intent.CATEGORY_LAUNCHER);
+						intent.addCategory("restarted");
+						mContext.getApplicationContext().startActivity(intent);
+					}
+				}, 500);
 		} catch (Throwable t){
 			Log.e("Xposed", "restartTopAppAsFloating failed", t);
 		}
@@ -368,31 +374,30 @@ public class Util
 //			startMain.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);// | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NO_ANIMATION);
 //			mContext.getApplicationContext().startActivity(startMain);
 //			
-			Intent mIntent = new Intent(Common.RESTART_ACTIVITY);
-			mIntent.setPackage(packageName);
-			mContext.getApplicationContext().sendBroadcast(mIntent);
+			postRestartActivity(mContext, packageName);
 			
-			final Intent intent = mContext.getApplicationContext().getPackageManager().getLaunchIntentForPackage(packageName);
-			
-			intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
-			intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
-			intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-			intent.addFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
-		//	intent.addFlags(Intent.FLAG_ACTIVITY_TASK_ON_HOME);
-//			intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET);
-//			intent.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
-//			intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
-			intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-			intent.addCategory(Intent.CATEGORY_LAUNCHER);
-			intent.addCategory("restarted");
-			mContext.getApplicationContext().startActivity(intent);
-			
-			/* need to repeat start for Hangouts and similar */
-			//mContext.getApplicationContext().startActivity(intent);
-			//startAppNormal(mContext, packageName);
+			new Handler().postDelayed(new Runnable(){
+
+					@Override
+					public void run()
+					{
+						final Intent intent = mContext.getApplicationContext().getPackageManager().getLaunchIntentForPackage(packageName);
+				//		intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
+						intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
+//						intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+//						intent.addFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
+						intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+						intent.addCategory(Intent.CATEGORY_LAUNCHER);
+						intent.addCategory("restarted");
+						mContext.getApplicationContext().startActivity(intent);
+
+						/* need to repeat start for Hangouts and similar */
+						//mContext.getApplicationContext().startActivity(intent);
+						//startAppNormal(mContext, packageName);
+					}
+					
 				
-			
-			
+			}, 500);
 		} catch (Throwable t){
 			Log.e("Xposed", "restartTopAppAsFloating failed", t);
 		}
@@ -402,5 +407,11 @@ public class Util
 		AppOpsManager appOps = (AppOpsManager) mContext.getSystemService(Context.APP_OPS_SERVICE);
 		int mode = appOps.checkOpNoThrow("android:get_usage_stats", android.os.Process.myUid(), Common.THIS_MOD_PACKAGE_NAME);
 		return mode == AppOpsManager.MODE_ALLOWED;
+	}
+
+	public static void postRestartActivity(final Context mContext, final String packageName){
+		Intent mIntent = new Intent(Common.RESTART_ACTIVITY);
+		mIntent.setPackage(packageName);
+		mContext.getApplicationContext().sendBroadcast(mIntent);
 	}
 }
