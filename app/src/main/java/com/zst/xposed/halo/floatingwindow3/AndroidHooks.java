@@ -375,7 +375,7 @@ public class AndroidHooks
 //					isMovable = isMovable || (mIntent!=null&&Util.isFlag(mIntent.getFlags(), MainXposed.mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW)));
 					String packageName = Util.getFailsafeStringFromObject(null, previous, "packageName");
 					isMovable = MWRegister.isMovable(packageName);
-					if(packageName.equals("com.whatsapp"))
+					if("com.whatsapp".equals(packageName))
 						isMovable = false;
 					if (!isMovable) return;
 					
