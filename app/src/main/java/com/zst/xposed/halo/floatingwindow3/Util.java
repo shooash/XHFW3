@@ -265,8 +265,12 @@ public class Util
 		mWindowManager.getDefaultDisplay().getMetrics(metrics);
 		return new Point(metrics.widthPixels, metrics.heightPixels);
 	}
+	
+	public static void finishApp(final Context mContext, final String packageName){
+		postRestartActivity(mContext, packageName);
+	}
 
-	public static void finishApp(String packageName)
+	public static void finishAppRoot(String packageName)
 	{
 		Process suProcess;
 		try
