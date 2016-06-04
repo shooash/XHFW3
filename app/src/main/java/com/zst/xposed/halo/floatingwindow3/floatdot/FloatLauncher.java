@@ -79,8 +79,8 @@ public class FloatLauncher
 				public void onItemClick(AdapterView<?> p1, View v, int pos, long p4)
 				{
 					LauncherListAdapter.ViewHolder holder = (LauncherListAdapter.ViewHolder) v.getTag();
-					if(holder.taskId==0 || !Util.moveToFront(mContext, holder.taskId))
-						Util.startApp(mContext, holder.packageName);
+					//if(holder.taskId==0 || !Util.moveToFront(mContext, holder.taskId))
+					Util.startApp(mContext, holder.packageName);
 					popupWin.dismiss();
 				}
 				
@@ -223,6 +223,10 @@ public class FloatLauncher
 	private void removeItem(String pkgName){
 		if(!itemsIndex.containsKey(pkgName))
 			return;
+		if(isInFavorites(pkgName)) {
+			updateItem(pkgName, 0);
+			return;
+			}
 		adapter.remove(itemsIndex.get(pkgName));
 		itemsIndex.remove(pkgName);
 	}
