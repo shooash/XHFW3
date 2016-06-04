@@ -162,10 +162,12 @@ public class FloatDot
 				@Override
 				public boolean onLongClick(View p1)
 				{
-					mFloatLauncher.showSubMenu(image, mContext, mCoordinates.x, mCoordinates.y-mScreenHeight/2, mCircleDiameter, 0, null, 
-						new String[]{mContext.getString(R.string.floatdot_action_movable_top),
-							mContext.getString(R.string.floatdot_action_fullscreen_top)},
-						new int[] {mFloatLauncher.ACTION_HALOFY_TOP, mFloatLauncher.ACTION_UNHALOFY_TOP});
+					String mPackageName = Util.getTopAppPackageName(mContext);
+					mFloatLauncher.showSubMenu(image, mContext, mCoordinates.x, mCoordinates.y-mScreenHeight/2, mCircleDiameter, 0, mPackageName,
+						new String[]{mContext.getString(R.string.floatdot_action_movable),
+							mContext.getString(R.string.floatdot_action_fullscreen),
+								(mFloatLauncher.isInFavorites(mPackageName)?mContext.getString(R.string.floatdot_action_unfav):mContext.getString(R.string.floatdot_action_fav))},
+						new int[] {mFloatLauncher.ACTION_HALOFY, mFloatLauncher.ACTION_UNHALOFY, (mFloatLauncher.isInFavorites(mPackageName)?mFloatLauncher.ACTION_REMOVE_FROM_FAVORITES:mFloatLauncher.ACTION_ADD_TO_FAVORITES)});
 					return true;
 				}
 

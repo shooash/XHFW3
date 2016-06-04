@@ -261,6 +261,8 @@ public class FloatLauncher
 	}
 	
 	public void removeAppFromFavs(final String pkg) {
+		if(pkg==null)
+			return;
 		Set<String> pkgs = new HashSet<String>(SavedPackages.getStringSet("launcher", new HashSet<String>()));
 		pkgs.remove(pkg);
 		SavedPackages.edit().putStringSet("launcher", pkgs).apply();
@@ -270,12 +272,18 @@ public class FloatLauncher
 	}
 
 	public void addAppToFavs(final String pkg) {
+		if(pkg==null)
+			return;
 		Set<String> pkgs = new HashSet<String>(SavedPackages.getStringSet("launcher", new HashSet<String>()));
 		if(pkgs.contains(pkg))
 			return;
 		pkgs.add(pkg);
 		SavedPackages.edit().putStringSet("launcher", pkgs).apply();
 		refreshFavorites();
+	}
+
+	public boolean isInFavorites(final String packageName){
+		return savedPackages.contains(packageName);
 	}
 	
 	final BroadcastReceiver br = new BroadcastReceiver(){
@@ -324,18 +332,34 @@ public class FloatLauncher
 	}
 	
 	
-	public void showSubMenu(final View anchor, final Context sContext, final int x, final int y, final int x_offset, final int y_offset, final String packageName, final String[] labels, final int[] actions){
+	public void showSubMenu(final View anchor, final Context sContext, final int x, final int y, final int x_offset, final int y_offset, String mPackageName, final String[] labels, final int[] actions){
 		setAnchor(anchor);
 		subListView = new ListView(mContext);
-		ArrayList<String> list = new ArrayList<>(Arrays.asList(labels));	
-
+		ArrayList<String> list = new ArrayList<>(Arrays.asList(labels));
+		if(mPackageName==null) {
+			mPackageName = Util.getTopAppPackageName(sContext);
+			}
+		/* HEADER */
+		LayoutInflater inflater = (LayoutInflater) sContext.getSystemService( Context.LAYOUT_INFLATER_SERVICE );
+		View header = inflater.inflate(R.layout.floatdot_submenu_header, null);
+		CharSequence mTitleText;
+		try {
+			mTitleText = sContext.getPackageManager().getApplicationInfo(mPackageName, 0).loadLabel(mPackageManager);
+		} catch (Throwable e)
+		{
+			mTitleText = mPackageName;
+		}
+		TextView mTitle = (TextView) header.findViewById(R.id.submenu_title);
+		mTitle.setText(mTitleText);
+		/* /HEADER */
+		final String packageName = mPackageName;
 		subListView.setAdapter(new SubMenuListAdapter(mContext, list));	
-		subListView.setOnItemClickListener(new AdapterView.OnItemClickListener(){
+		subListView.setOnItemClickListener(new OnItemClickListener(){
 				@Override
 				public void onItemClick(AdapterView<?> adapterview, View p2, final int pos, long p4)
 				{
-					//Util.finishApp(packageName);
-					if(pos>=actions.length)
+
+					if(pos>actions.length || pos < 1)
 						return;
 					mHandler.post(new Runnable(){
 
@@ -344,7 +368,7 @@ public class FloatLauncher
 							{
 								subPopupMenu.dismiss();
 								popupWin.dismiss();
-								switch(actions[pos]){
+								switch(actions[pos-1]){
 									case ACTION_CLOSE:
 										removeItem(packageName);
 										Util.finishApp(mContext, packageName);
@@ -374,8 +398,6 @@ public class FloatLauncher
 							}
 					});
 					
-//						Util.restartTopAppAsFullScreen(mContext, mFloatFlag);
-					
 				}
 			});
 		subPopupMenu.setOnDismissListener(new PopupWindow.OnDismissListener(){
@@ -393,12 +415,17 @@ public class FloatLauncher
 		int width = subListView.getMeasuredWidth();
 		if(width>MINIMAL_WIDTH)
 			width = MINIMAL_WIDTH;
+		subListView.addHeaderView(header);
 		subPopupMenu.setWidth(width);
 		//subPopupMenu.setWidth(MeasureSpec.makeMeasureSpec(MINIMAL_WIDTH,MeasureSpec.AT_MOST));
 		subPopupMenu.setHeight(WindowManager.LayoutParams.WRAP_CONTENT);
 		subPopupMenu.setBackgroundDrawable(mContext.getResources().getDrawable( R.drawable.round_rect ));
 		subPopupMenu.setOutsideTouchable(true);
-		subPopupMenu.setWindowLayoutType(WindowManager.LayoutParams.TYPE_APPLICATION_ATTACHED_DIALOG);
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+			subPopupMenu.setWindowLayoutType(WindowManager.LayoutParams.TYPE_APPLICATION_ATTACHED_DIALOG);
+		}
+		else
+			PopupWindowCompat.setWindowLayoutType(subPopupMenu, WindowManager.LayoutParams.TYPE_APPLICATION_ATTACHED_DIALOG);
 		subPopupMenu.setAnimationStyle(android.R.style.Animation);
 		subPopupMenu.showAtLocation(anchor, Gravity.LEFT, x + x_offset, y + y_offset);
 		subMenuVisible = true;
