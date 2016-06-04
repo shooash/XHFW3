@@ -90,7 +90,7 @@ public class FloatLauncher
 				@Override
 				public boolean onItemLongClick(AdapterView<?> p1, View v, int p3, long p4)
 				{
-					int y = MeasureSpec.getSize(popupWin.getHeight())/2 - MeasureSpec.getSize(v.getHeight())*3/2 - (int) v.getY();
+					int y = View.MeasureSpec.getSize(popupWin.getHeight())/2 - View.MeasureSpec.getSize(v.getHeight())*3/2 - (int) v.getY();
 					LauncherListAdapter.ViewHolder holder = (LauncherListAdapter.ViewHolder) v.getTag();
 					showSubMenu(mAnchor, mContext, position[0], position[1], Util.realDp(50, mContext),- y, holder.packageName, 
 								new String[]{"Close", "Restart as movable", "Restart as fullscreen", (savedPackages.contains(holder.packageName)?"Remove from favs":"Add to favs") }, 
@@ -116,7 +116,9 @@ public class FloatLauncher
 		//final ColorDrawable cd = new ColorDrawable(Color.parseColor("#AA333333"));
 		popupWin.setBackgroundDrawable(mContext.getResources().getDrawable( R.drawable.round_rect ));
 		popupWin.setOutsideTouchable(true);
-		popupWin.setWindowLayoutType(WindowManager.LayoutParams.TYPE_APPLICATION_ATTACHED_DIALOG);
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+			popupWin.setWindowLayoutType(WindowManager.LayoutParams.TYPE_APPLICATION_ATTACHED_DIALOG);
+		}
 		popupWin.setAnimationStyle(android.R.style.Animation);
 		popupWin.setOnDismissListener(new PopupWindow.OnDismissListener(){
 				@Override
@@ -146,10 +148,10 @@ public class FloatLauncher
 			setupPopup();
 		
 		popupWin.setContentView(lv);
-		popupWin.setWidth(MeasureSpec.makeMeasureSpec(MINIMAL_WIDTH,MeasureSpec.AT_MOST));
+		popupWin.setWidth(MINIMAL_WIDTH);
 		//popupWin.setHeight(MeasureSpec.makeMeasureSpec(mScreenHeight/3,MeasureSpec.AT_MOST));
 		//popupWin.setHeight(WindowManager.LayoutParams.WRAP_CONTENT);
-		lv.measure(MeasureSpec.UNSPECIFIED, MeasureSpec.UNSPECIFIED);
+		lv.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
 		int rows = adapter.getCount();
 		int height = lv.getMeasuredHeight() * rows;
 		if(height>mScreenHeight/3)
@@ -380,7 +382,7 @@ public class FloatLauncher
 			
 		});
 		subPopupMenu.setContentView(subListView);
-		subListView.measure(MeasureSpec.UNSPECIFIED, MeasureSpec.UNSPECIFIED);
+		subListView.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
 		int width = subListView.getMeasuredWidth();
 		if(width>MINIMAL_WIDTH)
 			width = MINIMAL_WIDTH;
