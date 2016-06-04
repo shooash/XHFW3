@@ -50,6 +50,8 @@ public class FloatLauncher
 	final int ACTION_UNHALOFY = 3;
 	final int ACTION_HALOFY_TOP = 4;
 	final int ACTION_UNHALOFY_TOP = 5;
+	final int ACTION_ADD_TO_FAVORITES = 6;
+	final int ACTION_REMOVE_FROM_FAVORITES = 7;
 	
 	
 	public FloatLauncher(Context sContext, int flag){
@@ -61,6 +63,7 @@ public class FloatLauncher
 		mFloatFlag = flag;
 		refreshScreenSize();
 		refreshMinimalSize();
+		setupMenu();
 	}
 	
 	public void setAnchor(View anchor){
@@ -89,9 +92,10 @@ public class FloatLauncher
 				{
 					int y = MeasureSpec.getSize(popupWin.getHeight())/2 - MeasureSpec.getSize(v.getHeight())*3/2 - (int) v.getY();
 					LauncherListAdapter.ViewHolder holder = (LauncherListAdapter.ViewHolder) v.getTag();
-					showSubMenu(mAnchor, mContext, position[0], position[1], Util.realDp(50, mContext),- y, holder.packageName, new String[]{"Close", "Restart as movable", "Restart as fullscreen"}, new int[]{ACTION_CLOSE, ACTION_HALOFY, ACTION_UNHALOFY});
+					showSubMenu(mAnchor, mContext, position[0], position[1], Util.realDp(50, mContext),- y, holder.packageName, 
+								new String[]{"Close", "Restart as movable", "Restart as fullscreen", (savedPackages.contains(holder.packageName)?"Remove from favs":"Add to favs") }, 
+								new int[]{ACTION_CLOSE, ACTION_HALOFY, ACTION_UNHALOFY,(savedPackages.contains(holder.packageName)?ACTION_REMOVE_FROM_FAVORITES:ACTION_ADD_TO_FAVORITES)});
 					return true;
-					
 				}
 
 			
@@ -205,18 +209,11 @@ public class FloatLauncher
 		adapter.insert(pi, 0);
 		//itemsList.add(0, new PackageItem(pm, pkgName, taskId, sGravity, savedPackages.contains(pkgName)));
 		itemsIndex.put(pkgName, pi);
-//		if(adapter!=null)
-//			adapter.notifyDataSetChanged();
 	}
 	
 	private void removeItem(String pkgName){
 		if(!itemsIndex.containsKey(pkgName))
 			return;
-//		itemsList.remove(itemsIndex.indexOf(pkgName));
-//		itemsIndex.remove(pkgName);
-//		setupMenu();
-//		if(adapter!=null)
-//			adapter.notifyDataSetChanged();
 		adapter.remove(itemsIndex.get(pkgName));
 		itemsIndex.remove(pkgName);
 	}
@@ -226,23 +223,12 @@ public class FloatLauncher
 		if(!itemsIndex.containsKey(pkgName))
 			return;
 		PackageItem pi = itemsIndex.get(pkgName);
-//		int index = itemsIndex.indexOf(pkgName);
-		//PackageItem pi = itemsList.get(index);
-//		PackageItem pi  = adapter.getItem(index);
 		adapter.remove(pi);
 		itemsIndex.remove(pi);
 		pi.taskId = mTaskId;
-		pi.isFavorite = (mTaskId==0);
-		//force it appear at top of the list
-		//itemsList.remove(index);
-//		itemsIndex.remove(index);
-		//itemsList.add(0, pi);
-//		itemsIndex.add(0, pkgName);
+		pi.isFavorite = savedPackages.contains(pkgName);
 		itemsIndex.put(pkgName, pi);
 		adapter.insert(pi, 0);
-		//setupMenu();
-		//if(adapter!=null)
-		//	adapter.notifyDataSetChanged();
 	}
 	
 	private void refreshAll(){
@@ -256,6 +242,31 @@ public class FloatLauncher
 		refreshScreenSize();
 		refreshMinimalSize();
 		mPopUpSet = false;
+	}
+	
+	private void refreshFavorites(){
+		popupWin.dismiss();
+		savedPackages.clear();
+		loadSavedPackages();
+		addSavedPackages();
+	}
+	
+	public void removeAppFromFavs(final String pkg) {
+		Set<String> pkgs = new HashSet<String>(SavedPackages.getStringSet("launcher", new HashSet<String>()));
+		pkgs.remove(pkg);
+		SavedPackages.edit().putStringSet("launcher", pkgs).apply();
+//		mPref.edit().remove(pkg).commit();
+//		mPkgAdapter.update(getSetStrings());
+		refreshFavorites();
+	}
+
+	public void addAppToFavs(final String pkg) {
+		Set<String> pkgs = new HashSet<String>(SavedPackages.getStringSet("launcher", new HashSet<String>()));
+		if(pkgs.contains(pkg))
+			return;
+		pkgs.add(pkg);
+		SavedPackages.edit().putStringSet("launcher", pkgs).apply();
+		refreshFavorites();
 	}
 	
 	final BroadcastReceiver br = new BroadcastReceiver(){
@@ -327,7 +338,7 @@ public class FloatLauncher
 								switch(actions[pos]){
 									case ACTION_CLOSE:
 										removeItem(packageName);
-										Util.finishApp(packageName);
+										Util.finishApp(mContext, packageName);
 										break;
 									case ACTION_HALOFY:
 										Util.restartAppAsFloating(mContext, mFloatFlag, packageName);
@@ -342,6 +353,12 @@ public class FloatLauncher
 									case ACTION_UNHALOFY_TOP:
 										removeItem(packageName);
 										Util.restartTopAppAsFullScreen(mContext, mFloatFlag);
+										break;
+									case ACTION_ADD_TO_FAVORITES:
+										addAppToFavs(packageName);
+										break;
+									case ACTION_REMOVE_FROM_FAVORITES:
+										removeAppFromFavs(packageName);
 										break;
 								}
 								
@@ -363,7 +380,12 @@ public class FloatLauncher
 			
 		});
 		subPopupMenu.setContentView(subListView);
-		subPopupMenu.setWidth(MeasureSpec.makeMeasureSpec(MINIMAL_WIDTH,MeasureSpec.AT_MOST));
+		subListView.measure(MeasureSpec.UNSPECIFIED, MeasureSpec.UNSPECIFIED);
+		int width = subListView.getMeasuredWidth();
+		if(width>MINIMAL_WIDTH)
+			width = MINIMAL_WIDTH;
+		subPopupMenu.setWidth(width);
+		//subPopupMenu.setWidth(MeasureSpec.makeMeasureSpec(MINIMAL_WIDTH,MeasureSpec.AT_MOST));
 		subPopupMenu.setHeight(WindowManager.LayoutParams.WRAP_CONTENT);
 		subPopupMenu.setBackgroundDrawable(mContext.getResources().getDrawable( R.drawable.round_rect ));
 		subPopupMenu.setOutsideTouchable(true);
