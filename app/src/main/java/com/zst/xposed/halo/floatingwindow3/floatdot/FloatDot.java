@@ -162,7 +162,8 @@ public class FloatDot
 				@Override
 				public boolean onLongClick(View p1)
 				{
-					mFloatLauncher.showSubMenu(image, mContext, mCoordinates.x, mCoordinates.y-mScreenHeight/2, mCircleDiameter, 0, null, new String[]{"Restart Top Activity as Movable", "Restart top activity as fullscreen"}, new int[] {mFloatLauncher.ACTION_HALOFY_TOP, mFloatLauncher.ACTION_UNHALOFY_TOP});
+					mFloatLauncher.showSubMenu(image, mContext, mCoordinates.x, mCoordinates.y-mScreenHeight/2, mCircleDiameter, 0, null, 
+					new String[]{"Restart top app as movable", "Restart top app as fullscreen"}, new int[] {mFloatLauncher.ACTION_HALOFY_TOP, mFloatLauncher.ACTION_UNHALOFY_TOP});
 					return true;
 				}
 
