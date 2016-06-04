@@ -1,4 +1,5 @@
 package com.zst.xposed.halo.floatingwindow3.floatdot;
+import android.support.v4.widget.PopupWindowCompat;
 import android.view.*;
 import android.widget.*;
 import android.content.*;
@@ -93,7 +94,11 @@ public class FloatLauncher
 					int y = View.MeasureSpec.getSize(popupWin.getHeight())/2 - View.MeasureSpec.getSize(v.getHeight())*3/2 - (int) v.getY();
 					LauncherListAdapter.ViewHolder holder = (LauncherListAdapter.ViewHolder) v.getTag();
 					showSubMenu(mAnchor, mContext, position[0], position[1], Util.realDp(50, mContext),- y, holder.packageName, 
-								new String[]{"Close", "Restart as movable", "Restart as fullscreen", (savedPackages.contains(holder.packageName)?"Remove from favs":"Add to favs") }, 
+								new String[]{mContext.getString(R.string.floatdot_action_close),
+										mContext.getString(R.string.floatdot_action_movable),
+										mContext.getString(R.string.floatdot_action_fullscreen),
+										(savedPackages.contains(holder.packageName)?mContext.getString(R.string.floatdot_action_unfav):
+												mContext.getString(R.string.floatdot_action_fav)) },
 								new int[]{ACTION_CLOSE, ACTION_HALOFY, ACTION_UNHALOFY,(savedPackages.contains(holder.packageName)?ACTION_REMOVE_FROM_FAVORITES:ACTION_ADD_TO_FAVORITES)});
 					return true;
 				}
@@ -119,6 +124,8 @@ public class FloatLauncher
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
 			popupWin.setWindowLayoutType(WindowManager.LayoutParams.TYPE_APPLICATION_ATTACHED_DIALOG);
 		}
+		else
+			PopupWindowCompat.setWindowLayoutType(popupWin, WindowManager.LayoutParams.TYPE_APPLICATION_ATTACHED_DIALOG);
 		popupWin.setAnimationStyle(android.R.style.Animation);
 		popupWin.setOnDismissListener(new PopupWindow.OnDismissListener(){
 				@Override
