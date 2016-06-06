@@ -116,11 +116,11 @@ public class MovableWindow
 				mCurrentActivity = (Activity) param.thisObject;
 				if(!mRestartReceiverRegistered)
 					mRestartReceiverRegistered = registerRestartBroadcastReceiver(mCurrentActivity);
-				isMovable = /* isMovable || */
-					(Util.isFlag(mCurrentActivity.getIntent().getFlags(), MainXposed.mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW)));
-				if(!isMovable) {
-					mWindowHolder=null;
-				}
+//				isMovable = /* isMovable || */
+//					(Util.isFlag(mCurrentActivity.getIntent().getFlags(), MainXposed.mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW)));
+//				if(!isMovable) {
+//					mWindowHolder=null;
+//				}
 				if(!isMovable || mWindowHolder==null) return;
 				showFocusOutline = false; //is was actualy disabled because the window lost focus
                 mWindowHolder.setWindow((Activity) param.thisObject);
@@ -165,11 +165,11 @@ public class MovableWindow
 					Activity mActivity = (Activity) param.thisObject;
 					hideFocusFrame(mActivity.getApplicationContext());
 					
-					isMovable = /* isMovable || */
-						(Util.isFlag(mActivity.getIntent().getFlags(), MainXposed.mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW)));
-					if(!isMovable) {
-						mWindowHolder=null;
-					}
+//					isMovable = /* isMovable || */
+//						(Util.isFlag(mActivity.getIntent().getFlags(), MainXposed.mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW)));
+//					if(!isMovable) {
+//						mWindowHolder=null;
+//					}
 					return;
 				}
 			});
@@ -541,6 +541,8 @@ public class MovableWindow
 		if (decor_view == null) return;
 		mOverlayView = (MovableOverlayView) decor_view.getTag(Common.LAYOUT_OVERLAY_TAG);
 		if (mOverlayView != null)  decor_view.bringChildToFront(mOverlayView);
+		else
+			setOverlayView();
 	}
 	
 	private static void setTagInternalForView(View view, int key, Object object) {
