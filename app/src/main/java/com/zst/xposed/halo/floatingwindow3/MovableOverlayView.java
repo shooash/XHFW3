@@ -749,9 +749,15 @@ public class MovableOverlayView extends RelativeLayout {
 		if (mPref.getBoolean(Common.KEY_WINDOW_TITLEBAR_SINGLE_WINDOW,
 				Common.DEFAULT_WINDOW_TITLEBAR_SINGLE_WINDOW)
 				&& Build.VERSION.SDK_INT >= 16) {
-			mActivity.finishAffinity();
+				if(MovableWindow.mWindowHolder!=null && MovableWindow.mWindowHolder.mActivity!=null)
+					MovableWindow.mWindowHolder.mActivity.finishAffinity();
+				else
+					mActivity.finishAffinity();
 		} else {
-			mActivity.finish();
+			if(MovableWindow.mWindowHolder!=null && MovableWindow.mWindowHolder.mActivity!=null)
+				MovableWindow.mWindowHolder.mActivity.finish();
+			else
+				mActivity.finish();
 		}
 	}
 	
