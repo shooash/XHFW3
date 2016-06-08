@@ -12,19 +12,22 @@ import java.util.*;
 public class MainXposed implements IXposedHookLoadPackage, IXposedHookZygoteInit {
 	
 	public static XModuleResources sModRes = null;
-	public static XSharedPreferences mPref = null;
-	public static XSharedPreferences mPackagesList = null;
+	public static XSharedPreferences mPref;
+	public static XSharedPreferences mPackagesList;
 	public static Compatibility.Hooks mCompatibility =  new Compatibility.Hooks();
 	
 
 	
 	@Override
 	public void initZygote(StartupParam startupParam) throws Throwable {
+		mPref = new XSharedPreferences(Common.THIS_MOD_PACKAGE_NAME, Common.PREFERENCE_MAIN_FILE);
+		mPref.makeWorldReadable();
+		mPackagesList = new XSharedPreferences(Common.THIS_MOD_PACKAGE_NAME, Common.PREFERENCE_PACKAGES_FILE);
+		mPackagesList.makeWorldReadable();
 		try{
 		//if(sModRes==null)
 		 	sModRes = XModuleResources.createInstance(startupParam.modulePath, null);
-			mPref = new XSharedPreferences(Common.THIS_MOD_PACKAGE_NAME, Common.PREFERENCE_MAIN_FILE);
-			mPackagesList = new XSharedPreferences(Common.THIS_MOD_PACKAGE_NAME, Common.PREFERENCE_PACKAGES_FILE);
+			
 			}catch(Throwable t){
 				XposedBridge.log("ModuleResources init failed");
 				XposedBridge.log(t);
@@ -33,12 +36,18 @@ public class MainXposed implements IXposedHookLoadPackage, IXposedHookZygoteInit
 	
 	@Override
 	public void handleLoadPackage(final LoadPackageParam lpparam) throws Throwable {
-	//if(mPref==null) 
-	//mPref = new XSharedPreferences(Common.THIS_MOD_PACKAGE_NAME, Common.PREFERENCE_MAIN_FILE);
-	//if(mPackagesList==null)
-	//mPackagesList = new XSharedPreferences(Common.THIS_MOD_PACKAGE_NAME, Common.PREFERENCE_PACKAGES_FILE);
-	//mPref.reload();
-	//mPackagesList.reload();
+	if(mPref==null){
+		mPref = new XSharedPreferences(Common.THIS_MOD_PACKAGE_NAME, Common.PREFERENCE_MAIN_FILE);
+		mPref.makeWorldReadable();
+	}	
+	if(mPackagesList==null){
+		mPackagesList = new XSharedPreferences(Common.THIS_MOD_PACKAGE_NAME, Common.PREFERENCE_PACKAGES_FILE);
+		mPackagesList.makeWorldReadable();
+	}	
+//	else{
+//		mPref.reload();
+//		mPackagesList.reload();
+//		}
 	if(!mPref.getBoolean(Common.KEY_MOVABLE_WINDOW, Common.DEFAULT_MOVABLE_WINDOW)) return;
 	
 	if(lpparam.packageName==null) return;
