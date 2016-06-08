@@ -312,6 +312,7 @@ public class AndroidHooks
 	}
 
 	private static boolean checkBlackWhiteList(boolean flag, String packageName){
+		MainXposed.mPackagesList.reload();
 		switch (MainXposed.getBlackWhiteListOption()) {
 			case 1: /* Always open apps in halo except blacklisted apps */
 				flag=!MainXposed.isBlacklisted(packageName);
