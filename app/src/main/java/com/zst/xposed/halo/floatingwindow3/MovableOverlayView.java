@@ -705,13 +705,13 @@ public class MovableOverlayView extends RelativeLayout {
 	public void setTitleBarVisibility(boolean visible) {
 		if (mTitleBarHeader != null) {
 			mTitleBarHeader.setVisibility(visible ? View.VISIBLE : View.GONE);
-			
-			final FrameLayout decorView = (FrameLayout) mActivity.getWindow().peekDecorView()
-					.getRootView();
-			final View child = decorView.getChildAt(0);
-			FrameLayout.LayoutParams parammm = (FrameLayout.LayoutParams) child.getLayoutParams();
-			parammm.setMargins(0, visible ? mTitleBarHeight : 0, 0, 0);
-			child.setLayoutParams(parammm);
+			MovableWindow.setTopMargin(visible ? mTitleBarHeight : 0);
+//			final FrameLayout decorView = (FrameLayout) MovableWindow.mWindowHolder.mActivity.getWindow().peekDecorView()
+//					.getRootView();
+//			final View child = decorView.getChildAt(0);
+//			FrameLayout.LayoutParams parammm = (FrameLayout.LayoutParams) child.getLayoutParams();
+//			parammm.setMargins(0, visible ? mTitleBarHeight : 0, 0, 0);
+//			child.setLayoutParams(parammm);
 		}
 	}
 	

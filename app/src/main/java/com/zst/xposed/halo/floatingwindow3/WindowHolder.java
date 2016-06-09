@@ -13,6 +13,7 @@ import android.view.*;
 import java.util.ArrayList;
 import android.os.*;
 import android.content.*;
+import android.widget.*;
 
 public class WindowHolder{
     public boolean isSnapped = false;
@@ -308,6 +309,25 @@ public class WindowHolder{
 		if(height>lp.height||width>lp.width)
 			return true;
 		return false;
+	}
+	
+	public void setTopMargin(Window window, int margin){
+		if(window==null)
+			return;
+		try{
+			final FrameLayout decorView = (FrameLayout) window.peekDecorView()
+				.getRootView();
+			final View child = decorView.getChildAt(0);
+			FrameLayout.LayoutParams parammm = (FrameLayout.LayoutParams) child.getLayoutParams();
+			parammm.setMargins(0, margin, 0, 0);
+			child.setLayoutParams(parammm);
+		} catch(Throwable t){}	
+	}
+	
+	public void syncNewTopMargin(int margin){
+		for(Window w : mWindows){
+			setTopMargin(w, margin);
+		}
 	}
 
 }

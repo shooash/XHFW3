@@ -23,12 +23,12 @@ public class MovableWindow
 {
 
     public static void DEBUG(String tag){
-//        XposedBridge.log(tag + " Package:[" + (mWindowHolder==null?"null":mWindowHolder.packageName + "] isSnapped: [" + mWindowHolder.isSnapped 
-//						 + "] isMaximized: [" + mWindowHolder.isMaximized)
-//							+ "] isMovable:[" + isMovable + "]");
-//		if(mWindowHolder!=null) 
-//			XposedBridge.log("      window:[" + mWindowHolder.width + ":" + mWindowHolder.height
-//				+ "] at [" + mWindowHolder.x + ":" + mWindowHolder.y + "]");
+        XposedBridge.log(tag + " Package:[" + (mWindowHolder==null?"null":mWindowHolder.packageName + "] isSnapped: [" + mWindowHolder.isSnapped 
+						 + "] isMaximized: [" + mWindowHolder.isMaximized)
+							+ "] isMovable:[" + isMovable + "]");
+		if(mWindowHolder!=null) 
+			XposedBridge.log("      window:[" + mWindowHolder.width + ":" + mWindowHolder.height
+				+ "] at [" + mWindowHolder.x + ":" + mWindowHolder.y + "]");
 //		if(mWindowHolderCached!=null) 
 //			XposedBridge.log("      window:[" + mWindowHolderCached.width + ":" + mWindowHolderCached.height
 //							 + "] at [" + mWindowHolderCached.x + ":" + mWindowHolderCached.y + "]");
@@ -63,7 +63,7 @@ public class MovableWindow
     public static boolean mActionBarDraggable;
     public static boolean mMinimizeToStatusbar;
 	private static boolean mRestartReceiverRegistered = false;
-	private static Activity mCurrentActivity = null;
+	public static Activity mCurrentActivity = null;
 
     public static AeroSnap mAeroSnap = null;
     public static boolean mAeroSnapChangeTitleBarVisibility;
@@ -92,12 +92,12 @@ public class MovableWindow
 				
                 DEBUG("onCreate start ");
                 mCurrentActivity = (Activity) param.thisObject;
-				isMovable = /* isMovable || */
+				isMovable =  isMovable || 
 					   (Util.isFlag(mCurrentActivity.getIntent().getFlags(), MainXposed.mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW)));
 				if(!mRestartReceiverRegistered)
 					mRestartReceiverRegistered = registerRestartBroadcastReceiver(mCurrentActivity);
 				if(!isMovable){
-					mWindowHolder=null;
+					//mWindowHolder=null;
 					return;
 					}
 				if(mWindowHolder==null) initWindow(mCurrentActivity);
@@ -314,12 +314,17 @@ public class MovableWindow
 					Window window = (Window) param.thisObject;
 					String name = window.getContext().getPackageName();
 					if (name.startsWith("com.android.systemui")||name.equals("android")) return;
-					if(window.isFloating()) return; //MODAL fix
+					//if(window.isFloating()) return; //MODAL fix
+					mWindowHolder.setWindow(window);
 					//TODO add to settings an option to force titlebar to overlay windows 
 					//(but that will overlap actionbar)
 					//setOverlayView();
-					putOverlayView();
+					//showTitleBar();
+					
+					//mWindowHolder.syncLayout();
 					mWindowHolder.pushToWindow(window);
+					putOverlayView();
+					//showTitleBar();
 					MovableWindow.DEBUG("GenerateLayout end");
 				}
 			});
@@ -417,6 +422,7 @@ public class MovableWindow
                 mWindowHolder.mWindow.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
                 break;
         }
+		//setOverlayView();
 	}
 	
     private static void setInitLayout(){
@@ -486,10 +492,7 @@ public class MovableWindow
 	
 	public static void showTitleBar(boolean show){
 		DEBUG("showTitleBar " + show);
-		if(show)
-			mOverlayView.setTitleBarVisibility(true);
-		else
-			mOverlayView.setTitleBarVisibility(false);
+			mOverlayView.setTitleBarVisibility(show);
 		}
 
 	public static void setOverlayView(){
@@ -530,6 +533,7 @@ public class MovableWindow
 	}
 
 	public static void putOverlayView(){
+		DEBUG("putOverlayView");
 		/*  We don't touch floating dialogs  */
 		if (mWindowHolder==null || mWindowHolder.mWindow.isFloating()) return;	
 		FrameLayout decor_view;
@@ -541,8 +545,8 @@ public class MovableWindow
 		if (decor_view == null) return;
 		mOverlayView = (MovableOverlayView) decor_view.getTag(Common.LAYOUT_OVERLAY_TAG);
 		if (mOverlayView != null)  decor_view.bringChildToFront(mOverlayView);
-		else
-			setOverlayView();
+//		else
+//			setOverlayView();
 	}
 	
 	private static void setTagInternalForView(View view, int key, Object object) {
@@ -846,6 +850,11 @@ public class MovableWindow
 			(Math.abs(mPreviousRange[1] -  event.getRawY()) > MOVE_MAX_RANGE));
 	}
 	
+	public static void setTopMargin(int margin){
+		if(mWindowHolder==null)
+			return;
+		mWindowHolder.syncNewTopMargin(margin);
+	}
 	/***********************************************************/
 	/*********************** Minimize **************************/
 	/***********************************************************/

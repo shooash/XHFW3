@@ -12,18 +12,18 @@ import java.util.*;
 public class MainXposed implements IXposedHookLoadPackage, IXposedHookZygoteInit {
 	
 	public static XModuleResources sModRes = null;
-	public static XSharedPreferences mPref;
-	public static XSharedPreferences mPackagesList;
+	public static XSharedPreferences mPref = null;
+	public static XSharedPreferences mPackagesList = null;
 	public static Compatibility.Hooks mCompatibility =  new Compatibility.Hooks();
 	
 
 	
 	@Override
 	public void initZygote(StartupParam startupParam) throws Throwable {
-		mPref = new XSharedPreferences(Common.THIS_MOD_PACKAGE_NAME, Common.PREFERENCE_MAIN_FILE);
-		mPref.makeWorldReadable();
-		mPackagesList = new XSharedPreferences(Common.THIS_MOD_PACKAGE_NAME, Common.PREFERENCE_PACKAGES_FILE);
-		mPackagesList.makeWorldReadable();
+//		mPref = new XSharedPreferences(Common.THIS_MOD_PACKAGE_NAME, Common.PREFERENCE_MAIN_FILE);
+//		mPref.makeWorldReadable();
+//		mPackagesList = new XSharedPreferences(Common.THIS_MOD_PACKAGE_NAME, Common.PREFERENCE_PACKAGES_FILE);
+//		mPackagesList.makeWorldReadable();
 		try{
 		//if(sModRes==null)
 		 	sModRes = XModuleResources.createInstance(startupParam.modulePath, null);
@@ -44,10 +44,10 @@ public class MainXposed implements IXposedHookLoadPackage, IXposedHookZygoteInit
 		mPackagesList = new XSharedPreferences(Common.THIS_MOD_PACKAGE_NAME, Common.PREFERENCE_PACKAGES_FILE);
 		mPackagesList.makeWorldReadable();
 	}	
-//	else{
-//		mPref.reload();
+	else{
+		mPref.reload();
 //		mPackagesList.reload();
-//		}
+		}
 	if(!mPref.getBoolean(Common.KEY_MOVABLE_WINDOW, Common.DEFAULT_MOVABLE_WINDOW)) return;
 	
 	if(lpparam.packageName==null) return;
