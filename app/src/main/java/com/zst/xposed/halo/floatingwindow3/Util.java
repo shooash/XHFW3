@@ -28,6 +28,7 @@ import java.util.*;
 import android.app.usage.*;
 import android.os.Handler;
 import android.provider.*;
+import android.content.pm.*;
 
 
 public class Util
@@ -407,8 +408,8 @@ public class Util
 		}
 	}
 	
-	public static boolean isUsageAccessGranted(Context mContext){
-		AppOpsManager appOps = (AppOpsManager) mContext.getSystemService(Context.APP_OPS_SERVICE);
+	public static boolean isUsageAccessGranted(final Context mContext){
+		final AppOpsManager appOps = (AppOpsManager) mContext.getSystemService(Context.APP_OPS_SERVICE);
 		int mode = 0;
 		if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.KITKAT) {
 			mode = appOps.checkOpNoThrow("android:get_usage_stats", android.os.Process.myUid(), Common.THIS_MOD_PACKAGE_NAME);
@@ -417,8 +418,15 @@ public class Util
 	}
 
 	public static void postRestartActivity(final Context mContext, final String packageName){
-		Intent mIntent = new Intent(Common.RESTART_ACTIVITY);
+		final Intent mIntent = new Intent(Common.RESTART_ACTIVITY);
 		mIntent.setPackage(packageName);
 		mContext.getApplicationContext().sendBroadcast(mIntent);
+	}
+	
+	public static void sendBroadcastSafe(final Intent mIntent, final Context mContext){
+//		if(Util.isFlag(mContext.getApplicationInfo().flags, ApplicationInfo.FLAG_SYSTEM))
+//			mContext.sendBroadcastAsUser(mIntent, android.os.Process.myUserHandle());
+//		else
+			mContext.sendBroadcast(mIntent);
 	}
 }

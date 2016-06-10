@@ -694,16 +694,14 @@ public class MovableWindow
 		int[] array = {mWindowHolder.x, mWindowHolder.y, mWindowHolder.height, mWindowHolder.width};
 		mIntent.putExtra(Common.INTENT_APP_PARAMS, array);
 		mIntent.putExtra(Common.INTENT_APP_FOCUS, true);
-		if((mCurrentActivity.getApplicationInfo().flags & ApplicationInfo.FLAG_SYSTEM) !=0){
-			mWindowHolder.mActivity.getApplicationContext().sendBroadcastAsUser(mIntent, android.os.Process.myUserHandle());
-		} else
-			mWindowHolder.mActivity.getApplicationContext().sendBroadcast(mIntent);
+		Util.sendBroadcastSafe(mIntent, mWindowHolder.mActivity.getApplicationContext());
 		showFocusOutline = true;
 		mResized = false;
 	}
 	
 	private static void hideFocusFrame(Context mContext){
-		mContext.sendBroadcast(new Intent(Common.SHOW_OUTLINE));
+		Util.sendBroadcastSafe(new Intent(Common.SHOW_OUTLINE), mContext);
+		//mContext.sendBroadcast(new Intent(Common.SHOW_OUTLINE));
 		showFocusOutline = false;
 	}
 
@@ -725,7 +723,8 @@ public class MovableWindow
 			hideFocusFrame(ctx);
 		Intent intent = new Intent(Common.SHOW_MULTIWINDOW_DRAGGER);
 		intent.putExtra(Common.INTENT_FLOAT_DOT_BOOL, show);
-		ctx.sendBroadcast(intent);
+		Util.sendBroadcastSafe(intent, ctx);
+		//ctx.sendBroadcast(intent);
 	}
 	
 	public static void getFloatingDotCoordinates(){
@@ -753,7 +752,8 @@ public class MovableWindow
 		Intent mIntent = new Intent(Common.ORIGINAL_PACKAGE_NAME + ".APP_REMOVED");
 		mIntent.putExtra("packageName", packageName);
 		mIntent.putExtra("removeCompletely", mCompletely);
-		mContext.getApplicationContext().sendBroadcast(mIntent);
+		//mContext.getApplicationContext().sendBroadcast(mIntent);
+		Util.sendBroadcastSafe(mIntent, mContext);
 	}
 	
 	private static void sendPackageInfo(){
@@ -763,7 +763,8 @@ public class MovableWindow
 		mIntent.putExtra("packageName", mWindowHolder.packageName);
 		mIntent.putExtra("float-gravity", mWindowHolder.SnapGravity);
 		mIntent.putExtra("float-taskid", mWindowHolder.mActivity.getTaskId());
-		mWindowHolder.mActivity.getApplicationContext().sendBroadcast(mIntent);
+		//mWindowHolder.mActivity.getApplicationContext().sendBroadcast(mIntent);
+		Util.sendBroadcastSafe(mIntent, mWindowHolder.mActivity.getApplicationContext());
 	}
 
 	/***********************************************************/
