@@ -134,7 +134,7 @@ public class FloatLauncher
 					dismissedTime = SystemClock.uptimeMillis();
 				}
 			});
-		
+		popupWin.setOverlapAnchor(false);
 		mPopUpSet = true;
 	}
 	
@@ -336,8 +336,10 @@ public class FloatLauncher
 	}
 	
 	
-	public void showSubMenu(final View anchor, final Context sContext, final int x, final int y, final int x_offset, final int y_offset, String mPackageName, final String[] labels, final int[] actions){
+	public void showSubMenu(final View anchor, final Context sContext, int x, final int y, final int x_offset, final int y_offset, String mPackageName, final String[] labels, final int[] actions){
 		setAnchor(anchor);
+		refreshScreenSize();
+		refreshMinimalSize();
 		subListView = new ListView(mContext);
 		ArrayList<String> list = new ArrayList<>(Arrays.asList(labels));
 		if(mPackageName==null) {
@@ -419,6 +421,11 @@ public class FloatLauncher
 		int width = subListView.getMeasuredWidth();
 		if(width>MINIMAL_WIDTH)
 			width = MINIMAL_WIDTH;
+		boolean putLeft = false;
+		if(width>mScreenWidth-x-x_offset){
+			putLeft=true;
+		}
+		x = putLeft? x-width-x_offset: x;
 		subListView.addHeaderView(header);
 		subPopupMenu.setWidth(width);
 		//subPopupMenu.setWidth(MeasureSpec.makeMeasureSpec(MINIMAL_WIDTH,MeasureSpec.AT_MOST));
