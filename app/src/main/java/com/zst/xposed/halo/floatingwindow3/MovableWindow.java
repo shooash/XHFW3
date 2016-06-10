@@ -314,7 +314,7 @@ public class MovableWindow
 					Window window = (Window) param.thisObject;
 					String name = window.getContext().getPackageName();
 					if (name.startsWith("com.android.systemui")||name.equals("android")) return;
-					//if(window.isFloating()) return; //MODAL fix
+					if(window.isFloating()) return; //MODAL fix
 					mWindowHolder.setWindow(window);
 					//TODO add to settings an option to force titlebar to overlay windows 
 					//(but that will overlap actionbar)
@@ -325,6 +325,7 @@ public class MovableWindow
 					mWindowHolder.pushToWindow(window);
 					putOverlayView();
 					//showTitleBar();
+					
 					MovableWindow.DEBUG("GenerateLayout end");
 				}
 			});
@@ -693,7 +694,10 @@ public class MovableWindow
 		int[] array = {mWindowHolder.x, mWindowHolder.y, mWindowHolder.height, mWindowHolder.width};
 		mIntent.putExtra(Common.INTENT_APP_PARAMS, array);
 		mIntent.putExtra(Common.INTENT_APP_FOCUS, true);
-		mWindowHolder.mActivity.getApplicationContext().sendBroadcast(mIntent);
+		if((mCurrentActivity.getApplicationInfo().flags & ApplicationInfo.FLAG_SYSTEM) !=0){
+			mWindowHolder.mActivity.getApplicationContext().sendBroadcastAsUser(mIntent, android.os.Process.myUserHandle());
+		} else
+			mWindowHolder.mActivity.getApplicationContext().sendBroadcast(mIntent);
 		showFocusOutline = true;
 		mResized = false;
 	}
@@ -850,11 +854,7 @@ public class MovableWindow
 			(Math.abs(mPreviousRange[1] -  event.getRawY()) > MOVE_MAX_RANGE));
 	}
 	
-	public static void setTopMargin(int margin){
-		if(mWindowHolder==null)
-			return;
-		mWindowHolder.syncNewTopMargin(margin);
-	}
+	
 	/***********************************************************/
 	/*********************** Minimize **************************/
 	/***********************************************************/
