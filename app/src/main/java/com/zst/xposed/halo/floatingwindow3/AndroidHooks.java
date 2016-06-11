@@ -343,9 +343,9 @@ public class AndroidHooks
 					if (!MWRegister.isMovable((String) param.args[1])) return;
 					//if (!mHasHaloFlag && (MovableWindow.mWindowHolder==null || !MovableWindow.mWindowHolder.isFloating)) return;
 					if ("android".equals((String) param.args[1])) return;
-					// Change boolean "createIfNeeded" to FALSE
+					// Change boolean "createIfNeeded" to FALSE for non-maximized windows
 					if (param.args[param.args.length - 1] instanceof Boolean) {
-						param.args[param.args.length - 1] = Boolean.FALSE;
+						param.args[param.args.length - 1] = MainXposed.mPref.getBoolean(Common.KEY_MAXIMIZE_ALL, Common.DEFAULT_MAXIMIZE_ALL) || MainXposed.isMaximizedlisted(((String) param.args[1]));
 						MovableWindow.DEBUG("setAppStartingWindow");
 						// Last param of the arguments
 						// It's length has changed in almost all versions of Android.
