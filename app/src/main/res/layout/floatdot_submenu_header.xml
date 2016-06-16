@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Unknown App"
+        android:id="@+id/submenu_title"
+        android:layout_gravity="center_horizontal"
+        android:textStyle="bold"
+        android:layout_margin="4dp"
+        android:layout_marginTop="8dp"
+        android:maxWidth="150dp"
+        android:gravity="clip_horizontal"
+        android:singleLine="true" />
+</LinearLayout>

@@ -27,6 +27,7 @@ import java.io.*;
 import java.util.*;
 import android.app.usage.*;
 import android.os.Handler;
+import android.provider.*;
 
 
 public class Util
@@ -236,14 +237,40 @@ public class Util
 		mContext.startActivity(intent);
 	}
 	
+	
+	public static void startAppNormal(Context mContext, String mPackageName){
+		if(mPackageName==null||mContext==null)
+			return;
+		final Intent intent;
+		try{
+			intent = new Intent(mContext.getApplicationContext().getPackageManager()
+								.getLaunchIntentForPackage(mPackageName));
+		} catch (Throwable t){
+			Log.e("Xposed", "startApp failed for package: " + mPackageName);
+//				intent = new Intent(Intent.ACTION_MAIN);
+//				//intent.setComponent(new ComponentName("com.package.address","com.package.address.MainActivity"));
+//				intent.setPackage(mPackageName);
+//				intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+			return;
+		}
+		if(intent==null) return;
+		//SharedPreferences mSPrefs = mContext.getSharedPreferences(Common.PREFERENCE_MAIN_FILE, mContext.MODE_WORLD_READABLE);
+		//int floatFlag = mSPrefs.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW);
+		//intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+		mContext.startActivity(intent);
+	}
 	public static Point getScreenSize(Context mContext){
 		final WindowManager mWindowManager = (WindowManager) mContext.getApplicationContext().getSystemService(Context.WINDOW_SERVICE);
 		final DisplayMetrics metrics = new DisplayMetrics();
 		mWindowManager.getDefaultDisplay().getMetrics(metrics);
 		return new Point(metrics.widthPixels, metrics.heightPixels);
 	}
+	
+	public static void finishApp(final Context mContext, final String packageName){
+		postRestartActivity(mContext, packageName);
+	}
 
-	public static void finishApp(String packageName)
+	public static void finishAppRoot(String packageName)
 	{
 		Process suProcess;
 		try
@@ -269,6 +296,13 @@ public class Util
 	}
 	
 	public static String getTopAppPackageName(Context mContext){
+		if(Build.VERSION.SDK_INT>20&&!isUsageAccessGranted(mContext))
+		{
+			Intent mIntent = new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS);
+			mIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+			mContext.getApplicationContext().startActivity(mIntent);
+			return null;
+		}
 		/* returns null if fails */
 		String packageName = null;
 		try{
@@ -301,19 +335,30 @@ public class Util
 	
 	public static void  restartTopAppAsFloating(Context mContext, int FloatFlag){
 			String packageName = getTopAppPackageName(mContext);
-			if(packageName==null) return;
+			restartAppAsFloating(mContext, FloatFlag, packageName);
+	}
+	
+	public static void restartAppAsFloating(final Context mContext, final int FloatFlag, final String packageName){
+		if(packageName==null) return;
 		try{
-			Intent intent = mContext.getApplicationContext().getPackageManager().getLaunchIntentForPackage(packageName);
-			intent.addFlags(FloatFlag);
-			intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
-			intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
-		//	intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-			//intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-//			intent.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
-//			intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
-			intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-			intent.addCategory("restarted");
-			mContext.getApplicationContext().startActivity(intent);
+			postRestartActivity(mContext, packageName);
+			
+			new Handler().postDelayed(new Runnable(){
+					@Override
+					public void run()
+					{
+						final Intent intent = mContext.getApplicationContext().getPackageManager().getLaunchIntentForPackage(packageName);
+						intent.addFlags(FloatFlag);
+					//	intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
+						intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
+//						intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+//						intent.addFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
+						intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+						intent.addCategory(Intent.CATEGORY_LAUNCHER);
+						intent.addCategory("restarted");
+						mContext.getApplicationContext().startActivity(intent);
+					}
+				}, 500);
 		} catch (Throwable t){
 			Log.e("Xposed", "restartTopAppAsFloating failed", t);
 		}
@@ -324,31 +369,56 @@ public class Util
 		restartAppAsFullScreen(mContext, FloatFlag, packageName);
 		}
 		
-	public static void restartAppAsFullScreen(final Context mContext, final int FloatFlag, String packageName){
+	public static void restartAppAsFullScreen(final Context mContext, final int FloatFlag, final String packageName){
 		if(packageName==null) return;
 		try{
-			final Intent intent = mContext.getApplicationContext().getPackageManager().getLaunchIntentForPackage(packageName);
-			intent.setFlags(intent.getFlags()&~FloatFlag);
-			intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
-			intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
-			//intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-			//intent.addFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
-//			intent.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
-//			intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
-			intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-			intent.addCategory("restarted");
-			mContext.getApplicationContext().startActivity(intent);
-//			if(packageName.startsWith("com.android.chrome"))
-//				new Handler().postDelayed(new Runnable(){
-//						@Override
-//						public void run()
-//						{
-//							mContext.getApplicationContext().startActivity(intent);
-//						}
-//					}, 1000);
+			
+//			Intent startMain = new Intent(Intent.ACTION_MAIN);
+//			startMain.addCategory(Intent.CATEGORY_HOME);
+//			startMain.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);// | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NO_ANIMATION);
+//			mContext.getApplicationContext().startActivity(startMain);
+//			
+			postRestartActivity(mContext, packageName);
+			
+			new Handler().postDelayed(new Runnable(){
+
+					@Override
+					public void run()
+					{
+						final Intent intent = mContext.getApplicationContext().getPackageManager().getLaunchIntentForPackage(packageName);
+				//		intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
+						intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
+//						intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+//						intent.addFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
+						intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+						intent.addCategory(Intent.CATEGORY_LAUNCHER);
+						intent.addCategory("restarted");
+						mContext.getApplicationContext().startActivity(intent);
+
+						/* need to repeat start for Hangouts and similar */
+						//mContext.getApplicationContext().startActivity(intent);
+						//startAppNormal(mContext, packageName);
+					}
+					
 				
+			}, 500);
 		} catch (Throwable t){
 			Log.e("Xposed", "restartTopAppAsFloating failed", t);
 		}
+	}
+	
+	public static boolean isUsageAccessGranted(Context mContext){
+		AppOpsManager appOps = (AppOpsManager) mContext.getSystemService(Context.APP_OPS_SERVICE);
+		int mode = 0;
+		if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.KITKAT) {
+			mode = appOps.checkOpNoThrow("android:get_usage_stats", android.os.Process.myUid(), Common.THIS_MOD_PACKAGE_NAME);
+		}
+		return mode == AppOpsManager.MODE_ALLOWED;
+	}
+
+	public static void postRestartActivity(final Context mContext, final String packageName){
+		Intent mIntent = new Intent(Common.RESTART_ACTIVITY);
+		mIntent.setPackage(packageName);
+		mContext.getApplicationContext().sendBroadcast(mIntent);
 	}
 }

@@ -10,37 +10,42 @@ import android.view.*;
 
 import static de.robv.android.xposed.XposedHelpers.findClass;
 
-public class SystemHooks
+public class AndroidHooks
 {
-	static boolean isMovable = false;
-	static ArrayList<String> mListMovablePackages = new ArrayList<String>();
-	static Map<String, ArrayList<Integer>> mPackagesTasksList = new HashMap<String,ArrayList<Integer>>();
-	
+	//static boolean isMovable = false;
+//	static ArrayList<String> mListMovablePackages = new ArrayList<String>();
+//	static Map<String, ArrayList<Integer>> mPackagesTasksList = new HashMap<String,ArrayList<Integer>>();
+
 	/*****HOOKS******/
-	
+
 	public static void hookActivityRecord(Class<?> classActivityRecord) throws Throwable {
 
 		XposedBridge.hookAllConstructors(classActivityRecord, 
 			new XC_MethodHook(XCallback.PRIORITY_HIGHEST) {
 				@Override
 				protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+					boolean isMovable = false;
 					String packageName = Util.getFailsafeStringFromObject(null, param.thisObject, "packageName");
 					if(packageName==null)
 						return;
-					isMovable = false;
 					if (packageName.startsWith("com.android.systemui")|| packageName.equals("android")) return;
 					Intent mIntent = (Intent) Util.getFailsafeObjectFromObject(param.thisObject, "intent");
 					if(mIntent==null)
 						return;
 					if(mIntent.hasCategory("restarted")){
-						removePackage(packageName);
+						MWRegister.removePackage(packageName);
 						mIntent.removeCategory("restarted");
-						}
+//						removePackage(packageName);
+					}
 					/* stop if need to force non movable */
-					if(mPackagesTasksList.containsKey(packageName) && !isPackageMovable(packageName)){
+					if(MWRegister.isRegistered(packageName)&&!MWRegister.isMovable(packageName)){
 						removeFloatingFlag(mIntent);
 						return;
 					}
+//					if(mPackagesTasksList.containsKey(packageName) && !isPackageMovable(packageName)){
+//						removeFloatingFlag(mIntent);
+//						return;
+//					}
 
 //					Object mStackSupervisor = new Object();
 //					Object mActivityStack = new Object();
@@ -51,34 +56,53 @@ public class SystemHooks
 //						mActivityStack = MainXposed.mCompatibility.getActivityRecord_ActivityStack(mStackSupervisor);
 //						}
 //					else if(Util.getFailsafeObjectFromObject(mStackSupervisor, param.thisObject, "mStackSupervisor"))
-					
+
 					Object mActivityStack = MainXposed.mCompatibility.getActivityRecord_ActivityStack(Util.getFailsafeObjectFromObject(param.thisObject, "mStackSupervisor"));
-						
+
 					isMovable = checkInheritFloatingFlag(packageName, mActivityStack, mIntent);
-					
+
 					isMovable = isMovable || Util.isFlag(mIntent.getFlags(), MainXposed.mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW));
-					isMovable = isMovable || isPackageMovable(packageName);
+//					isMovable = isMovable || isPackageMovable(packageName);
 					isMovable = checkBlackWhiteList(isMovable, packageName);
-					if(!isMovable) return;
+					MWRegister.addPackage(packageName, isMovable);
+					if(!isMovable) {
+						removeFloatingFlag(mIntent);
+						return;
+					}
 					MovableWindow.DEBUG(packageName + " hookActivityRecord.isMovable:[" + isMovable + "] is multiple tasks:[" + Util.isFlag(mIntent.getFlags(), Intent.FLAG_ACTIVITY_MULTIPLE_TASK) +"]");
-					addMovablePackage(packageName);
+//					addMovablePackage(packageName);
 					XposedHelpers.setBooleanField(param.thisObject, "fullscreen", false);
 					setIntentFlags(mIntent);
-					}
+				}
 			});//XposedBridge.hookAllConstructors(classActivityRecord, XC_MethodHook);
-			
+
 		XposedBridge.hookAllMethods(classActivityRecord, "takeFromHistory", new XC_MethodHook() {
 				protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
 					MovableWindow.DEBUG("takeFromHistory");
 					Intent mIntent = (Intent) Util.getFailsafeObjectFromObject(param.thisObject, "intent");
 					if(mIntent == null)
 						return;
-					isMovable = Util.isFlag(mIntent.getFlags(), MainXposed.mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW));
-					MovableWindow.DEBUG("takeFromHistory " + isMovable);
+					String packageName = Util.getFailsafeStringFromObject(null, param.thisObject, "packageName");
+//					if(packageName!=null && mIntent.hasCategory("restarted")){
+//						removePackage(packageName);
+//						//mIntent.removeCategory("restarted");
+//					}
+					if(mIntent.hasCategory("restarted")){
+						MWRegister.removePackage(packageName);
+						mIntent.removeCategory("restarted");
+//						removePackage(packageName);
+						MWRegister.addPackage(packageName, Util.isFlag(mIntent.getFlags(), MainXposed.mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW)));
+					}
+					if(!MWRegister.isMovable(packageName))
+						removeFloatingFlag(mIntent);
+					else
+						setIntentFlags(mIntent);
+					//isMovable = Util.isFlag(mIntent.getFlags(), MainXposed.mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW));
+					MovableWindow.DEBUG("takeFromHistory done");
 				}
 			});
 	}
-	
+
 	public static void hookTaskRecord(Class<?> classTaskRecord) throws Throwable {
 		XposedBridge.hookAllConstructors(classTaskRecord, 
 			new XC_MethodHook(XCallback.PRIORITY_HIGHEST) {
@@ -91,24 +115,30 @@ public class SystemHooks
 //					isMovable = false;
 					MovableWindow.DEBUG("TaskRecord package: " + packageName);
 					if ((packageName.startsWith("com.android.systemui"))||(packageName.equals("android"))) return;
-					if(param.args==null || param.args.length<MainXposed.mCompatibility.TaskRecord_Intent+1 || param.args[MainXposed.mCompatibility.TaskRecord_Intent]==null || !(param.args[MainXposed.mCompatibility.TaskRecord_Intent] instanceof Intent)) return;
+//					if(param.args==null || param.args.length<MainXposed.mCompatibility.TaskRecord_Intent+1 || param.args[MainXposed.mCompatibility.TaskRecord_Intent]==null || !(param.args[MainXposed.mCompatibility.TaskRecord_Intent] instanceof Intent)) return;
 					Intent mIntent = (Intent) Util.getFailsafeObjectFromObject(param.thisObject, "intent");
 					//(Intent) param.args[MainXposed.mCompatibility.TaskRecord_Intent];
 					if(mIntent==null)
 						return;
-					isMovable = Util.isFlag(mIntent.getFlags(), MainXposed.mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW));
-					if(mIntent.hasCategory("restarted")){
-						removePackage(packageName);
-						mIntent.removeCategory("restarted");
-					}
-					isMovable = isMovable || isPackageMovable(packageName);
+//					isMovable = Util.isFlag(mIntent.getFlags(), MainXposed.mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW));
+//					if(mIntent.hasCategory("restarted")){
+//						removePackage(packageName);
+//						//mIntent.removeCategory("restarted");
+//					}
+//					isMovable = isMovable || isPackageMovable(packageName);
 					Integer taskID = Util.getFailsafeIntFromObject(param.thisObject, "taskId");
 					if(taskID==null)
 						return;
-					addTask(packageName, taskID.intValue(), isMovable);
+					MWRegister.addTask(packageName, taskID);
+					if(MWRegister.isMovable(packageName)){
+						setIntentFlags(mIntent);
 					}
-				});
-				
+					else
+						removeFloatingFlag(mIntent);
+					//addTask(packageName, taskID.intValue(), isMovable);
+				}
+			});
+
 		XposedBridge.hookAllMethods(classTaskRecord, "removedFromRecents", 
 			new XC_MethodHook() {
 				@Override
@@ -117,18 +147,21 @@ public class SystemHooks
 					if(packageName == null)
 						return;
 //					isMovable = false;
-					Intent mIntent = (Intent) Util.getFailsafeObjectFromObject(param.thisObject, "intent");
+//					Intent mIntent = (Intent) Util.getFailsafeObjectFromObject(param.thisObject, "intent");
 					//(Intent) param.args[MainXposed.mCompatibility.TaskRecord_Intent];
-				
-					if(mIntent!=null && mIntent.hasCategory("restarted")){
-						removePackage(packageName);
-						mIntent.removeCategory("restarted");
-					}
+
+//					if(mIntent!=null && mIntent.hasCategory("restarted")){
+//						removePackage(packageName);
+//						mIntent.removeCategory("restarted");
+//					}
 					if ((packageName.startsWith("com.android.systemui"))||(packageName.equals("android"))) return;
 					Integer taskID = Util.getFailsafeIntFromObject(param.thisObject, "taskId");
 					if(taskID==null)
 						return;
-					removeTask(packageName, taskID.intValue());
+					if(MWRegister.removeTask(packageName, taskID))
+						return;
+						
+					//removeTask(packageName, taskID.intValue());
 					Object mActivityStack = Util.getFailsafeObjectFromObject(param.thisObject, "stack");
 					if(mActivityStack==null)
 						return;
@@ -139,10 +172,10 @@ public class SystemHooks
 					if(mContext==null)
 						return;
 					MovableWindow.sendRemovedPackageInfo(packageName, mContext, true);
-					}
-				});
+				}
+			});
 	}
-	
+
 //	public static void hookRecents(Class<?> classRecentsView) throws Throwable{
 //		XposedBridge.hookAllMethods(classRecentsView, "onTaskViewClicked", new XC_MethodHook(XCallback.PRIORITY_LOWEST) {
 //				@Override
@@ -161,9 +194,9 @@ public class SystemHooks
 //			});
 //	}
 
-	
+
 	/*****HELPERS*****/
-	
+
 	private static Intent setIntentFlags(Intent mIntent){
 		int flags = mIntent.getFlags();
 		flags = flags | MainXposed.mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW);
@@ -179,13 +212,13 @@ public class SystemHooks
 		mIntent.setFlags(flags);
 		return mIntent;
 	}
-	
+
 	private static void removeFloatingFlag(Intent mIntent){
 		int flags = mIntent.getFlags();
 		flags &= ~MainXposed.mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW);
 		mIntent.setFlags(flags);
 	}
-	
+
 	private static void setIntentGravity(Intent mIntent, int sGravity, boolean alternative) throws Throwable{
 		if(sGravity==0||mIntent==null) return;
 		if(mIntent.getIntExtra(Common.EXTRA_SNAP_SIDE, 0)!=0) return;
@@ -231,8 +264,12 @@ public class SystemHooks
 		sGravity = Compatibility.snapGravityToSide(sGravity);
 		return sGravity;
 	}
-	
+
 	private static boolean checkInheritFloatingFlag(String packageName, Object activityStack, Intent mIntent) throws Throwable {
+		if(mIntent.hasCategory("restarted")){
+			mIntent.removeCategory("restarted");
+			return false;
+		}
 		//if(activityStack==null) return false;
 		ArrayList<?> taskHistory = (ArrayList<?>) Util.getFailsafeObjectFromObject(activityStack, MainXposed.mCompatibility.ActivityRecord_TaskHistory);
 		if(taskHistory==null || taskHistory.size()==0)
@@ -243,18 +280,18 @@ public class SystemHooks
 		if(lastIntent==null)
 			return false;
 		int sGravity;
-		if((packageName.equals(lastIntent.getPackage()))){
-			sGravity = lastIntent.getIntExtra(Common.EXTRA_SNAP_SIDE, 0);
-			try
-			{
-				setIntentGravity(mIntent, sGravity, false);
-			}
-			catch (Throwable e)
-			{
-				XposedBridge.log("Unable to set snap gravity to intent " + mIntent.getPackage() + " Snapside=" + sGravity);
-			}
-			return Util.isFlag(lastIntent.getFlags(), MainXposed.mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW));
-			}
+//		if((packageName.equals(lastIntent.getPackage()))){
+//			sGravity = lastIntent.getIntExtra(Common.EXTRA_SNAP_SIDE, 0);
+//			try
+//			{
+//				setIntentGravity(mIntent, sGravity, false);
+//			}
+//			catch (Throwable e)
+//			{
+//				XposedBridge.log("Unable to set snap gravity to intent " + mIntent.getPackage() + " Snapside=" + sGravity);
+//			}
+//			return Util.isFlag(lastIntent.getFlags(), MainXposed.mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW));
+//		}
 		if(MainXposed.mPref.getBoolean(Common.KEY_FORCE_OPEN_APP_ABOVE_HALO, Common.DEFAULT_FORCE_OPEN_APP_ABOVE_HALO)){
 			/* alternative gravity option */
 			int sGravitySettings = MainXposed.mPref.getInt(Common.KEY_FORCE_OPEN_ALT_GRAVITY, Common.DEFAULT_FORCE_OPEN_ALT_GRAVITY);
@@ -270,11 +307,12 @@ public class SystemHooks
 				{}
 			} //alternative gravity option
 			return Util.isFlag(lastIntent.getFlags(), MainXposed.mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW));
-			}
+		}
 		return false;
 	}
-	
+
 	private static boolean checkBlackWhiteList(boolean flag, String packageName){
+		MainXposed.mPackagesList.reload();
 		switch (MainXposed.getBlackWhiteListOption()) {
 			case 1: /* Always open apps in halo except blacklisted apps */
 				flag=!MainXposed.isBlacklisted(packageName);
@@ -298,33 +336,51 @@ public class SystemHooks
 		}
 		return flag;
 	}
-	
+
 	public static void removeAppStartingWindow(final Class<?> hookClass) throws Throwable {
 		XposedBridge.hookAllMethods(hookClass, "setAppStartingWindow", new XC_MethodHook() {
 				protected void beforeHookedMethod(MethodHookParam param) throws Throwable {			
-					if (!isMovable) return;
+					if (!MWRegister.isMovable((String) param.args[1])) return;
 					//if (!mHasHaloFlag && (MovableWindow.mWindowHolder==null || !MovableWindow.mWindowHolder.isFloating)) return;
 					if ("android".equals((String) param.args[1])) return;
 					// Change boolean "createIfNeeded" to FALSE
 					if (param.args[param.args.length - 1] instanceof Boolean) {
 						param.args[param.args.length - 1] = Boolean.FALSE;
-						MovableWindow.DEBUG("setAppStartingWindow.isMovable:[" + isMovable + "]");
+						MovableWindow.DEBUG("setAppStartingWindow");
 						// Last param of the arguments
 						// It's length has changed in almost all versions of Android.
 						// Since it is always the last value, we use this to our advantage.
 					}
 				}
 			});
-		}
-	
+	}
+
 	public static void hookActivityStack(Class<?> hookClass) throws Throwable {
 		XposedBridge.hookAllMethods(hookClass, "resumeTopActivityLocked", new XC_MethodHook() {
 				Object previous = null;
 				boolean appPauseEnabled;
+				boolean isMovable = false;
 //				boolean isHalo;
 				protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
 					// Find the first activity that is not finishing.
+					final Object prevActivity = XposedHelpers.getObjectField(param.thisObject, "mResumedActivity");
+					previous = prevActivity;
+//					final Intent mIntent = (Intent) Util.getFailsafeObjectFromObject(previous, "intent");
+//					if(mIntent!=null && mIntent.hasCategory("restarted")){
+//						String packageName = Util.getFailsafeStringFromObject(null, previous, "packageName");
+//						if(packageName!=null){
+//							removePackage(packageName);
+//							mIntent.removeCategory("restarted");
+//						}
+//					}
+//					isMovable = isMovable || (mIntent!=null&&Util.isFlag(mIntent.getFlags(), MainXposed.mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW)));
+					String packageName = Util.getFailsafeStringFromObject(null, previous, "packageName");
+					isMovable = MWRegister.isMovable(packageName);
+					if("com.whatsapp".equals(packageName))
+						isMovable = false;
 					if (!isMovable) return;
+					
+					
 					//if (mIsPreviousActivityHome) return;
 
 //					Object nextAR = XposedHelpers.callMethod(param.thisObject, "topRunningActivityLocked",
@@ -339,11 +395,10 @@ public class SystemHooks
 //					}
 //					if (!isHalo) return;
 
+//					if(previous!=null)
+//						XposedHelpers.setBooleanField(previous, "fullscreen", false);
 					appPauseEnabled = MainXposed.mPref.getBoolean(Common.KEY_APP_PAUSE, Common.DEFAULT_APP_PAUSE);
 					if (appPauseEnabled) return;
-
-					final Object prevActivity = XposedHelpers.getObjectField(param.thisObject, "mResumedActivity");
-					previous = prevActivity;
 					XposedHelpers.setObjectField(param.thisObject, "mResumedActivity", null);
 				}
 				protected void afterHookedMethod(MethodHookParam param) throws Throwable {
@@ -357,11 +412,11 @@ public class SystemHooks
 					}
 				}
 			});
-			
+
 		/* This is a Kitkat work-around to make sure the background is transparent */
 		XposedBridge.hookAllMethods(hookClass, "startActivityLocked", new XC_MethodHook() {
 				protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-					MovableWindow.DEBUG("startActivityLocked [" + isMovable + "]");
+					MovableWindow.DEBUG("startActivityLocked");
 //					if(!isMovable)
 //						throw new Exception("test");
 					Object activityRecord = param.args[0];
@@ -373,43 +428,54 @@ public class SystemHooks
 //						MovableWindow.DEBUG("startActivityLocked in flagtest [" + isMovable + "]");
 //					}
 					Intent mIntent = (Intent) Util.getFailsafeObjectFromObject(activityRecord, "intent");
-					if(mIntent!=null){
-						if(mIntent.hasCategory("restarted")){
-							removePackage(mIntent.getPackage());
-							mIntent.removeCategory("restarted");
-						}
-						isMovable = isMovable || Util.isFlag(mIntent.getFlags(), MainXposed.mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW));
-						MovableWindow.DEBUG("startActivityLocked in flagtest [" + isMovable + "]");
-						}
+					
+//					if(mIntent!=null){
+//						if(mIntent.hasCategory("restarted")){
+//							removePackage(mIntent.getPackage());
+//							//mIntent.removeCategory("restarted");
+//							isMovable = false;
+//						}
+//						isMovable = isMovable || Util.isFlag(mIntent.getFlags(), MainXposed.mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW));
+//						MovableWindow.DEBUG("startActivityLocked in flagtest [" + isMovable + "]");
+//					}
 					String packageName = Util.getFailsafeStringFromObject(null, activityRecord, "packageName");
 					if(packageName==null)
+						packageName = mIntent.getPackage();
+					if(!MWRegister.isMovable(packageName)){
+						if(mIntent!=null)
+							removeFloatingFlag(mIntent);
 						return;
-					isMovable = isMovable || MovableWindow.isMovable || isPackageMovable(packageName);
-					MovableWindow.DEBUG("startActivityLocked for package " + packageName + " with isMovable set to " + isMovable);
-					if (!isMovable) return;
+						}
+					if(mIntent!=null)
+						setIntentFlags(mIntent);
+//					if(packageName==null)
+//						return;
+//					isMovable = isMovable || MovableWindow.isMovable || isPackageMovable(packageName);
+					MovableWindow.DEBUG("startActivityLocked for package " + packageName);
+//					if (!isMovable) return;
 					XposedHelpers.setBooleanField(activityRecord, "fullscreen", false);
 				}
 			});
-			
-		XposedBridge.hookAllMethods(hookClass, "relaunchActivityLocked", new XC_MethodHook() {
-			protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-				MovableWindow.DEBUG("relaunchActivityLocked [" + isMovable + "]");
-				Object activityRecord = param.args[0];
-				if(activityRecord==null) return;
-				String packageName = Util.getFailsafeStringFromObject(null, activityRecord, "packageName");
-				if(packageName==null)
-					return;
-				
-				isMovable = isMovable || MovableWindow.isMovable || isPackageMovable(packageName);
-				Intent mIntent = (Intent) Util.getFailsafeObjectFromObject(activityRecord, "intent");
-				if(mIntent!=null)
-					isMovable = isMovable || Util.isFlag(mIntent.getFlags(), MainXposed.mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW));
-				
-				if (!isMovable) return;
-				XposedHelpers.setBooleanField(activityRecord, "fullscreen", false);
-				
-			}
-		});
+
+//		XposedBridge.hookAllMethods(hookClass, "relaunchActivityLocked", new XC_MethodHook() {
+//				protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+//					MovableWindow.DEBUG("relaunchActivityLocked [" + isMovable + "]");
+//					Object activityRecord = param.args[0];
+//					if(activityRecord==null) return;
+//					String packageName = Util.getFailsafeStringFromObject(null, activityRecord, "packageName");
+//					if(packageName==null)
+//						return;
+//
+//					isMovable = isMovable || MovableWindow.isMovable || isPackageMovable(packageName);
+//					Intent mIntent = (Intent) Util.getFailsafeObjectFromObject(activityRecord, "intent");
+//					if(mIntent!=null)
+//						isMovable = isMovable || Util.isFlag(mIntent.getFlags(), MainXposed.mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW));
+//
+//					if (!isMovable) return;
+//					XposedHelpers.setBooleanField(activityRecord, "fullscreen", false);
+//
+//				}
+//			});
 
 		if (Build.VERSION.SDK_INT < 19) {
 			/*
@@ -431,53 +497,6 @@ public class SystemHooks
 						}
 					}
 				});
-			}//for SDK_INT 19 only
-	}
-	
-	/*****PACKAGES AND TASK STACK******/
-	
-	private static boolean isPackageMovable(String pkg){
-		//if(!mPackagesTasksList.containsKey(pkg)) return false;	
-		return mListMovablePackages.contains(pkg);
-	}
-	
-	private static void addMovablePackage(String pkg){
-		if(!mListMovablePackages.contains(pkg))
-			mListMovablePackages.add(pkg);
-	}
-
-	private static void addTask(String pkg, int taskID, boolean mMovable){
-		MovableWindow.DEBUG("AddTask " + pkg + " isMovable: " + mMovable);
-		if(pkg==null || pkg.equals("")) return;
-		ArrayList<Integer> tasksList;
-		if(mPackagesTasksList.containsKey(pkg))
-			tasksList = mPackagesTasksList.get(pkg);
-		else {
-			if(mMovable && !mListMovablePackages.contains(pkg)) 
-				mListMovablePackages.add(pkg);
-			tasksList = new ArrayList<Integer>();
-		}
-		tasksList.add(Integer.valueOf(taskID));
-		mPackagesTasksList.put(pkg, tasksList);
-	}
-
-	private static void removePackage(String pkg){
-		MovableWindow.DEBUG("RemovePackage " + pkg);
-		if(pkg==null || pkg.equals("")) return;
-		mPackagesTasksList.remove(pkg);
-		mListMovablePackages.remove(pkg);
-	}
-
-	private static void removeTask(String pkg, int taskID){
-		MovableWindow.DEBUG("RemoveTask " + pkg);
-		if(pkg==null || pkg.equals("")) return;
-		if(!mPackagesTasksList.containsKey(pkg)){
-			//mListMovablePackages.remove(pkg);
-			return;
-		}
-		ArrayList<Integer> tasksList = mPackagesTasksList.get(pkg);
-		tasksList.remove(Integer.valueOf(taskID));
-		if(tasksList.isEmpty())
-			removePackage(pkg);
+		}//for SDK_INT 19 only
 	}
 }

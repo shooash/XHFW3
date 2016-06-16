@@ -37,56 +37,7 @@ public class XHFWService extends Service {
 		mContext = this;
 		mPref = getSharedPreferences(Common.PREFERENCE_MAIN_FILE, MODE_MULTI_PROCESS);
 		isLauncherDotEnabled = mPref.getBoolean(Common.KEY_FLOATDOT_LAUNCHER_ENABLED, Common.DEFAULT_FLOATDOT_LAUNCHER_ENABLED);
-//		mPref.registerOnSharedPreferenceChangeListener(new SharedPreferences.OnSharedPreferenceChangeListener(){
-//
-//				@Override
-//				public void onSharedPreferenceChanged(SharedPreferences prefs, String key)
-//				{
-//					if(key.equals(Common.KEY_FLOATDOT_COLOR_OUTER1)&&fd!=null){
-//						fd.setColor(Color.parseColor("#" + prefs.getString(Common.KEY_FLOATDOT_COLOR_OUTER1, Common.DEFAULT_FLOATDOT_COLOR_OUTER1)), false);
-//						fd.redrawView();
-//					}
-//					else if(key.equals(Common.KEY_FLOATDOT_COLOR_INNER1)&&fd!=null){
-//						fd.setColor(Color.parseColor("#" + prefs.getString(Common.KEY_FLOATDOT_COLOR_INNER1, Common.DEFAULT_FLOATDOT_COLOR_INNER1)), true);
-//						fd.redrawView();
-//					}
-//					else if(key.equals(Common.KEY_FLOATDOT_COLOR_OUTER2)&&ld!=null){
-//						ld.setColor(Color.parseColor("#" + prefs.getString(Common.KEY_FLOATDOT_COLOR_OUTER2, Common.DEFAULT_FLOATDOT_COLOR_OUTER2)), false);
-//						ld.redrawView();
-//					}
-//					else if(key.equals(Common.KEY_FLOATDOT_COLOR_INNER2)&&ld!=null){
-//						ld.setColor(Color.parseColor("#" + prefs.getString(Common.KEY_FLOATDOT_COLOR_INNER2, Common.DEFAULT_FLOATDOT_COLOR_INNER2)), true);
-//						ld.redrawView();
-//					}
-//					else if(key.equals(Common.KEY_FLOATDOT_SIZE)){
-//						if(fd!=null) {
-//							fd.setSize(prefs.getInt(key, Common.DEFAULT_FLOATDOT_SIZE));
-//							fd.redrawView();
-//							}
-//						if(ld!=null) {
-//							ld.setSize(prefs.getInt(key, Common.DEFAULT_FLOATDOT_SIZE));
-//							ld.redrawView();
-//							}
-//					}
-//					else if(key.equals(Common.KEY_FLOATDOT_SINGLE_COLOR_SNAP)&&fd!=null){
-//						if(prefs.getBoolean(key, Common.DEFAULT_FLOATDOT_SINGLE_COLOR_SNAP))
-//							fd.setColor(fd.mColor);
-//						else
-//							fd.setColor(Color.parseColor("#" + prefs.getString(Common.KEY_FLOATDOT_COLOR_INNER1, Common.DEFAULT_FLOATDOT_COLOR_INNER1)), true);
-//						fd.redrawView();
-//					}
-//					else if(key.equals(Common.KEY_FLOATDOT_SINGLE_COLOR_LAUNCHER)&&ld!=null){
-//						if(prefs.getBoolean(key, Common.DEFAULT_FLOATDOT_SINGLE_COLOR_LAUNCHER))
-//							ld.setColor(ld.mColor);
-//						else
-//							ld.setColor(Color.parseColor("#" + prefs.getString(Common.KEY_FLOATDOT_COLOR_INNER2, Common.DEFAULT_FLOATDOT_COLOR_INNER2)), true);
-//						ld.redrawView();
-//					}
-//					//TODO add disable launcher dot
-//				}
-//				
-//			
-//		});
+
 		mFloatLauncher = new FloatLauncher(mContext, mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW));
 		cachedRotation = Util.getDisplayRotation(mContext.getApplicationContext());
 		
