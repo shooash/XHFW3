@@ -134,7 +134,6 @@ public class FloatLauncher
 					dismissedTime = SystemClock.uptimeMillis();
 				}
 			});
-		popupWin.setOverlapAnchor(false);
 		mPopUpSet = true;
 	}
 	

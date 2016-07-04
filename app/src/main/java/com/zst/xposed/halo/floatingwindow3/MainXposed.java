@@ -8,6 +8,7 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam;
 import static de.robv.android.xposed.XposedHelpers.*;
 import android.content.res.*;
 import java.util.*;
+import com.zst.xposed.halo.floatingwindow3.debug.*;
 
 public class MainXposed implements IXposedHookLoadPackage, IXposedHookZygoteInit {
 	
@@ -15,6 +16,7 @@ public class MainXposed implements IXposedHookLoadPackage, IXposedHookZygoteInit
 	public static XSharedPreferences mPref = null;
 	public static XSharedPreferences mPackagesList = null;
 	public static Compatibility.Hooks mCompatibility =  new Compatibility.Hooks();
+	public static String mPackageName = "user";
 	
 
 	
@@ -51,7 +53,8 @@ public class MainXposed implements IXposedHookLoadPackage, IXposedHookZygoteInit
 	if(!mPref.getBoolean(Common.KEY_MOVABLE_WINDOW, Common.DEFAULT_MOVABLE_WINDOW)) return;
 	
 	if(lpparam.packageName==null) return;
-	XposedBridge.log("XHFW3 load package " + lpparam.packageName);
+	mPackageName = lpparam.packageName;
+	Debugger.setupDebug();
 	if(lpparam.packageName.equals("android")){
 		try {
 			Class<?> classActivityRecord = findClass("com.android.server.am.ActivityRecord", lpparam.classLoader);
@@ -93,7 +96,8 @@ public class MainXposed implements IXposedHookLoadPackage, IXposedHookZygoteInit
 		
 	} else if(!lpparam.packageName.startsWith("com.android.systemui")){
 		try{
-			MovableWindow.hookActivity(lpparam);
+			//MovableWindow.hookActivity(lpparam);
+			ActivityHooks.loadActivityHooks(lpparam);
 		} catch (Throwable t){
 			XposedBridge.log("MovableWindow hook failed");
 			XposedBridge.log(t);
@@ -105,7 +109,7 @@ public class MainXposed implements IXposedHookLoadPackage, IXposedHookZygoteInit
 				MovableWindow.fixExceptionWhenResuming(clsAT);
 				} 
 			}catch(Throwable t){XposedBridge.log(t);}
-		
+//		
 		// XHFW
 		TestingSettingHook.handleLoadPackage(lpparam);
 		}

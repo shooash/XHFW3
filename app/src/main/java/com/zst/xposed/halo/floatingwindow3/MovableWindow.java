@@ -14,6 +14,7 @@ import java.util.*;
 import com.zst.xposed.halo.floatingwindow3.floatdot.*;
 import android.os.*;
 import android.annotation.*;
+import com.zst.xposed.halo.floatingwindow3.debug.*;
 
 /**
  * Created by andrey on 21.04.16.
@@ -21,14 +22,17 @@ import android.annotation.*;
 
 public class MovableWindow
 {
-
     public static void DEBUG(String tag){
-        XposedBridge.log(tag + " Package:[" + (mWindowHolder==null?"null":mWindowHolder.packageName + "] isSnapped: [" + mWindowHolder.isSnapped 
-						 + "] isMaximized: [" + mWindowHolder.isMaximized)
-							+ "] isMovable:[" + isMovable + "]");
-		if(mWindowHolder!=null) 
-			XposedBridge.log("      window:[" + mWindowHolder.width + ":" + mWindowHolder.height
-				+ "] at [" + mWindowHolder.x + ":" + mWindowHolder.y + "]");
+		if(mWindowHolder!=null)
+			Debugger.DEBUG(tag, mWindowHolder.packageName);
+		else
+			Debugger.DEBUG(tag);
+//        XposedBridge.log(tag + " Package:[" + (mWindowHolder==null?"null":mWindowHolder.packageName + "] isSnapped: [" + mWindowHolder.isSnapped 
+//						 + "] isMaximized: [" + mWindowHolder.isMaximized)
+//							+ "] isMovable:[" + isMovable + "]");
+//		if(mWindowHolder!=null) 
+//			XposedBridge.log("      window:[" + mWindowHolder.width + ":" + mWindowHolder.height
+//				+ "] at [" + mWindowHolder.x + ":" + mWindowHolder.y + "]");
 //		if(mWindowHolderCached!=null) 
 //			XposedBridge.log("      window:[" + mWindowHolderCached.width + ":" + mWindowHolderCached.height
 //							 + "] at [" + mWindowHolderCached.x + ":" + mWindowHolderCached.y + "]");
@@ -38,6 +42,7 @@ public class MovableWindow
     public static boolean isMovable = false;
     public static WindowHolder mWindowHolder=null;
 	public static WindowHolder mWindowHolderCached=null;
+	public static boolean isFocused = false;
 
     static int mScreenHeight;
     static int mScreenWidth;
@@ -89,7 +94,6 @@ public class MovableWindow
 		XposedBridge.hookAllMethods(Activity.class, "onCreate", new XC_MethodHook() {
             @Override
             protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-				
                 DEBUG("onCreate start ");
                 mCurrentActivity = (Activity) param.thisObject;
 				isMovable =  isMovable || 
@@ -208,6 +212,16 @@ public class MovableWindow
 					return;
 				}
 			});
+			
+			
+		XposedBridge.hookAllMethods(Activity.class, "onWindowFocusChanged", new XC_MethodHook() {
+				@Override
+				protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+					boolean focused = param.args[0];
+					isFocused = focused;
+					DEBUG("onWindowFocusChanged focused=" + focused);
+					}
+				});
 			
 //		XposedBridge.hookAllMethods(Activity.class, "onNewIntent", new XC_MethodHook() {
 //				@Override
@@ -544,7 +558,8 @@ public class MovableWindow
 			decor_view=null;
 		}
 		if (decor_view == null) return;
-		mOverlayView = (MovableOverlayView) decor_view.getTag(Common.LAYOUT_OVERLAY_TAG);
+		if(mOverlayView==null)
+			mOverlayView = (MovableOverlayView) decor_view.getTag(Common.LAYOUT_OVERLAY_TAG);
 		if (mOverlayView != null)  decor_view.bringChildToFront(mOverlayView);
 //		else
 //			setOverlayView();
@@ -653,6 +668,8 @@ public class MovableWindow
 				//sActivity.finish();
 				if(mCurrentActivity!=null)
 					mCurrentActivity.finish();
+				else
+					sActivity.finishAffinity();
 			}
 		}
 	};
@@ -670,12 +687,15 @@ public class MovableWindow
 	}
 
 	private static void changeFocusApp(Activity a) {
+		DEBUG("changeFocusApp with isFocused=" + isFocused);
+		if(isFocused)
+			return;
 		if(XHFWInterfaceLink==null) 
 			connectService();
 		try		{
 			XHFWInterfaceLink.bringToFront(a.getTaskId());
 		}
-		catch (RemoteException e)
+		catch (Throwable e)
 		{
 			XposedBridge.log("changeFocusApp failed");
 		}

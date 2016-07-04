@@ -9,6 +9,7 @@ import android.app.*;
 import android.view.*;
 
 import static de.robv.android.xposed.XposedHelpers.findClass;
+import com.zst.xposed.halo.floatingwindow3.debug.*;
 
 public class AndroidHooks
 {
@@ -28,6 +29,7 @@ public class AndroidHooks
 					String packageName = Util.getFailsafeStringFromObject(null, param.thisObject, "packageName");
 					if(packageName==null)
 						return;
+					Debugger.DEBUG("new ActivityRecord", packageName);
 					if (packageName.startsWith("com.android.systemui")|| packageName.equals("android")) return;
 					Intent mIntent = (Intent) Util.getFailsafeObjectFromObject(param.thisObject, "intent");
 					if(mIntent==null)
@@ -69,7 +71,7 @@ public class AndroidHooks
 						removeFloatingFlag(mIntent);
 						return;
 					}
-					MovableWindow.DEBUG(packageName + " hookActivityRecord.isMovable:[" + isMovable + "] is multiple tasks:[" + Util.isFlag(mIntent.getFlags(), Intent.FLAG_ACTIVITY_MULTIPLE_TASK) +"]");
+					
 //					addMovablePackage(packageName);
 					XposedHelpers.setBooleanField(param.thisObject, "fullscreen", false);
 					setIntentFlags(mIntent);
@@ -78,11 +80,12 @@ public class AndroidHooks
 
 		XposedBridge.hookAllMethods(classActivityRecord, "takeFromHistory", new XC_MethodHook() {
 				protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-					MovableWindow.DEBUG("takeFromHistory");
+					
 					Intent mIntent = (Intent) Util.getFailsafeObjectFromObject(param.thisObject, "intent");
 					if(mIntent == null)
 						return;
 					String packageName = Util.getFailsafeStringFromObject(null, param.thisObject, "packageName");
+					Debugger.DEBUG("takeFromHistory", packageName);
 //					if(packageName!=null && mIntent.hasCategory("restarted")){
 //						removePackage(packageName);
 //						//mIntent.removeCategory("restarted");
@@ -98,7 +101,6 @@ public class AndroidHooks
 					else
 						setIntentFlags(mIntent);
 					//isMovable = Util.isFlag(mIntent.getFlags(), MainXposed.mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW));
-					MovableWindow.DEBUG("takeFromHistory done");
 				}
 			});
 	}
@@ -108,12 +110,12 @@ public class AndroidHooks
 			new XC_MethodHook(XCallback.PRIORITY_HIGHEST) {
 				@Override
 				protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-					MovableWindow.DEBUG("TaskRecord start");
 					String packageName = Util.getFailsafeStringFromObject(null, param.thisObject, "affinity");
 					if(packageName == null)
 						return;
+					Debugger.DEBUG("new TaskRecord", packageName);
 //					isMovable = false;
-					MovableWindow.DEBUG("TaskRecord package: " + packageName);
+					
 					if ((packageName.startsWith("com.android.systemui"))||(packageName.equals("android"))) return;
 //					if(param.args==null || param.args.length<MainXposed.mCompatibility.TaskRecord_Intent+1 || param.args[MainXposed.mCompatibility.TaskRecord_Intent]==null || !(param.args[MainXposed.mCompatibility.TaskRecord_Intent] instanceof Intent)) return;
 					Intent mIntent = (Intent) Util.getFailsafeObjectFromObject(param.thisObject, "intent");
@@ -146,6 +148,7 @@ public class AndroidHooks
 					String packageName = Util.getFailsafeStringFromObject(null, param.thisObject, "affinity");
 					if(packageName == null)
 						return;
+					Debugger.DEBUG("removedFromRecents", packageName);
 //					isMovable = false;
 //					Intent mIntent = (Intent) Util.getFailsafeObjectFromObject(param.thisObject, "intent");
 					//(Intent) param.args[MainXposed.mCompatibility.TaskRecord_Intent];
@@ -266,6 +269,7 @@ public class AndroidHooks
 	}
 
 	private static boolean checkInheritFloatingFlag(String packageName, Object activityStack, Intent mIntent) throws Throwable {
+		Debugger.DEBUG("checkInheritFloatingFlag", packageName);
 		if(mIntent.hasCategory("restarted")){
 			mIntent.removeCategory("restarted");
 			return false;
@@ -308,6 +312,7 @@ public class AndroidHooks
 			} //alternative gravity option
 			return Util.isFlag(lastIntent.getFlags(), MainXposed.mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW));
 		}
+		Debugger.DEBUG("checkInheritFloatingFlag: nothing to inherit");
 		return false;
 	}
 
@@ -334,6 +339,7 @@ public class AndroidHooks
 				}
 				break;
 		}
+		Debugger.DEBUG("checkBlackWhiteList result Flag=" + flag, packageName);
 		return flag;
 	}
 
@@ -342,15 +348,15 @@ public class AndroidHooks
 				protected void beforeHookedMethod(MethodHookParam param) throws Throwable {			
 					if (!MWRegister.isMovable((String) param.args[1])) return;
 					//if (!mHasHaloFlag && (MovableWindow.mWindowHolder==null || !MovableWindow.mWindowHolder.isFloating)) return;
-					if ("android".equals((String) param.args[1])) return;
+					//if ("android".equals((String) param.args[1])) return;
 					// Change boolean "createIfNeeded" to FALSE
 					if (param.args[param.args.length - 1] instanceof Boolean) {
 						param.args[param.args.length - 1] = Boolean.FALSE;
-						MovableWindow.DEBUG("setAppStartingWindow");
 						// Last param of the arguments
 						// It's length has changed in almost all versions of Android.
 						// Since it is always the last value, we use this to our advantage.
 					}
+					Debugger.DEBUG("setAppStartingWindow", (String) param.args[1]);
 				}
 			});
 	}
@@ -375,6 +381,7 @@ public class AndroidHooks
 //					}
 //					isMovable = isMovable || (mIntent!=null&&Util.isFlag(mIntent.getFlags(), MainXposed.mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW)));
 					String packageName = Util.getFailsafeStringFromObject(null, previous, "packageName");
+					Debugger.DEBUG("resumeTopActivityLocked", packageName);
 					isMovable = MWRegister.isMovable(packageName);
 					if("com.whatsapp".equals(packageName))
 						isMovable = false;
@@ -416,7 +423,6 @@ public class AndroidHooks
 		/* This is a Kitkat work-around to make sure the background is transparent */
 		XposedBridge.hookAllMethods(hookClass, "startActivityLocked", new XC_MethodHook() {
 				protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-					MovableWindow.DEBUG("startActivityLocked");
 //					if(!isMovable)
 //						throw new Exception("test");
 					Object activityRecord = param.args[0];
@@ -441,6 +447,7 @@ public class AndroidHooks
 					String packageName = Util.getFailsafeStringFromObject(null, activityRecord, "packageName");
 					if(packageName==null)
 						packageName = mIntent.getPackage();
+					Debugger.DEBUG("startActivityLocked", packageName);
 					if(!MWRegister.isMovable(packageName)){
 						if(mIntent!=null)
 							removeFloatingFlag(mIntent);
@@ -451,7 +458,7 @@ public class AndroidHooks
 //					if(packageName==null)
 //						return;
 //					isMovable = isMovable || MovableWindow.isMovable || isPackageMovable(packageName);
-					MovableWindow.DEBUG("startActivityLocked for package " + packageName);
+					
 //					if (!isMovable) return;
 					XposedHelpers.setBooleanField(activityRecord, "fullscreen", false);
 				}

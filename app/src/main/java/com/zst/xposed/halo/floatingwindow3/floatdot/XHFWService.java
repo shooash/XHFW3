@@ -28,6 +28,8 @@ public class XHFWService extends Service {
 	private int[] mColors = new int[4];
 	private int mDotsSize = Common.DEFAULT_FLOATDOT_SIZE;
 	private boolean isLauncherDotEnabled;
+	private int lastTaskId = 0;
+	private int previousTaskId = 0;
 
 	@Override
 	public void onCreate()
@@ -233,7 +235,7 @@ public class XHFWService extends Service {
 		public int getLastTaskId() throws RemoteException
 		{
 			// TODO: Implement this method
-			return 0;
+			return lastTaskId;
 		}
 		
 		@Override
@@ -244,6 +246,8 @@ public class XHFWService extends Service {
 		@Override
 		public void bringToFront(int taskId) throws RemoteException
 		{
+			previousTaskId = lastTaskId;
+			lastTaskId = taskId;
 			mContext=getApplicationContext();
 			ActivityManager mActivityManager = (ActivityManager) mContext
 				.getSystemService(Context.ACTIVITY_SERVICE);
