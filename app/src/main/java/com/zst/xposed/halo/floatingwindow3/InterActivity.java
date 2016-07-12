@@ -15,6 +15,7 @@ public class InterActivity
 	static boolean showFocusOutline = false;
 	public static boolean restartReceiverRegistered = false;
 	public static boolean FloatDotReceiverRegistered = false;
+	public static int focusedTaskId = -1;
 	
 	final static ServiceConnection XHFWServiceConnection = new ServiceConnection(){
 		@Override
@@ -114,14 +115,23 @@ public class InterActivity
 	}
 
 	public static void changeFocusApp(final Activity a) {
+		int task = a.getTaskId();
+		if(task == focusedTaskId)
+			return;
 		Debugger.DEBUG("changeFocusApp");
-		try		{
-			XHFWInterfaceLink.bringToFront(a.getTaskId());
+		try {
+			XHFWInterfaceLink.bringToFront(task);
+			focusedTaskId = task;
 		}
 		catch (Throwable e)
 		{
 			Debugger.DEBUG_E("changeFocusApp failed");
 		}
+	}
+	
+	public static void unfocusApp(int task) {
+		if(focusedTaskId == task)
+			focusedTaskId = -1;
 	}
 
 	public static void drawFocusFrame(final Context mContext, final int x, final int y, final int width, final int height){

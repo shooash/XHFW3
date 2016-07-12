@@ -77,6 +77,16 @@ public class ActivityHooks
 				}
 			});
 			
+		XposedBridge.hookAllMethods(Activity.class, "onWindowFocusChanged", new XC_MethodHook() {
+				@Override
+				protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+					boolean focused = param.args[0];
+					mCurrentActivity =  (Activity) param.thisObject;
+					if(!focused)
+						InterActivity.unfocusApp(mCurrentActivity.getTaskId());
+				}
+			});
+			
 		
 	}
 	

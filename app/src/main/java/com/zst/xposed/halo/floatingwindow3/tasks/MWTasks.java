@@ -11,7 +11,9 @@ import android.content.res.*;
 public class MWTasks
 {
 	public String packageName = new String();
-	private Map<Integer, WindowHolder> taskStack = new HashMap<>();
+	private ArrayList<TaskHolder> taskStack = new ArrayList<>();
+	private Map<Integer, Integer> tasksIndex = new HashMap<>();
+//	private TaskHolder mTaskHolder = null;
 	private Context appContext;
 	private float[] movableViewCoordinates = new float[2];
 	private float[] movableScreenCoordinates = new float[2];
@@ -20,6 +22,7 @@ public class MWTasks
 	/*Preferences*/
 	public boolean mRetainStartPosition;
     public boolean mConstantMovePosition;
+	public boolean mSeparateWindows;
     public int mPreviousRotation;
     public boolean mMaximizeChangeTitleBarVisibility;
     public boolean mActionBarDraggable;
@@ -45,9 +48,14 @@ public class MWTasks
 		Point screenSize = Util.getScreenSize(appContext);
 		int x = InterActivity.FloatDotCoordinates[0];
 		int y = InterActivity.FloatDotCoordinates[1];
-		for(Map.Entry entry : taskStack.entrySet()) {
-			((WindowHolder)entry.getValue()).updateByFloatDot(x,y,screenSize.x, screenSize.y);
+//		if(mTaskHolder!=null)
+//			mTaskHolder.updateByFloatDot(x,y,screenSize.x, screenSize.y);
+		for(TaskHolder mTh : taskStack) {
+			if(mTh!=null) mTh.updateByFloatDot(x,y,screenSize.x, screenSize.y);
 		}
+//		for(Map.Entry entry : taskStack.entrySet()) {
+//			((WindowHolder)entry.getValue()).updateByFloatDot(x,y,screenSize.x, screenSize.y);
+//		}
 	}
 	
 	
@@ -61,9 +69,21 @@ public class MWTasks
 
 	private void createNewTaskFromActivity(final Activity mActivity)
 	{
-		WindowHolder mWindowHolder = new WindowHolder(mActivity, defaultLayout);
+		//WindowHolder2 mWindowHolder = new WindowHolder2(mActivity, defaultLayout);
+		mSeparateWindows = !mConstantMovePosition&&Util.isFlag(mActivity.getIntent().getFlags(), Intent.FLAG_ACTIVITY_NEW_DOCUMENT);
+		TaskHolder mTaskHolder = new TaskHolder(mActivity, 
+			mSeparateWindows?defaultLayout:
+				taskStack.isEmpty()?defaultLayout:taskStack.get(taskStack.size()-1).getLastOrDefaultWindow());
+		
+		/* DEBUG SECTION */
+//		int flags = mActivity.getIntent().getFlags();
+//		Debugger.DEBUG("DEBUG FLAG HAS MULTIPLE TASKS:" + Util.isFlag(flags, Intent.FLAG_ACTIVITY_MULTIPLE_TASK) + 
+//					   "DEBUG FLAG HAS NEW DOCUMENT" + Util.isFlag(flags, Intent.FLAG_ACTIVITY_NEW_DOCUMENT));
+		
+		/* TODO: CLEAN */
 		Integer task = (Integer) mActivity.getTaskId();
-		taskStack.put(task, mWindowHolder);
+		taskStack.add(mTaskHolder);
+		tasksIndex.put(task, taskStack.size()-1);
 		InterActivity.sendPackageInfo(packageName, mActivity.getApplicationContext(), task, 0);
 	}
 	
@@ -107,7 +127,7 @@ public class MWTasks
 		/* setup listeners */
 		getConnected(mActivity.getApplicationContext());
 		/* setup default layout */
-		defaultLayout = new WindowHolder(mActivity);
+		defaultLayout = new WindowHolder();
 		switch(Util.getScreenOrientation(mActivity)){
             case Configuration.ORIENTATION_LANDSCAPE:
                 defaultLayout.size((int) (screenSize.x * MainXposed.mPref.getFloat(Common.KEY_LANDSCAPE_WIDTH, Common.DEFAULT_LANDSCAPE_WIDTH)), 
@@ -135,7 +155,7 @@ public class MWTasks
 			y = (screenSize.y-defaultLayout.height)/2;
 			
 		defaultLayout.position(x,y);
-		
+		//mTaskHolder = new TaskHolder(mActivity, defaultLayout);
 		/* initial snap */
 		//TODO
 //		if(mAeroSnap!=null&&mWindowHolder.isSnapped) {
@@ -151,20 +171,20 @@ public class MWTasks
 	
 	public void onNewTask(final Activity mActivity) {
 		Integer task = (Integer) mActivity.getTaskId();
-		if(taskStack.containsKey(task))
+		if(taskStack.contains(task))
 			onNewWindow(mActivity.getWindow(), task);
 		else
 			createNewTaskFromActivity(mActivity);
 	}
 	
 	public void onNewWindow(final Window mWindow, final int task){
-		WindowHolder mWindowHolder = taskStack.get(task);
-		if(mWindowHolder==null) {
+		TaskHolder mTh = taskStack.get(tasksIndex.get(task));
+		if(mTh==null) {
 			Debugger.DEBUG_E("onNewWindow failed with taskId=" + task);
 			return;
-		}	
-		mWindowHolder.setWindow(mWindow);
-		mWindowHolder.pushToWindow();
+		}
+		mTh.addWindow(mWindow);
+//		mTaskHolder.addWindow(mWindow);
 	}
 
 	public void onTaskPause(){
@@ -222,11 +242,20 @@ public class MWTasks
 	}
 	
 	public void move(int x, int y, int taskId) {
-		if(!taskStack.containsKey(taskId))
+		if(!mSeparateWindows) {
+			move(x,y);
 			return;
-		final WindowHolder mWindowHolder = taskStack.get(taskId);
-		mWindowHolder.position(x, y);
-		mWindowHolder.syncLayout();
+		}
+		//if(!taskStack.containsKey(taskId))
+		if(!tasksIndex.containsKey(taskId))
+			return;
+		final TaskHolder mTaskHolder = taskStack.get(tasksIndex.get(taskId));
+		mTaskHolder.move(x, y);
 	}
 	
+	public void move (int x,  int y) {
+		for(TaskHolder mTaskHolder : taskStack) {
+			mTaskHolder.move(x, y);
+		}
+	}
 }
