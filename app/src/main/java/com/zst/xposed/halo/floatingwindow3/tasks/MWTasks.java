@@ -11,8 +11,8 @@ import android.content.res.*;
 public class MWTasks
 {
 	public String packageName = new String();
-	private ArrayList<TaskHolder> taskStack = new ArrayList<>();
-	private Map<Integer, Integer> tasksIndex = new HashMap<>();
+	private Map<Integer, TaskHolder> taskStack = new HashMap<>();
+	//private Map<Integer, Integer> tasksIndex = new HashMap<>();
 	private Context appContext;
 	private float[] movableViewCoordinates = new float[2];
 	private float[] movableScreenCoordinates = new float[2];
@@ -52,8 +52,8 @@ public class MWTasks
 		int y = InterActivity.FloatDotCoordinates[1];
 //		if(mTaskHolder!=null)
 //			mTaskHolder.updateByFloatDot(x,y,screenSize.x, screenSize.y);
-		for(TaskHolder mTh : taskStack) {
-			if(mTh!=null) mTh.updateByFloatDot(x,y,screenSize.x, screenSize.y);
+		for(Map.Entry<Integer, TaskHolder> mTh : taskStack.entrySet()) {
+			if(mTh.getValue()!=null) mTh.getValue().updateByFloatDot(x,y,screenSize.x, screenSize.y);
 		}
 //		for(Map.Entry entry : taskStack.entrySet()) {
 //			((WindowHolder)entry.getValue()).updateByFloatDot(x,y,screenSize.x, screenSize.y);
@@ -88,8 +88,8 @@ public class MWTasks
 		
 		/* TODO: CLEAN */
 		Integer task = (Integer) mActivity.getTaskId();
-		taskStack.add(mTaskHolder);
-		tasksIndex.put(task, taskStack.size()-1);
+		taskStack.put(task, mTaskHolder);
+		//tasksIndex.put(task, taskStack.size()-1);
 		InterActivity.sendPackageInfo(packageName, mActivity.getApplicationContext(), task, 0);
 	}
 	
@@ -184,7 +184,7 @@ public class MWTasks
 	}
 	
 	public void onNewWindow(final Window mWindow, final int task){
-		TaskHolder mTh = taskStack.get(tasksIndex.get(task));
+		TaskHolder mTh = taskStack.get(task);
 		if(mTh==null) {
 			Debugger.DEBUG_E("onNewWindow failed with taskId=" + task);
 			return;
@@ -287,11 +287,11 @@ public class MWTasks
 					mSnappable = false;
 				}
 				else if(action == Common.ACTION_RESIZE_LEFT&&mChangedPreviousRangeResize) {
+					broadcastResizable(taskId, false, 0, 0, true);
+					mChangedPreviousRangeResize = false;
 					int deltax = (int) (mEvent.getRawX() - mPreviousRangeResize[0]);
 					int deltay = (int) (mEvent.getRawY() - mPreviousRangeResize[1]);
 					resize(-deltax, deltay, deltax, taskId);
-					mChangedPreviousRangeResize = false;
-					broadcastResizable(taskId, false, 0, 0, true);
 				}
 				else if (action == Common.ACTION_DRAG)
 					mChangedPreviousRangeDrag=false;
@@ -304,17 +304,20 @@ public class MWTasks
 			restoreAll();
 			return;
 		}
-		if(!tasksIndex.containsKey(taskId))
+		if(!taskStack.containsKey(taskId))
 			return;
-		final TaskHolder mTaskHolder = taskStack.get(tasksIndex.get(taskId));
+		final TaskHolder mTaskHolder = taskStack.get(taskId);
 		if(mTaskHolder.isSnapped || mTaskHolder.isMaximized ) 
 			mTaskHolder.restore();
 	}
 	
 	private void restoreAll() {
-		for(TaskHolder mTaskHolder : taskStack) {
-			if(mTaskHolder.isSnapped || mTaskHolder.isMaximized ) 
-				mTaskHolder.restore();
+		for(Map.Entry<Integer, TaskHolder> mTh : taskStack.entrySet()) {
+			if(mTh.getValue()!=null) {
+				TaskHolder mTaskHolder = mTh.getValue();
+				if(mTaskHolder.isSnapped || mTaskHolder.isMaximized ) 
+					mTaskHolder.restore();
+				}
 		}
 	}
 	
@@ -324,35 +327,34 @@ public class MWTasks
 			return;
 		}
 		//if(!taskStack.containsKey(taskId))
-		if(!tasksIndex.containsKey(taskId))
+		if(!taskStack.containsKey(taskId))
 			return;
-		final TaskHolder mTaskHolder = taskStack.get(tasksIndex.get(taskId));
+		final TaskHolder mTaskHolder = taskStack.get(taskId);
 		mTaskHolder.move(x, y);
 	}
 	
 	public void move (int x,  int y) {
-		for(TaskHolder mTaskHolder : taskStack) {
-			mTaskHolder.move(x, y);
+		for(Map.Entry<Integer, TaskHolder> mTh : taskStack.entrySet()) {
+			if(mTh.getValue()!=null) mTh.getValue().move(x, y);
 		}
 	}
 	
 	public void resize(int deltax, int deltay, int offset, int taskId) {
 		if(!mSeparateWindows) {
-			resize(deltax, deltay, offset);
+			resizeall(deltax, deltay, offset, taskId);
 			return;
 		}
-		if(!tasksIndex.containsKey(taskId))
+		if(!taskStack.containsKey(taskId))
 			return;
-		final TaskHolder mTaskHolder = taskStack.get(tasksIndex.get(taskId));
+		final TaskHolder mTaskHolder = taskStack.get(taskId);
 		mTaskHolder.resize(deltax, deltay, offset);
 	}
 	
-	public void resize(int deltax, int deltay, int offset) {
-		TaskHolder mTaskHolderBase = taskStack.get(0);
+	public void resizeall(int deltax, int deltay, int offset, int taskId) {
+		TaskHolder mTaskHolderBase = taskStack.get(taskId);
 		mTaskHolderBase.resize(deltax, deltay, offset);
-		for(TaskHolder mTaskHolder : taskStack) {
-			//mTaskHolder.resize(deltax, deltay, offset);
-			mTaskHolder.syncAllWindowsAsWindow(mTaskHolderBase.defaultLayout);
+		for(Map.Entry<Integer, TaskHolder> mTh : taskStack.entrySet()) {
+			if(mTh.getValue()!=null) mTh.getValue().syncAllWindowsAsWindow(mTaskHolderBase.defaultLayout);
 		}
 	}
 	
@@ -361,15 +363,15 @@ public class MWTasks
 			maximize();
 			return;
 		}
-		if(!tasksIndex.containsKey(taskId))
+		if(!taskStack.containsKey(taskId))
 			return;
-		final TaskHolder mTaskHolder = taskStack.get(tasksIndex.get(taskId));
+		final TaskHolder mTaskHolder = taskStack.get(taskId);
 		mTaskHolder.maximize();
 	}
 	
 	private void maximize() {
-		for(TaskHolder mTaskHolder : taskStack) {
-			mTaskHolder.maximize();
+		for(Map.Entry<Integer, TaskHolder> mTh : taskStack.entrySet()) {
+			if(mTh.getValue()!=null) mTh.getValue().maximize();
 		}
 	}
 	
@@ -378,22 +380,22 @@ public class MWTasks
 			snap(snapWindowHolder);
 			return;
 		}
-		if(!tasksIndex.containsKey(taskId))
+		if(!taskStack.containsKey(taskId))
 			return;
-		final TaskHolder mTaskHolder = taskStack.get(tasksIndex.get(taskId));
+		final TaskHolder mTaskHolder = taskStack.get(taskId);
 		mTaskHolder.snap(snapWindowHolder);
 	}
 	
 	private void snap(final WindowHolder snapWindowHolder) {
-		for(TaskHolder mTaskHolder : taskStack) {
-			mTaskHolder.snap(snapWindowHolder);
+		for(Map.Entry<Integer, TaskHolder> mTh : taskStack.entrySet()) {
+			if(mTh.getValue()!=null) mTh.getValue().snap(snapWindowHolder);
 		}
 	}
 	
 	private void broadcastResizable(int taskId, boolean show, int x, int y, boolean left) {
-		if(!tasksIndex.containsKey(taskId))
+		if(!taskStack.containsKey(taskId))
 			return;
-		final TaskHolder mTaskHolder = taskStack.get(tasksIndex.get(taskId));
+		final TaskHolder mTaskHolder = taskStack.get(taskId);
 		mTaskHolder.broadcastResizable(show, x, y, left);
 	}
 
