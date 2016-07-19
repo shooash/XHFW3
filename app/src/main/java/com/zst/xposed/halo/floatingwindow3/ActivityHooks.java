@@ -86,6 +86,14 @@ public class ActivityHooks
 						InterActivity.unfocusApp(mCurrentActivity.getTaskId());
 				}
 			});
+		
+		XposedBridge.hookAllMethods(Activity.class, "onDestroy", new XC_MethodHook() {
+				@Override
+				protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+					mCurrentActivity =  (Activity) param.thisObject;
+					taskStack.onRemoveActivity(mCurrentActivity);
+				}
+			});
 			
 		
 	}
@@ -116,6 +124,8 @@ public class ActivityHooks
 		@Override
 		public void run()
 		{
+			isMovable = false;
+			taskStack = null;
 			if(android.os.Build.VERSION.SDK_INT>=21)
 				mCurrentActivity.finishAndRemoveTask();
 			else

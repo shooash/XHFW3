@@ -2,6 +2,8 @@ package com.zst.xposed.halo.floatingwindow3.tasks;
 import android.view.*;
 import com.zst.xposed.halo.floatingwindow3.*;
 import android.widget.RelativeLayout.*;
+import android.graphics.*;
+import android.content.*;
 
 public class WindowHolder implements Comparable<WindowHolder>
 {
@@ -117,6 +119,17 @@ public class WindowHolder implements Comparable<WindowHolder>
 		position(y,x);
 		size(height, width);
 		//restoreSnap();
+	}
+	
+	public void resize(int deltax, int deltay, final Context mContext) {
+		final Point screenSize = Util.getScreenSize(mContext);
+		if(width == WindowManager.LayoutParams.MATCH_PARENT && deltax != 0)
+			width = screenSize.x;
+		if(height == WindowManager.LayoutParams.MATCH_PARENT && deltay != 0)
+			height = screenSize.y;
+		int mWidth = width + deltax;
+		int mHeight = height + deltay;
+		size(mWidth, mHeight);
 	}
 	
 	private boolean isIncreasing(){

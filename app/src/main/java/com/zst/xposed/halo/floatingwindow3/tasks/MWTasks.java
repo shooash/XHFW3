@@ -13,12 +13,14 @@ public class MWTasks
 	public String packageName = new String();
 	private ArrayList<TaskHolder> taskStack = new ArrayList<>();
 	private Map<Integer, Integer> tasksIndex = new HashMap<>();
-//	private TaskHolder mTaskHolder = null;
 	private Context appContext;
 	private float[] movableViewCoordinates = new float[2];
 	private float[] movableScreenCoordinates = new float[2];
-	private boolean mChangedPreviousRange;
-	private float[] mPreviousRange = new float[2];
+	private boolean mChangedPreviousRangeResize;
+	private boolean mChangedPreviousRangeDrag;
+	private float[] mPreviousRangeResize = new float[2];
+	private float[] mPreviousRangeDrag = new float[2];
+	private boolean mSnappable;
 	/*Preferences*/
 	public boolean mRetainStartPosition;
     public boolean mConstantMovePosition;
@@ -71,9 +73,13 @@ public class MWTasks
 	{
 		//WindowHolder2 mWindowHolder = new WindowHolder2(mActivity, defaultLayout);
 		mSeparateWindows = !mConstantMovePosition&&Util.isFlag(mActivity.getIntent().getFlags(), Intent.FLAG_ACTIVITY_NEW_DOCUMENT);
-		TaskHolder mTaskHolder = new TaskHolder(mActivity, 
-			mSeparateWindows?defaultLayout:
-				taskStack.isEmpty()?defaultLayout:taskStack.get(taskStack.size()-1).getLastOrDefaultWindow());
+		TaskHolder mTaskHolder;
+		if(mSeparateWindows)
+			mTaskHolder = new TaskHolder(mActivity, defaultLayout, null);
+		else 
+			mTaskHolder = new TaskHolder(mActivity,
+				taskStack.isEmpty()?defaultLayout:taskStack.get(0).getLastOrDefaultWindow(),
+										 taskStack.isEmpty()?null:taskStack.get(0).cachedLayout);
 		
 		/* DEBUG SECTION */
 //		int flags = mActivity.getIntent().getFlags();
@@ -98,7 +104,7 @@ public class MWTasks
 		mAeroSnapChangeTitleBarVisibility = MainXposed.mPref.getBoolean(Common.KEY_WINDOW_RESIZING_AERO_SNAP_TITLEBAR_HIDE, Common.DEFAULT_WINDOW_RESIZING_AERO_SNAP_TITLEBAR_HIDE);
 		mMaximizeChangeTitleBarVisibility = MainXposed.mPref.getBoolean(Common.KEY_WINDOW_TITLEBAR_MAXIMIZE_HIDE, Common.DEFAULT_WINDOW_TITLEBAR_MAXIMIZE_HIDE);
 		mAeroFocusWindow = MainXposed.mPref.getBoolean(Common.KEY_AERO_FOCUS_ENABLED, Common.DEFAULT_AERO_FOCUS_ENABLED);
-		MOVE_MAX_RANGE = Util.realDp(MainXposed.mPref.getInt(Common.KEY_MOVE_MAX_RANGE, Common.DEFAULT_MOVE_MAX_RANGE), mActivity.getApplicationContext());
+		MOVE_MAX_RANGE = Util.realDp(MainXposed.mPref.getInt(Common.KEY_MOVE_MAX_RANGE, Common.DEFAULT_MOVE_MAX_RANGE), appContext);
 		mInitGravity = MainXposed.mPref.getInt(Common.KEY_GRAVITY, Common.DEFAULT_GRAVITY);
     }
 	
@@ -170,10 +176,10 @@ public class MWTasks
 	}
 	
 	public void onNewTask(final Activity mActivity) {
-		Integer task = (Integer) mActivity.getTaskId();
-		if(taskStack.contains(task))
-			onNewWindow(mActivity.getWindow(), task);
-		else
+//		Integer task = (Integer) mActivity.getTaskId();
+//		if(taskStack.contains(task))
+//			onNewWindow(mActivity.getWindow(), task);
+//		else
 			createNewTaskFromActivity(mActivity);
 	}
 	
@@ -195,30 +201,70 @@ public class MWTasks
 		onNewWindow(sWindow, task);
 	}
 
-	public void onRemoveActivity(){}
+	public void onRemoveActivity(final Activity mActivity){
+//		int taskId = mActivity.getTaskId();
+//		int index;
+//		if(!tasksIndex.containsKey(taskId))
+//			return;
+//		index = tasksIndex.get(taskId);
+//		final TaskHolder mTaskHolder = taskStack.get(index);
+//		if(mTaskHolder.remove())
+//			taskStack.remove(index);
+		
+	}
 
 	public void onClearAll(){}
 
 	public void onUserAction(final Activity mActivity, final MotionEvent mEvent){
+		onUserAction(mActivity, mEvent, Common.ACTION_DRAG, null);
+		}
+		
+	public void onUserAction(final Activity mActivity, final MotionEvent mEvent, int action, final View offsetview){
+		int height;
+		boolean drag = false;
+		int[] offsetXY = {0,0};
+		int taskId = mActivity.getTaskId();
+		final Point screenSize = Util.getScreenSize(appContext);
 		switch (mEvent.getAction()) {
 			case MotionEvent.ACTION_DOWN:
-				movableViewCoordinates[0] = mEvent.getX();
-				movableViewCoordinates[1] = mEvent.getY();
-				if (!mChangedPreviousRange) {
-					mPreviousRange[0] = mEvent.getRawX();
-					mPreviousRange[1] = mEvent.getRawY();
-					mChangedPreviousRange = true;
+				if(offsetview!=null) {
+					offsetview.getLocationInWindow(offsetXY);
+				}
+				movableViewCoordinates[0] = mEvent.getX()+offsetXY[0];
+				movableViewCoordinates[1] = mEvent.getY()+offsetXY[1];
+				if(action == Common.ACTION_RESIZE_LEFT&&!mChangedPreviousRangeResize) {
+					restoreIfNeeded(taskId);
+					mPreviousRangeResize[0] = mEvent.getRawX();
+					mPreviousRangeResize[1] = mEvent.getRawY();
+					mChangedPreviousRangeResize = true;
+				}
+				else if (action == Common.ACTION_DRAG&&!mChangedPreviousRangeDrag) {
+					mPreviousRangeDrag[0] = mEvent.getRawX();
+					mPreviousRangeDrag[1] = mEvent.getRawY();
+					mChangedPreviousRangeDrag = true;
 				}
 				InterActivity.changeFocusApp(mActivity);
 				break;
 			case MotionEvent.ACTION_MOVE:
-				if (mActionBarDraggable) {
-					ActionBar ab = mActivity.getActionBar();
-					int height = (ab != null) ? ab.getHeight() : Util.dp(48, mActivity.getApplicationContext());
-
-					if (movableViewCoordinates[1] < height) {
+				if (action == Common.ACTION_DRAG) {
+					if(offsetview==null&&mActionBarDraggable) {
+						ActionBar ab = mActivity.getActionBar();
+						height = (ab != null) ? ab.getHeight() : Util.dp(48, appContext);
+						drag = movableViewCoordinates[1] < height;
+					}
+					else 
+						drag = (offsetview!=null);
+					
+					if (drag) {
 						movableScreenCoordinates[0] = mEvent.getRawX();
 						movableScreenCoordinates[1] = mEvent.getRawY();
+						if(Math.abs(mPreviousRangeDrag[0]-movableScreenCoordinates[0]) < MOVE_MAX_RANGE &&
+						   Math.abs(mPreviousRangeDrag[1]-movableScreenCoordinates[1]) < MOVE_MAX_RANGE) {
+								//mPreviousRange = movableScreenCoordinates;
+								return;
+							}
+						restoreIfNeeded(taskId);
+						mSnappable = SnapHelpers.checkAndShowSnap((int)movableScreenCoordinates[0], (int) movableScreenCoordinates[1], screenSize.x, screenSize.y, appContext);
 //						if((mWindowHolder.isSnapped || mWindowHolder.isMaximized) && !moveRangeAboveLimit(event))
 //							break;
 //						unsnap();
@@ -227,18 +273,49 @@ public class MWTasks
 						move(leftFromScreen.intValue(), topFromScreen.intValue(), mActivity.getTaskId());								
 					}
 				}
+				
+				else if (action == Common.ACTION_RESIZE_LEFT) {
+//					movableScreenCoordinates[0] = mEvent.getRawX();
+//					movableScreenCoordinates[1] = mEvent.getRawY();
+					broadcastResizable(taskId, true, (int) mEvent.getX(), (int) mEvent.getY(), true);
+				}
 				break;
 			case MotionEvent.ACTION_UP:
-				mChangedPreviousRange=false;
+				if (mSnappable) {
+					snap(SnapHelpers.checkAndGetFinalSnap((int) mEvent.getRawX(), (int) mEvent.getRawY(), screenSize.x, screenSize.y, appContext), 
+						taskId);
+					mSnappable = false;
+				}
+				else if(action == Common.ACTION_RESIZE_LEFT&&mChangedPreviousRangeResize) {
+					int deltax = (int) (mEvent.getRawX() - mPreviousRangeResize[0]);
+					int deltay = (int) (mEvent.getRawY() - mPreviousRangeResize[1]);
+					resize(-deltax, deltay, deltax, taskId);
+					mChangedPreviousRangeResize = false;
+					broadcastResizable(taskId, false, 0, 0, true);
+				}
+				else if (action == Common.ACTION_DRAG)
+					mChangedPreviousRangeDrag=false;
 				break;
 		}
-//		ActionBar ab = a.getActionBar();
-//		int height = (ab != null) ? ab.getHeight() : Util.dp(48, a.getApplicationContext());
-//		if (viewY < height && mAeroSnap != null 
-//			&& mActionBarDraggable && !mWindowHolder.isSnapped 
-//			&& !mWindowHolder.isMaximized) {
-//			mAeroSnap.dispatchTouchEvent(event);
-//		}
+	}
+	
+	public void restoreIfNeeded(int taskId){
+		if(!mSeparateWindows) {
+			restoreAll();
+			return;
+		}
+		if(!tasksIndex.containsKey(taskId))
+			return;
+		final TaskHolder mTaskHolder = taskStack.get(tasksIndex.get(taskId));
+		if(mTaskHolder.isSnapped || mTaskHolder.isMaximized ) 
+			mTaskHolder.restore();
+	}
+	
+	private void restoreAll() {
+		for(TaskHolder mTaskHolder : taskStack) {
+			if(mTaskHolder.isSnapped || mTaskHolder.isMaximized ) 
+				mTaskHolder.restore();
+		}
 	}
 	
 	public void move(int x, int y, int taskId) {
@@ -258,4 +335,66 @@ public class MWTasks
 			mTaskHolder.move(x, y);
 		}
 	}
+	
+	public void resize(int deltax, int deltay, int offset, int taskId) {
+		if(!mSeparateWindows) {
+			resize(deltax, deltay, offset);
+			return;
+		}
+		if(!tasksIndex.containsKey(taskId))
+			return;
+		final TaskHolder mTaskHolder = taskStack.get(tasksIndex.get(taskId));
+		mTaskHolder.resize(deltax, deltay, offset);
+	}
+	
+	public void resize(int deltax, int deltay, int offset) {
+		TaskHolder mTaskHolderBase = taskStack.get(0);
+		mTaskHolderBase.resize(deltax, deltay, offset);
+		for(TaskHolder mTaskHolder : taskStack) {
+			//mTaskHolder.resize(deltax, deltay, offset);
+			mTaskHolder.syncAllWindowsAsWindow(mTaskHolderBase.defaultLayout);
+		}
+	}
+	
+	public void maximize(int taskId) {
+		if(!mSeparateWindows) {
+			maximize();
+			return;
+		}
+		if(!tasksIndex.containsKey(taskId))
+			return;
+		final TaskHolder mTaskHolder = taskStack.get(tasksIndex.get(taskId));
+		mTaskHolder.maximize();
+	}
+	
+	private void maximize() {
+		for(TaskHolder mTaskHolder : taskStack) {
+			mTaskHolder.maximize();
+		}
+	}
+	
+	public void snap(final WindowHolder snapWindowHolder, int taskId) {
+		if(!mSeparateWindows) {
+			snap(snapWindowHolder);
+			return;
+		}
+		if(!tasksIndex.containsKey(taskId))
+			return;
+		final TaskHolder mTaskHolder = taskStack.get(tasksIndex.get(taskId));
+		mTaskHolder.snap(snapWindowHolder);
+	}
+	
+	private void snap(final WindowHolder snapWindowHolder) {
+		for(TaskHolder mTaskHolder : taskStack) {
+			mTaskHolder.snap(snapWindowHolder);
+		}
+	}
+	
+	private void broadcastResizable(int taskId, boolean show, int x, int y, boolean left) {
+		if(!tasksIndex.containsKey(taskId))
+			return;
+		final TaskHolder mTaskHolder = taskStack.get(tasksIndex.get(taskId));
+		mTaskHolder.broadcastResizable(show, x, y, left);
+	}
+
 }

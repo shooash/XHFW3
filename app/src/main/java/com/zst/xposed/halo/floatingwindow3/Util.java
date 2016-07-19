@@ -429,4 +429,34 @@ public class Util
 //		else
 			mContext.sendBroadcast(mIntent);
 	}
+
+//Overlay helpers
+	public static void setRootNamespace(View v, boolean isRoot) {
+		XposedHelpers.callMethod(v, "setIsRootNamespace", isRoot);
+	}
+	
+	public static View findViewByIdHelper(final View view, int id, final String tag) {
+		View v = view.findViewById(id);
+		if (v == null) {
+			v = findViewWithTag(view, tag);
+		}
+		return v;
+    }
+
+	public static View findViewWithTag(final View view, final String text) {
+		if (view.getTag() instanceof String) {
+			if (((String) view.getTag()).equals(text))
+				return view;
+		}
+		if (view instanceof ViewGroup) {
+			final ViewGroup group = (ViewGroup) view;
+			for (int i = 0; i < group.getChildCount(); ++i) {
+				final View child = group.getChildAt(i);
+				final View found = findViewWithTag(child, text);
+				if (found != null)
+					return found;
+			}
+		}
+        return null;
+    }
 }
