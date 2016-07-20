@@ -83,7 +83,9 @@ public class ActivityHooks
 					boolean focused = param.args[0];
 					mCurrentActivity =  (Activity) param.thisObject;
 					if(!focused)
-						InterActivity.unfocusApp(mCurrentActivity.getTaskId());
+						taskStack.onTaskUnFocused(mCurrentActivity.getTaskId());
+					else
+						taskStack.onTaskFocused(mCurrentActivity.getTaskId());
 				}
 			});
 		

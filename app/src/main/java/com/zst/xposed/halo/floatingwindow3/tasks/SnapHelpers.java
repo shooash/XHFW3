@@ -23,6 +23,7 @@ public class SnapHelpers
 		broadcastHideSnap(mContext);
 		WindowHolder mWindowHolder = getSnapLayout(snapGravity, screenW, screenH);
 		mWindowHolder.isSnapped = true;
+		mWindowHolder.SnapGravity = snapGravity;
 		return mWindowHolder;
 	}
 	

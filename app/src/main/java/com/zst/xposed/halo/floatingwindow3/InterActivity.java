@@ -135,22 +135,29 @@ public class InterActivity
 	}
 
 	public static void drawFocusFrame(final Context mContext, final int x, final int y, final int width, final int height){
-		if(showFocusOutline) return;
-		//hide previous outlines
-		hideFocusFrame(mContext);
-		//send new params
-		Intent mIntent = new Intent(Common.SHOW_OUTLINE);
-		int[] array = {x, y, width, height};
-		mIntent.putExtra(Common.INTENT_APP_PARAMS, array);
-		mIntent.putExtra(Common.INTENT_APP_FOCUS, true);
-		Util.sendBroadcastSafe(mIntent, mContext);
-		showFocusOutline = true;
+//		if(showFocusOutline) return;
+//		//hide previous outlines
+//		//hideFocusFrame(mContext);
+//		//send new params
+//		Intent mIntent = new Intent(Common.SHOW_OUTLINE);
+//		int[] array = {x, y, width, height};
+//		mIntent.putExtra(Common.INTENT_APP_PARAMS, array);
+//		mIntent.putExtra(Common.INTENT_APP_FOCUS, true);
+//		Util.sendBroadcastSafe(mIntent, mContext);
+//		showFocusOutline = true;
 	}
 
-	private static void hideFocusFrame(final Context mContext){
-		Util.sendBroadcastSafe(new Intent(Common.SHOW_OUTLINE), mContext);
-		//mContext.sendBroadcast(new Intent(Common.SHOW_OUTLINE));
-		showFocusOutline = false;
+	public static void hideFocusFrame(final Context mContext){
+//		Util.sendBroadcastSafe(new Intent(Common.SHOW_OUTLINE), mContext);
+//		//mContext.sendBroadcast(new Intent(Common.SHOW_OUTLINE));
+//		showFocusOutline = false;
+	}
+	
+	public static void resetFocusFrameIfNeeded(final Context mContext, final int x, final int y, final int width, final int height, int taskId) {
+		if(focusedTaskId == taskId) {
+			hideFocusFrame(mContext);
+			drawFocusFrame(mContext, x, y, width, height);
+		}
 	}
 
 	public static void toggleDragger(final Context ctx, final boolean show){

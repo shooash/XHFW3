@@ -12,10 +12,12 @@ import android.widget.*;
 import com.zst.xposed.halo.floatingwindow3.MovableOverlayView;
 import com.zst.xposed.halo.floatingwindow3.overlays.*;
 import android.content.*;
+import com.zst.xposed.halo.floatingwindow3.*;
 
 public class TaskHolder
 {
 	final Activity mActivity;
+	//Map<String, ArrayList<WindowHolder>> activitiesStack = new HashMap<>();
 	ArrayList<WindowHolder> windowsStack = new ArrayList<>();
 	int taskId;
 	WindowHolder defaultLayout = new WindowHolder();
@@ -47,6 +49,7 @@ public class TaskHolder
 		isMaximized = defaultLayout.isMaximized;
 		if(mCachedLayout!=null)
 			cachedLayout.copy(mCachedLayout);
+		mActivity.getComponentName().getClassName();
 	}
 
 	public void broadcastResizable(boolean show, int x, int y, boolean left)
@@ -83,8 +86,19 @@ public class TaskHolder
 
 	public void updateByFloatDot(int x, int y, int p2, int p3)
 	{
-		for(WindowHolder mWindowHolder : windowsStack) {
-			if(mWindowHolder!=null) mWindowHolder.updateByFloatDot(x, y, p2, p3);
+		boolean changed = defaultLayout.updateByFloatDot(x, y, p2, p3);
+//		for(WindowHolder mWindowHolder : windowsStack) {
+//			if(mWindowHolder!=null) 
+//				mWindowHolder.updateByFloatDot(x, y, p2, p3);
+//			}
+		if(changed) {
+			syncAllWindowsAsWindow(defaultLayout);
+			InterActivity.resetFocusFrameIfNeeded(mActivity.getApplicationContext(),
+							defaultLayout.x,
+							defaultLayout.y,
+							defaultLayout.width,
+							defaultLayout.height,
+							taskId);
 			}
 	}
 
@@ -292,6 +306,7 @@ public class TaskHolder
 //		else
 //			setOverlayView(mWindow);
 //	}
+	
 	private static void setTagInternalForView(View view, int key, Object object) {
 		Class<?>[] classes = { Integer.class, Object.class };
 		XposedHelpers.callMethod(view, "setTagInternal", classes, key, object);
