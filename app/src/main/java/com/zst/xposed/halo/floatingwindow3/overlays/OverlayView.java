@@ -16,6 +16,7 @@ import com.zst.xposed.halo.floatingwindow3.*;
 import android.util.*;
 import android.view.inputmethod.*;
 import android.os.*;
+import com.zst.xposed.halo.floatingwindow3.debug.*;
 
 @SuppressLint("ViewConstructor")
 public class OverlayView extends RelativeLayout
@@ -63,6 +64,7 @@ public class OverlayView extends RelativeLayout
 	private float triangle_alpha;
 	private float quadrant_alpha;
 	public boolean titleBarVisible = true;
+	
 	
 	public OverlayView(final Activity mActivity){
 		super(mActivity);
@@ -370,11 +372,12 @@ public class OverlayView extends RelativeLayout
 		setTitleBarVisibility(true);
 	}
 	
-	public void setTitleBarVisibility() {
-		setTitleBarVisibility(titleBarVisible);
-	}
+//	public void setTitleBarVisibility() {
+//		setTitleBarVisibility(titleBarVisible);
+//	}
 	
 	public void setTitleBarVisibility(boolean visible) {
+		Debugger.DEBUG("setTitleBarVisibility " + visible);
 		titleBarVisible = visible;
 		if(mTitleBar==null)
 			return;

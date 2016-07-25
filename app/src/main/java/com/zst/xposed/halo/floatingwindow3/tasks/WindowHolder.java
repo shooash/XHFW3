@@ -210,7 +210,8 @@ public class WindowHolder implements Comparable<WindowHolder>
 		if(width==0) width=-1;
 		if(height==0) height = -1;
         SnapGravity = sWindowHolder.SnapGravity;
-        isSnapped = true;
+        isSnapped = sWindowHolder.isSnapped;
+		isMaximized = sWindowHolder.isMaximized;
     }
 	
 	public boolean updateLayoutIfNeeded(final int newx, final int newy, final int newwidth, final int newheight) {

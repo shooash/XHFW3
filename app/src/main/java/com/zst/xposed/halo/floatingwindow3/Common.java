@@ -118,7 +118,7 @@ public class Common {
 	public static final boolean DEFAULT_SYSTEM_PREVENT_HOME_TO_FRONT = false;
 	public static final boolean DEFAULT_SYSTEM_RECENTS_LONGPRESS_OPTION = false;
 	public static final boolean DEFAULT_WINDOW_MOVING_RETAIN_START_POSITION = true;
-	public static final boolean DEFAULT_WINDOW_MOVING_CONSTANT_POSITION = true; //TODO CHANGE TO TRUE
+	public static final boolean DEFAULT_WINDOW_MOVING_CONSTANT_POSITION = false; //TODO CHANGE TO TRUE
 	public static final boolean DEFAULT_WINDOW_RESIZING_LIVE_UPDATE = false;
 	public static final boolean DEFAULT_WINDOW_RESIZING_AERO_SNAP_ENABLED = true;
 	public static final int DEFAULT_WINDOW_RESIZING_AERO_SNAP_DELAY = 1000;

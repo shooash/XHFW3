@@ -16,15 +16,16 @@ import com.zst.xposed.halo.floatingwindow3.*;
 
 public class TaskHolder
 {
-	final Activity mActivity;
-	//Map<String, ArrayList<WindowHolder>> activitiesStack = new HashMap<>();
-	ArrayList<WindowHolder> windowsStack = new ArrayList<>();
+	//final Activity mActivity;
+	final Context appContext;
+	Map<String, ArrayList<WindowHolder>> activitiesStack = new HashMap<>();
+	//ArrayList<WindowHolder> windowsStack = new ArrayList<>();
 	int taskId;
 	WindowHolder defaultLayout = new WindowHolder();
 	WindowHolder cachedLayout = new WindowHolder();
 	int cachedOrientation;
 	String packageName;
-	MovableOverlayView mMovableOverlay = null;
+	//MovableOverlayView mMovableOverlay = null;
 	OverlayView mOverlay = null;
 	boolean isSnapped;
 	boolean isMaximized;
@@ -34,14 +35,15 @@ public class TaskHolder
 		MainXposed.mPref.reload();
 		cachedOrientation=Util.getScreenOrientation(sActivity.getApplicationContext());	
 		packageName = sActivity.getCallingPackage();
-		mActivity = sActivity;
+		appContext = sActivity.getApplicationContext();
+		//mActivity = sActivity;
 		if(packageName==null)
 			packageName = sActivity.getPackageName();
 //		int flags = mActivity.getIntent().getFlags();
 //		isHiddenFromRecents = Util.isFlag(flags, Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
 //			|| Util.isFlag(flags, Intent.FLAG_ACTIVITY_NO_HISTORY);
 		if(mDefaultLayout==null)
-			getDefaults(MainXposed.mPref);
+			getDefaults(MainXposed.mPref, sActivity);
 		else
 			defaultLayout.copy(mDefaultLayout);
 		//setOverlayView(sActivity.getWindow());
@@ -49,20 +51,19 @@ public class TaskHolder
 		isMaximized = defaultLayout.isMaximized;
 		if(mCachedLayout!=null)
 			cachedLayout.copy(mCachedLayout);
-		mActivity.getComponentName().getClassName();
+		//mActivity.getComponentName().getClassName();
 	}
 
 	public void broadcastResizable(boolean show, int x, int y, boolean left)
 	{
-		if(!show||windowsStack.isEmpty()) {
+		if(!show||activitiesStack.isEmpty()) {
 			broadcastResizable(false, 0,0,0,0);
 			return;
 		}
-		WindowHolder mWindowHolder = windowsStack.get(0);
 		if(left)
-			broadcastResizable(true, mWindowHolder.x+x, mWindowHolder.y, mWindowHolder.width-x, mWindowHolder.height+y);
+			broadcastResizable(true, defaultLayout.x+x, defaultLayout.y, defaultLayout.width-x, defaultLayout.height+y);
 		else
-			broadcastResizable(true, mWindowHolder.x, mWindowHolder.y, x, y);
+			broadcastResizable(true, defaultLayout.x, defaultLayout.y, x, y);
 	}
 	
 	
@@ -72,7 +73,7 @@ public class TaskHolder
 			int[] array = { x, y, w, h };
 			i.putExtra(Common.INTENT_APP_PARAMS, array);
 		}
-		mActivity.getApplicationContext().sendBroadcast(i);
+		Util.sendBroadcastSafe(i, appContext);
 	}
 
 	public WindowHolder getLastOrDefaultWindow()
@@ -93,7 +94,7 @@ public class TaskHolder
 //			}
 		if(changed) {
 			syncAllWindowsAsWindow(defaultLayout);
-			InterActivity.resetFocusFrameIfNeeded(mActivity.getApplicationContext(),
+			InterActivity.resetFocusFrameIfNeeded(appContext,
 							defaultLayout.x,
 							defaultLayout.y,
 							defaultLayout.width,
@@ -102,7 +103,7 @@ public class TaskHolder
 			}
 	}
 
-	public void getDefaults(final XSharedPreferences mPref){
+	public void getDefaults(final XSharedPreferences mPref, final Activity mActivity){
 		defaultLayout.alpha = mPref.getFloat(Common.KEY_ALPHA, Common.DEFAULT_ALPHA);
         defaultLayout.dim = mPref.getFloat(Common.KEY_DIM, Common.DEFAULT_DIM);
 		defaultLayout.SnapGravity = Compatibility.snapSideToGravity(mActivity.getIntent().getIntExtra(Common.EXTRA_SNAP_SIDE, Compatibility.AeroSnap.SNAP_NONE));
@@ -110,22 +111,52 @@ public class TaskHolder
         defaultLayout.isMaximized=(defaultLayout.SnapGravity == Gravity.FILL);
 	}
 	
-	public boolean addWindow(final Window mWindow) {
-		if(mWindow==null ||mWindow.isFloating() || isWindowRegistered(mWindow))
+	public void resume(final Activity mActivity, final Window mWindow ) {
+		syncAllWindows();
+		setOverlayView(mWindow, mActivity);
+//		if(mOverlay!=null)
+//			mOverlay.setTitleBarVisibility(!isSnapped&!isMaximized);
+	}
+	
+	public boolean addWindow(final Window mWindow, final Activity mActivity) {
+		String activityClass = mActivity.getComponentName().getClassName();
+		ArrayList<WindowHolder> windowsStack;
+		if(mWindow==null ||mWindow.isFloating() || isWindowRegistered(mWindow, activityClass))
 			return false;
+		if(activitiesStack.containsKey(activityClass))
+			windowsStack = activitiesStack.get(activityClass);
+		else
+			windowsStack = addActivity(activityClass);
 		WindowHolder mWindowHolder = new WindowHolder(mWindow, defaultLayout);
 		mWindowHolder.pushToWindow();
+	
 		windowsStack.add(mWindowHolder);
-		setOverlayView(mWindow);
-		mOverlay.setTitleBarVisibility();
+		setOverlayView(mWindow, mActivity);
+//		if(mOverlay!=null)
+//			mOverlay.setTitleBarVisibility(!isSnapped&!isMaximized);
 		//putOverlayView(mWindow);
 		
 		//TODO TEST MOVE TO NEW WINDOW
 		return true;
 	}
 	
-	public boolean isWindowRegistered(final Window mWindow) {
-		for(WindowHolder mWindowHolder : windowsStack) {
+	public boolean removeActivity(final Activity mActivity) {
+		activitiesStack.remove(mActivity.getComponentName().getClassName());
+		removeOverlayView(mActivity.getWindow());
+		return activitiesStack.isEmpty();
+	}
+	
+	public ArrayList<WindowHolder> addActivity(final String mActivityClass) {
+		Debugger.DEBUG("addActivity " + mActivityClass);
+		final ArrayList<WindowHolder> windowsStack = new ArrayList<>();
+		activitiesStack.put(mActivityClass, windowsStack);
+		return windowsStack;
+	}
+	
+	public boolean isWindowRegistered(final Window mWindow, final String activityClass) {
+		if(!activitiesStack.containsKey(activityClass))
+			return false;
+		for(WindowHolder mWindowHolder : activitiesStack.get(activityClass)) {
 			//TODO use hashCode()?
 			if(mWindowHolder.window == mWindow)
 				return true;
@@ -139,7 +170,13 @@ public class TaskHolder
 //	}
 	
 	public void syncAllWindows() {
-		for(WindowHolder mWindowHolder : windowsStack) {
+		for(String activityClass : activitiesStack.keySet()) {
+			syncAllWindows(activityClass);
+		}
+	}
+	
+	public void syncAllWindows(final String activityClass) {
+		for(WindowHolder mWindowHolder : activitiesStack.get(activityClass)) {
 			mWindowHolder.pushToWindow();
 		}
 	}
@@ -150,54 +187,79 @@ public class TaskHolder
 	}
 	
 	public void syncAllWindowsAsWindow(final WindowHolder copyLayout) {
-		for(WindowHolder mWindowHolder : windowsStack) {
-			mWindowHolder.copy(copyLayout);
-			mWindowHolder.pushToWindow();
+		for(String activityClass : activitiesStack.keySet()) {
+			syncAllWindowsAsWindow(copyLayout, activityClass);
 		}
 		defaultLayout.copy(copyLayout);
 	}
 	
+	public void syncAllWindowsAsWindow(final WindowHolder copyLayout, final String activityClass) {
+		for(WindowHolder mWindowHolder : activitiesStack.get(activityClass)) {
+			mWindowHolder.copy(copyLayout);
+			mWindowHolder.pushToWindow();
+		}
+	}
+	
 	public void move(int x, int y) {
-		for(WindowHolder mWindowHolder : windowsStack) {
-			if(mWindowHolder!=null) {
-				mWindowHolder.position(x, y);
-				mWindowHolder.pushToWindow();
-				}
+		if(isSnapped || isMaximized)
+			return;
+		for(String activityClass : activitiesStack.keySet()) {
+			move(x, y, activityClass);
 		}
 		defaultLayout.position(x, y);
 	}
 	
-	public void resize(int deltax, int deltay, int offset) {
-		
-		if(deltax>0&&deltay>0) {
-			resize_backwards(deltax, deltay, offset);
-			return;
-		}
-		final Context mContext = mActivity.getApplicationContext();
-		for(WindowHolder mWindowHolder : windowsStack) {
+	public void move(int x, int y, final String activityClass) {
+		for(WindowHolder mWindowHolder : activitiesStack.get(activityClass)) {
 			if(mWindowHolder!=null) {
-				mWindowHolder.resize(deltax, deltay, mContext);
-				mWindowHolder.position(mWindowHolder.x+offset, mWindowHolder.y);
+				mWindowHolder.position(x, y);
 				mWindowHolder.pushToWindow();
 			}
 		}
-		if(!windowsStack.isEmpty()) 
-			defaultLayout.copy(windowsStack.get(0));
 	}
 	
-	private void resize_backwards(int deltax, int deltay, int offset) {
-		final Context mContext = mActivity.getApplicationContext();
-		for(int i = windowsStack.size()-1; i >= 0; i--) {
-			WindowHolder mWindowHolder = windowsStack.get(i);
-			if(mWindowHolder!=null) {
-				mWindowHolder.resize(deltax, deltay, mContext);
-				mWindowHolder.position(mWindowHolder.x+offset, mWindowHolder.y);
-				mWindowHolder.pushToWindow();
-			}
-		}
-		if(!windowsStack.isEmpty()) 
-			defaultLayout.copy(windowsStack.get(0));
+	public void resize(int deltax, int deltay, int offset) {
+		if(isSnapped || isMaximized)
+			return;
+		defaultLayout.resize(deltax, deltay, appContext);
+		defaultLayout.position(defaultLayout.x+offset, defaultLayout.y);
+		syncAllWindowsAsWindow(defaultLayout);
 	}
+	
+//	public void resize(int deltax, int deltay, int offset, final String activityClass) {
+//		if(!activitiesStack.containsKey(activityClass))
+//			return;
+////		if(deltax>0&&deltay>0) {
+////			resize_backwards(deltax, deltay, offset, activityClass);
+////			return;
+////		}
+//		
+//		for(WindowHolder mWindowHolder : activitiesStack.get(activityClass)) {
+//			if(mWindowHolder!=null) {
+//				mWindowHolder.resize(deltax, deltay, appContext);
+//				mWindowHolder.position(mWindowHolder.x+offset, mWindowHolder.y);
+//				mWindowHolder.pushToWindow();
+//			}
+//		}
+//		if(!activitiesStack.get(activityClass).isEmpty()) 
+//			defaultLayout.copy(activitiesStack.get(activityClass).get(0));
+//	}
+//	
+//	private void resize_backwards(int deltax, int deltay, int offset, final String activityClass) {
+//		if(!activitiesStack.containsKey(activityClass))
+//			return;
+//		ArrayList<WindowHolder> windowsStack = activitiesStack.get(activityClass);
+//		for(int i = windowsStack.size()-1; i >= 0; i--) {
+//			WindowHolder mWindowHolder = windowsStack.get(i);
+//			if(mWindowHolder!=null) {
+//				mWindowHolder.resize(deltax, deltay, appContext);
+//				mWindowHolder.position(mWindowHolder.x+offset, mWindowHolder.y);
+//				mWindowHolder.pushToWindow();
+//			}
+//		}
+//		if(!windowsStack.isEmpty()) 
+//			defaultLayout.copy(windowsStack.get(0));
+//	}
 	
 	public void snap(int x, int y, int w, int h, int snapgravity) {
 		WindowHolder mWindowHolder = new WindowHolder(null, x, y, w, h);
@@ -207,31 +269,41 @@ public class TaskHolder
 	}
 	
 	public void snap(final WindowHolder mWindowHolder) {
-		if(!isMaximized&&!isSnapped)
-			saveLayout();
+		saveLayout();
 		syncAllWindowsAsWindow(mWindowHolder);
 		isSnapped = true;
-		if(mOverlay!= null) mOverlay.setTitleBarVisibility(false);
+		if(mOverlay!= null) 
+			mOverlay.setTitleBarVisibility(false);
+		else
+			setOverlayView(ActivityHooks.mCurrentActivity.getWindow(), ActivityHooks.mCurrentActivity);
 	}
 	
 	public void maximize() {
-		if(!isMaximized&&!isSnapped)
-			saveLayout();
-		for(WindowHolder mWindowHolder : windowsStack) {
+		for(String activityClass : activitiesStack.keySet()) {
+			maximize(activityClass);
+		}
+		defaultLayout.setMaximized();
+		isMaximized = true;
+		if(mOverlay!= null) 
+			mOverlay.setTitleBarVisibility(false);
+		else
+			setOverlayView(ActivityHooks.mCurrentActivity.getWindow(), ActivityHooks.mCurrentActivity);
+	}
+	
+	public void maximize(final String activityClass) {
+		saveLayout();
+		for(WindowHolder mWindowHolder : activitiesStack.get(activityClass)) {
 			if(mWindowHolder!=null) {
 				mWindowHolder.setMaximized();
 				mWindowHolder.pushToWindow();
 			}
 		}
-		defaultLayout.setMaximized();
-		isMaximized = true;
-		if(mOverlay!= null) mOverlay.setTitleBarVisibility(false);
 	}
 	
 	public void saveLayout() {
-		if(windowsStack.isEmpty())
+		if(defaultLayout.isSnapped || defaultLayout.isMaximized)
 			return;
-		cachedLayout.copy(windowsStack.get(0));
+		cachedLayout.copy(defaultLayout);
 	}
 	
 	public void restore() {
@@ -239,9 +311,15 @@ public class TaskHolder
 		isSnapped = false;
 		isMaximized = false;
 		if(mOverlay!=null) mOverlay.setTitleBarVisibility(true);
+		else
+			{
+				setOverlayView(ActivityHooks.mCurrentActivity.getWindow(), ActivityHooks.mCurrentActivity);
+			}
 	}
 	
-	public void setOverlayView(final Window mWindow){
+	public void setOverlayView(final Window mWindow, final Activity mActivity){
+		if(mWindow==null)
+			return;
 		FrameLayout decorView;
 		try{
 			decorView = (FrameLayout) mWindow.peekDecorView().getRootView();
@@ -257,39 +335,44 @@ public class TaskHolder
 		} catch (Throwable e) {
 		}
 		Debugger.DEBUG("setOverlayView");
-//		mMovableOver(lay = (MovableOverlayView) decorView.getTag(Common.LAYOUT_OVERLAY_TAG);
-//		
-//		
+
+//		if(mOverlay==null)
+//		mOverlay = (OverlayView) decorView.getTag(Common.LAYOUT_OVERLAY_TAG);
 //		for (int i = 0; i < decorView.getChildCount(); ++i) {
 //			final View child = decorView.getChildAt(i);
-//			if (child instanceof MovableOverlayView && mMovableOverlay != child) {
+//			if (child instanceof OverlayView && mOverlay != child) {
 //				// If our tag is different or null, then the
 //				// view we found should be removed by now.
 //				decorView.removeView(decorView.getChildAt(i));
 //				break;
 //			}
 //		}
-//		if (mMovableOverlay == null) {
-//			mMovableOverlay = new MovableOverlayView(mActivity, MainXposed.sModRes, MainXposed.mPref);
-//			decorView.addView(mMovableOverlay, -1, mMovableOverlay.getParams());
-//			setTagInternalForView(decorView, Common.LAYOUT_OVERLAY_TAG,  mMovableOverlay);
-//		}
-		if(mOverlay != null) {
-			decorView.bringChildToFront(mOverlay);
-			return;
-		}
-		mOverlay = (OverlayView) decorView.getTag(Common.LAYOUT_OVERLAY_TAG);
 		if(mOverlay == null) {
 			mOverlay = new OverlayView(mActivity);
 			decorView.addView(mOverlay, -1, mOverlay.getParams());
 			setTagInternalForView(decorView, Common.LAYOUT_OVERLAY_TAG,  mOverlay);
+//			if(isSnapped||isMaximized)
+//				mOverlay.setTitleBarVisibility(false);
+		}
+		decorView.bringChildToFront(mOverlay);
 			if(isSnapped||isMaximized)
 				mOverlay.setTitleBarVisibility(false);
+			else
+				mOverlay.setTitleBarVisibility(true);
+	}
+	
+	private void removeOverlayView(final Window mWindow) {
+		mOverlay = null;
+		if(mWindow==null)
+			return;
+		FrameLayout decorView;
+		try{
+			decorView = (FrameLayout) mWindow.peekDecorView().getRootView();
+		} catch(Throwable t){
+			decorView=null;
 		}
-		else {
-			decorView.bringChildToFront(mOverlay);
-			//mOverlay.setTitleBarVisibility(true);
-		}
+		if (decorView == null) return;
+		setTagInternalForView(decorView, Common.LAYOUT_OVERLAY_TAG,  null);
 	}
 //	public void putOverlayView(final Window mWindow){
 //		Debugger.DEBUG("putOverlayView");

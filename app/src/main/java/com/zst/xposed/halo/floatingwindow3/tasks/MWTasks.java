@@ -13,7 +13,8 @@ public class MWTasks
 	public String packageName = new String();
 	private Map<Integer, TaskHolder> taskStack = new HashMap<>();
 	//private Map<Integer, Integer> tasksIndex = new HashMap<>();
-	private Context appContext;
+	private final Context appContext;
+	public Activity startActivity;
 	private float[] movableViewCoordinates = new float[2];
 	private float[] movableScreenCoordinates = new float[2];
 	private boolean mChangedPreviousRangeResize;
@@ -42,6 +43,7 @@ public class MWTasks
 		/* stuff that is common for all activities */
 		 packageName = pkg;
 		 appContext = mActivity.getApplicationContext();
+		// startActivity = mActivity;
 		 onAppStart(mActivity);
 	}
 
@@ -76,11 +78,15 @@ public class MWTasks
 		TaskHolder mTaskHolder;
 		if(mSeparateWindows)
 			mTaskHolder = new TaskHolder(mActivity, defaultLayout, null);
-		else 
-			mTaskHolder = new TaskHolder(mActivity,
-				taskStack.isEmpty()?defaultLayout:taskStack.get(getAnyRegisteredTaskId()).getLastOrDefaultWindow(),
-										 taskStack.isEmpty()?null:taskStack.get(getAnyRegisteredTaskId()).cachedLayout);
-		
+		else if (taskStack.isEmpty()){
+			mTaskHolder = new TaskHolder(mActivity, defaultLayout, null);
+		} else {
+			final int anyId = getAnyRegisteredTaskId();
+			final WindowHolder mDefaultLayout = taskStack.get(anyId).defaultLayout;
+			final WindowHolder mCachedLayout = taskStack.get(anyId).cachedLayout;
+			mTaskHolder = new TaskHolder(mActivity, mDefaultLayout, mCachedLayout);
+		}
+			
 		/* DEBUG SECTION */
 //		int flags = mActivity.getIntent().getFlags();
 //		Debugger.DEBUG("DEBUG FLAG HAS MULTIPLE TASKS:" + Util.isFlag(flags, Intent.FLAG_ACTIVITY_MULTIPLE_TASK) + 
@@ -178,19 +184,26 @@ public class MWTasks
 	public void onNewTask(final Activity mActivity) {
 		Integer task = (Integer) mActivity.getTaskId();
 		if(taskStack.containsKey(task)) {
-			onNewWindow(mActivity.getWindow(), task);
+			onNewWindow(mActivity.getWindow(), mActivity, task);
 		}
 		else
 			createNewTaskFromActivity(mActivity);
 	}
 	
-	public void onNewWindow(final Window mWindow, final int task){
+	public void onNewWindow(final Window mWindow, Activity mActivity, int task){
+		if(startActivity == null && mWindow!=null)
+			startActivity = mActivity;
+		if(mActivity==null) {
+			mActivity=startActivity;
+			task = mActivity.getTaskId();
+		}
 		TaskHolder mTh = taskStack.get(task);
 		if(mTh==null) {
 			Debugger.DEBUG_E("onNewWindow failed with taskId=" + task);
 			return;
 		}
-		mTh.addWindow(mWindow);
+		if(!mTh.addWindow(mWindow, mActivity))
+			onTaskResume(mWindow, mActivity, task);
 //		mTaskHolder.addWindow(mWindow);
 	}
 
@@ -198,19 +211,24 @@ public class MWTasks
 		
 	}
 
-	public void onTaskResume(final Window sWindow, final int task){
-		onNewWindow(sWindow, task);
+	public void onTaskResume(final Window sWindow, final Activity mActivity, final int task){
+		//onNewWindow(sWindow, mActivity, task);
+//		if(!taskStack.containsKey(task)) {
+//			onNewWindow(sWindow, mActivity, task);
+//			return;
+//		}
+		taskStack.get(task).resume(mActivity, sWindow);
 	}
 
 	public void onRemoveActivity(final Activity mActivity){
-//		int taskId = mActivity.getTaskId();
-//		int index;
-//		if(!tasksIndex.containsKey(taskId))
-//			return;
-//		index = tasksIndex.get(taskId);
-//		final TaskHolder mTaskHolder = taskStack.get(index);
-//		if(mTaskHolder.remove())
-//			taskStack.remove(index);
+		int taskId = mActivity.getTaskId();
+		if(!taskStack.containsKey(taskId))
+			return;
+		final TaskHolder mTaskHolder = taskStack.get(taskId);
+		//if(
+		mTaskHolder.removeActivity(mActivity);//)
+			//taskStack.remove(taskId);
+		
 		
 	}
 
@@ -304,9 +322,9 @@ public class MWTasks
 		if(!taskStack.containsKey(taskId))
 			return;
 		final TaskHolder mTaskHolder = taskStack.get(taskId);
-		if(mTaskHolder.windowsStack.isEmpty())
+		if(mTaskHolder.activitiesStack.isEmpty())
 			return;
-		final WindowHolder mWindowHolder = mTaskHolder.windowsStack.get(0);
+		final WindowHolder mWindowHolder = mTaskHolder.defaultLayout;
 		//InterActivity.hideFocusFrame(appContext);
 		if(mTaskHolder.isSnapped) {
 			InterActivity.drawFocusFrame(appContext, mWindowHolder.x, mWindowHolder.y, mWindowHolder.width, mWindowHolder.height);
@@ -331,6 +349,7 @@ public class MWTasks
 		if(mTaskHolder.isSnapped || mTaskHolder.isMaximized ) {
 			mTaskHolder.restore();
 			InterActivity.hideFocusFrame(appContext);
+			InterActivity.toggleDragger(appContext, false);
 		}
 			
 	}
@@ -345,8 +364,11 @@ public class MWTasks
 					restored = true;
 				}
 		}
-		if(restored)
+		if(restored) {
 			InterActivity.hideFocusFrame(appContext);
+			InterActivity.toggleDragger(appContext, false);
+		}
+			
 	}
 	
 	public void move(int x, int y, int taskId) {
@@ -434,8 +456,8 @@ public class MWTasks
 	
 	private int getAnyRegisteredTaskId() {
 		//taskStack.keySet().toArray();
-		return taskStack.keySet().toArray()[0];
-		//taskStack.keySet().iterator().next();
+		//return taskStack.keySet().toArray()[0];
+		return taskStack.keySet().iterator().next();
 		
 	}
 }

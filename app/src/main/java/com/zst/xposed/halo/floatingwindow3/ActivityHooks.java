@@ -13,7 +13,8 @@ public class ActivityHooks
 {
 	public static String packageName = null;
 	public static MWTasks taskStack = null;
-	private static Activity mCurrentActivity;
+	public static Activity mCurrentActivity = null;
+	private static Activity mPreviousActivity = null;
 	public static boolean isMovable;
 	
 	public static void loadActivityHooks(final XC_LoadPackage.LoadPackageParam lpparam) {
@@ -26,6 +27,7 @@ public class ActivityHooks
 		XposedBridge.hookAllMethods(Activity.class, "onCreate", new XC_MethodHook() {
 				@Override
 				protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+					mPreviousActivity = mCurrentActivity;
 					mCurrentActivity = (Activity) param.thisObject;
 					if(packageName==null)
 						packageName = mCurrentActivity.getPackageName();
@@ -45,11 +47,11 @@ public class ActivityHooks
 		XposedBridge.hookAllMethods(Activity.class, "onStart", new XC_MethodHook() {
 				@Override
 				protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-					Debugger.DEBUG("onStart ", packageName);
+					Debugger.DEBUG("onStart", packageName);
 					mCurrentActivity = (Activity) param.thisObject;
 					if(!isMovable || taskStack==null)
 						return;
-					taskStack.onNewWindow(mCurrentActivity.getWindow(), mCurrentActivity.getTaskId());
+					taskStack.onNewWindow(mCurrentActivity.getWindow(), mCurrentActivity, mCurrentActivity.getTaskId());
 				}
 			});
 			
@@ -60,7 +62,7 @@ public class ActivityHooks
 					mCurrentActivity = (Activity) param.thisObject;
 					if(!isMovable || taskStack==null)
 						return;
-					taskStack.onTaskResume(mCurrentActivity.getWindow(), mCurrentActivity.getTaskId());
+					taskStack.onTaskResume(mCurrentActivity.getWindow(), mCurrentActivity, mCurrentActivity.getTaskId());
 					Debugger.DEBUG("onResume");
 				}
 			});
@@ -80,6 +82,7 @@ public class ActivityHooks
 		XposedBridge.hookAllMethods(Activity.class, "onWindowFocusChanged", new XC_MethodHook() {
 				@Override
 				protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+					if(!isMovable|| taskStack==null) return;
 					boolean focused = param.args[0];
 					mCurrentActivity =  (Activity) param.thisObject;
 					if(!focused)
@@ -91,9 +94,11 @@ public class ActivityHooks
 		
 		XposedBridge.hookAllMethods(Activity.class, "onDestroy", new XC_MethodHook() {
 				@Override
-				protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-					mCurrentActivity =  (Activity) param.thisObject;
-					taskStack.onRemoveActivity(mCurrentActivity);
+				protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+					if(!isMovable||taskStack==null) return;
+					//mCurrentActivity =  (Activity) param.thisObject;
+					taskStack.onRemoveActivity((Activity) param.thisObject);
+					mCurrentActivity = taskStack.startActivity;
 				}
 			});
 			
@@ -115,8 +120,8 @@ public class ActivityHooks
 					if (!isMovable||taskStack==null) return;
 					Window window = (Window) param.thisObject;
 					String name = window.getContext().getPackageName();
-					//if (name.startsWith("com.android.systemui")||name.equals("android")) return;
-
+					if (name.startsWith("com.android.systemui")||name.equals("android")) return;
+					taskStack.onNewWindow(window, null, 0);
 					Debugger.DEBUG("GenerateLayout end for" + name);
 				}
 			});
