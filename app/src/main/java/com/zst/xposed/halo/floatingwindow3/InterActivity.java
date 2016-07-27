@@ -5,6 +5,7 @@ import com.zst.xposed.halo.floatingwindow3.debug.*;
 import android.app.*;
 import com.zst.xposed.halo.floatingwindow3.floatdot.*;
 import android.graphics.*;
+import com.zst.xposed.halo.floatingwindow3.tasks.*;
 
 public class InterActivity
 {
@@ -114,28 +115,35 @@ public class InterActivity
 		return true;
 	}
 
-	public static void changeFocusApp(final Activity a) {
+	public static boolean changeFocusApp(final Activity a) {
 		int task = a.getTaskId();
 		if(task == focusedTaskId)
-			return;
-		Debugger.DEBUG("changeFocusApp");
+			return false;
+		Debugger.DEBUG("changeFocusApp " + task);
+		final WindowHolder mWindowHolder = new WindowHolder(a.getWindow());
+		drawFocusFrame(ActivityHooks.taskStack.appContext, mWindowHolder.x, mWindowHolder.y, mWindowHolder.width, mWindowHolder.height);
 		try {
 			XHFWInterfaceLink.bringToFront(task);
 			focusedTaskId = task;
 		}
 		catch (Throwable e)
 		{
-			Debugger.DEBUG_E("changeFocusApp failed");
+			Debugger.DEBUG_E("changeFocusApp failed for " + task);
 		}
+		return true;
 	}
 	
-	public static void unfocusApp(int task) {
-		if(focusedTaskId == task)
+	public static boolean unfocusApp(int task) {
+		if(focusedTaskId == task) {
+			Debugger.DEBUG("unfocusApp " + task);
 			focusedTaskId = -1;
+			return true;
+		}
+		return false;
 	}
 
 	public static void drawFocusFrame(final Context mContext, final int x, final int y, final int width, final int height){
-//		if(showFocusOutline) return;
+		if(showFocusOutline) return;
 //		//hide previous outlines
 //		//hideFocusFrame(mContext);
 //		//send new params
@@ -144,13 +152,15 @@ public class InterActivity
 //		mIntent.putExtra(Common.INTENT_APP_PARAMS, array);
 //		mIntent.putExtra(Common.INTENT_APP_FOCUS, true);
 //		Util.sendBroadcastSafe(mIntent, mContext);
-//		showFocusOutline = true;
+		showFocusOutline = true;
 	}
 
 	public static void hideFocusFrame(final Context mContext){
+		if(!showFocusOutline)
+			return;
 //		Util.sendBroadcastSafe(new Intent(Common.SHOW_OUTLINE), mContext);
-//		//mContext.sendBroadcast(new Intent(Common.SHOW_OUTLINE));
-//		showFocusOutline = false;
+		//mContext.sendBroadcast(new Intent(Common.SHOW_OUTLINE));
+		showFocusOutline = false;
 	}
 	
 	public static void resetFocusFrameIfNeeded(final Context mContext, final int x, final int y, final int width, final int height, int taskId) {

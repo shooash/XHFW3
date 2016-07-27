@@ -30,7 +30,9 @@ public class OverlayView extends RelativeLayout
 	private static final int ACTION_LONGPRESS_QUADRANT = 0x3;
 	
 	
-	final Activity activity;
+	//final Activity activity;
+	final Context appContext;
+	Window mWindow;
 
 	// Views
 	public final View mDragToMoveBar;
@@ -53,6 +55,8 @@ public class OverlayView extends RelativeLayout
 	private boolean mTintedTitlebarBorder;
 	private int border_color;
 	private int border_thickness;
+	private int border_focus_color;
+	private int border_focus_thickness;
 	
 //	/* Title Bar */
 	private boolean mTitleBarEnabled;
@@ -66,17 +70,18 @@ public class OverlayView extends RelativeLayout
 	public boolean titleBarVisible = true;
 	
 	
-	public OverlayView(final Activity mActivity){
-		super(mActivity);
-		activity = mActivity;
+	public OverlayView (final Context mContext, final Window sWindow) {
+		super(mContext);
+		appContext = mContext;
+		mWindow = sWindow;
 		loadPrefs();
 		try {
-			Context module_context = activity.createPackageContext(Common.THIS_MOD_PACKAGE_NAME,
+			Context module_context = appContext.createPackageContext(Common.THIS_MOD_PACKAGE_NAME,
 																   Context.CONTEXT_IGNORE_SECURITY);
 			LayoutInflater.from(module_context).inflate(R.layout.movable_window, this);
 		} catch (Exception e) {
 			XmlResourceParser parser = MainXposed.sModRes.getLayout(R.layout.movable_window);
-			activity.getWindow().getLayoutInflater().inflate(parser, this);
+			mWindow.getLayoutInflater().inflate(parser, this);
 		}
 		setId(ID_OVERLAY_VIEW);
 		Util.setRootNamespace(this, false);
@@ -102,6 +107,10 @@ public class OverlayView extends RelativeLayout
 		Util.setRootNamespace(this, true);
 	}
 	
+	public void setWindow(final Window sWindow) {
+		mWindow = sWindow;
+	}
+	
 	private void loadPrefs(){
 		// set preferences values
 		mTitleBarIconType = MainXposed.mPref.getInt(Common.KEY_WINDOW_TITLEBAR_ICON_TYPE,
@@ -111,10 +120,10 @@ public class OverlayView extends RelativeLayout
 															  Common.DEFAULT_WINDOW_TITLEBAR_SEPARATOR_ENABLED);
 		mTitleBarHeight = !mTitleBarEnabled ? 0 : 
 			Util.realDp(MainXposed.mPref.getInt(Common.KEY_WINDOW_TITLEBAR_SIZE, 
-					Common.DEFAULT_WINDOW_TITLEBAR_SIZE), activity);
+					Common.DEFAULT_WINDOW_TITLEBAR_SIZE), appContext);
 		mTitleBarDivider = !titlebar_separator_enabled ? 0 : Util.realDp(
 			MainXposed.mPref.getInt(Common.KEY_WINDOW_TITLEBAR_SEPARATOR_SIZE,
-						 Common.DEFAULT_WINDOW_TITLEBAR_SEPARATOR_SIZE), activity);
+						 Common.DEFAULT_WINDOW_TITLEBAR_SEPARATOR_SIZE), appContext);
 		mLiveResizing = MainXposed.mPref.getBoolean(Common.KEY_WINDOW_RESIZING_LIVE_UPDATE,
 										 Common.DEFAULT_WINDOW_RESIZING_LIVE_UPDATE);
 		mTintedTitlebar = MainXposed.mPref.getBoolean(Common.KEY_TINTED_TITLEBAR_ENABLED, Common.DEFAULT_TINTED_TITLEBAR_ENABLED);
@@ -133,9 +142,9 @@ public class OverlayView extends RelativeLayout
 											Common.DEFAULT_WINDOW_QUADRANT_ENABLE);
 					
 		triangle_size = triangle_enabled?Util.dp(MainXposed.mPref.getInt(Common.KEY_WINDOW_TRIANGLE_SIZE,
-					Common.DEFAULT_WINDOW_TRIANGLE_SIZE), activity.getApplicationContext()):0;
+					Common.DEFAULT_WINDOW_TRIANGLE_SIZE), appContext):0;
 		quadrant_size = quadrant_enabled?Util.dp(MainXposed.mPref.getInt(Common.KEY_WINDOW_QUADRANT_SIZE,
-					Common.DEFAULT_WINDOW_QUADRANT_SIZE), activity.getApplicationContext()):0;
+					Common.DEFAULT_WINDOW_QUADRANT_SIZE), appContext):0;
 		
 		if(MainXposed.mPref.getBoolean(Common.KEY_WINDOW_TRIANGLE_DRAGGING_ENABLED,
 					Common.DEFAULT_WINDOW_TRIANGLE_DRAGGING_ENABLED))
@@ -168,6 +177,8 @@ public class OverlayView extends RelativeLayout
 																 Common.DEFAULT_WINDOW_BORDER_COLOR));
 		border_thickness = MainXposed.mPref.getInt(Common.KEY_WINDOW_BORDER_THICKNESS,
 										   Common.DEFAULT_WINDOW_BORDER_THICKNESS);
+		border_focus_thickness = Util.realDp(4, appContext);
+		border_focus_color = Color.parseColor("#" + MainXposed.mPref.getString(Common.KEY_AERO_FOCUS_COLOR, Common.DEFAULT_AERO_FOCUS_COLOR));
 	}
 	
 	private void setCornersView() {
@@ -194,7 +205,7 @@ public class OverlayView extends RelativeLayout
 				@Override
 				public boolean onTouch(View v, MotionEvent e)
 				{
-					ActivityHooks.taskStack.onUserAction(activity, e, triangle_action, v);
+					ActivityHooks.taskStack.onUserAction(null, e, triangle_action, v);
 					return false;
 				}	
 			});
@@ -203,7 +214,7 @@ public class OverlayView extends RelativeLayout
 				@Override
 				public boolean onTouch(View v, MotionEvent e)
 				{
-					ActivityHooks.taskStack.onUserAction(activity, e, quadrant_action, v);
+					ActivityHooks.taskStack.onUserAction(null, e, quadrant_action, v);
 					return false;
 				}	
 		});
@@ -232,6 +243,14 @@ public class OverlayView extends RelativeLayout
 		}
 	}
 	
+	public void setWindowBorder(){
+		setWindowBorder(border_color, border_enabled?border_thickness:0);
+	}
+	
+	public void setWindowBorderFocused() {
+		setWindowBorder(border_focus_color, border_focus_thickness);
+	}
+	
 	public void setTitleBarViewLegacy() {
 		final View divider = Util.findViewByIdHelper(mTitleBar,
 							R.id.movable_titlebar_line, "movable_titlebar_line");
@@ -245,7 +264,7 @@ public class OverlayView extends RelativeLayout
 							R.id.movable_titlebar_more, "movable_titlebar_more");
 		final ImageButton close_button = (ImageButton) Util.findViewByIdHelper(mTitleBar,
 							R.id.movable_titlebar_close, "movable_titlebar_close");
-		app_title.setText(activity.getApplicationInfo().loadLabel(activity.getPackageManager()));
+		app_title.setText(appContext.getApplicationInfo().loadLabel(appContext.getPackageManager()));
 
 		switch (mTitleBarIconType) {
 			case Common.TITLEBAR_ICON_ORIGINAL:
@@ -291,7 +310,7 @@ public class OverlayView extends RelativeLayout
 		final String menu_item4_sub7 = MainXposed.sModRes.getString(R.string.dnm_snap_window_sub7);
 		final String menu_item4_sub8 = MainXposed.sModRes.getString(R.string.dnm_snap_window_sub8);
 
-		final PopupMenu popupMenu = new PopupMenu(activity, more_button);
+		final PopupMenu popupMenu = new PopupMenu(appContext, more_button);
 		final Menu menu = popupMenu.getMenu();
 		menu.add(item1);
 		menu.add(menu_item4_sub1);
@@ -339,7 +358,7 @@ public class OverlayView extends RelativeLayout
 				if (id == R.id.movable_titlebar_close || tag.equals("movable_titlebar_close")) {
 					closeApp();
 				} else if (id == R.id.movable_titlebar_max || tag.equals("movable_titlebar_max")) {
-					ActivityHooks.taskStack.maximize(activity.getTaskId());
+					ActivityHooks.taskStack.maximize();
 				} else if (id == R.id.movable_titlebar_min || tag.equals("movable_titlebar_min")) {
 //					MovableWindow.minimizeAndShowNotification(mActivity);
 				} else if (id == R.id.movable_titlebar_more || tag.equals("movable_titlebar_more")) {
@@ -355,7 +374,7 @@ public class OverlayView extends RelativeLayout
 				@Override
 				public boolean onTouch(View v, MotionEvent e)
 				{
-					ActivityHooks.taskStack.onUserAction(activity, e, Common.ACTION_DRAG, v);
+					ActivityHooks.taskStack.onUserAction(null, e, Common.ACTION_DRAG, v);
 					return false;
 				}
 		});
@@ -377,12 +396,16 @@ public class OverlayView extends RelativeLayout
 //	}
 	
 	public void setTitleBarVisibility(boolean visible) {
+		setTitleBarVisibility(visible, this.mWindow);
+	}
+	
+	public void setTitleBarVisibility(boolean visible, final Window mWindow) {
 		Debugger.DEBUG("setTitleBarVisibility " + visible);
 		titleBarVisible = visible;
 		if(mTitleBar==null)
 			return;
 		mTitleBar.setVisibility(visible ? View.VISIBLE : View.GONE);
-			final FrameLayout decorView = (FrameLayout) activity.getWindow().peekDecorView()
+			final FrameLayout decorView = (FrameLayout) mWindow.peekDecorView()
 				.getRootView();
 			for(int i=decorView.indexOfChild(this)-1; i>=0; i--){
 				final View child = decorView.getChildAt(i);
@@ -406,7 +429,7 @@ public class OverlayView extends RelativeLayout
 	private int getPrimaryDarkColor(){
 		int DEFAULT_TITLEBAR_COLOR = Color.BLACK;
 		TypedValue a = new TypedValue();
-		if(!activity.getTheme().resolveAttribute(android.R.attr.colorPrimaryDark, a, true))
+		if(!appContext.getTheme().resolveAttribute(android.R.attr.colorPrimaryDark, a, true))
 			return DEFAULT_TITLEBAR_COLOR;	
 		if (a.type >= TypedValue.TYPE_FIRST_COLOR_INT && a.type <= TypedValue.TYPE_LAST_COLOR_INT) {
 			// it is a color
@@ -424,17 +447,17 @@ public class OverlayView extends RelativeLayout
 			 * another fullscreen app.
 			 */
 			InputMethodManager imm = (InputMethodManager)
-				activity.getSystemService(Context.INPUT_METHOD_SERVICE);
-			imm.hideSoftInputFromWindow(activity.getCurrentFocus().getWindowToken(), 0);
+				appContext.getSystemService(Context.INPUT_METHOD_SERVICE);
+			imm.hideSoftInputFromWindow(ActivityHooks.mCurrentActivity.getCurrentFocus().getWindowToken(), 0);
 		} catch (Exception e) {
 			//ignore
 		}
 		if (MainXposed.mPref.getBoolean(Common.KEY_WINDOW_TITLEBAR_SINGLE_WINDOW,
 							 Common.DEFAULT_WINDOW_TITLEBAR_SINGLE_WINDOW)
 			&& Build.VERSION.SDK_INT >= 16) {
-			activity.finishAffinity();
+			ActivityHooks.mCurrentActivity.finishAffinity();
 		} else {
-			activity.finish();
+			ActivityHooks.mCurrentActivity.finish();
 		}
 	}
 }

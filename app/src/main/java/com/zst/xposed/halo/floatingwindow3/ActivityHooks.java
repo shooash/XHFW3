@@ -66,6 +66,17 @@ public class ActivityHooks
 					Debugger.DEBUG("onResume");
 				}
 			});
+		XposedBridge.hookAllMethods(Activity.class, "onPause", new XC_MethodHook() {
+				@Override
+				protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+					Debugger.DEBUG("onPause start ", packageName);
+					Activity mActivity = (Activity) param.thisObject;
+					if(!isMovable || taskStack==null)
+						return;
+					taskStack.onTaskPause(mActivity.getTaskId(), mActivity.getWindow());
+					Debugger.DEBUG("onPause");
+				}
+			});
 			
 		XposedBridge.hookAllMethods(Activity.class, "dispatchTouchEvent", new XC_MethodHook() {
 				@Override
@@ -84,11 +95,14 @@ public class ActivityHooks
 				protected void afterHookedMethod(MethodHookParam param) throws Throwable {
 					if(!isMovable|| taskStack==null) return;
 					boolean focused = param.args[0];
-					mCurrentActivity =  (Activity) param.thisObject;
+					Debugger.DEBUG("onWindowFocusChanged " + focused);
 					if(!focused)
-						taskStack.onTaskUnFocused(mCurrentActivity.getTaskId());
-					else
-						taskStack.onTaskFocused(mCurrentActivity.getTaskId());
+						taskStack.onTaskUnFocused(((Activity) param.thisObject).getTaskId(), ((Activity) param.thisObject).getWindow());
+					else {
+						mCurrentActivity =  (Activity) param.thisObject;
+						taskStack.onTaskFocused(mCurrentActivity.getTaskId(), mCurrentActivity.getWindow());
+					}
+						
 				}
 			});
 		
@@ -98,7 +112,7 @@ public class ActivityHooks
 					if(!isMovable||taskStack==null) return;
 					//mCurrentActivity =  (Activity) param.thisObject;
 					taskStack.onRemoveActivity((Activity) param.thisObject);
-					mCurrentActivity = taskStack.startActivity;
+					//mCurrentActivity = taskStack.startActivity;
 				}
 			});
 			
@@ -121,7 +135,7 @@ public class ActivityHooks
 					Window window = (Window) param.thisObject;
 					String name = window.getContext().getPackageName();
 					if (name.startsWith("com.android.systemui")||name.equals("android")) return;
-					taskStack.onNewWindow(window, null, 0);
+					taskStack.onNewGeneratedWindow(window);
 					Debugger.DEBUG("GenerateLayout end for" + name);
 				}
 			});

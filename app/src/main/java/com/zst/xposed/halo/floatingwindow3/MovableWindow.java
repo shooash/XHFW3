@@ -40,8 +40,8 @@ public class MovableWindow
     }
 
     public static boolean isMovable = false;
-    public static WindowHolder mWindowHolder=null;
-	public static WindowHolder mWindowHolderCached=null;
+    public static WindowHolder3 mWindowHolder=null;
+	public static WindowHolder3 mWindowHolderCached=null;
 	public static boolean isFocused = false;
 
     static int mScreenHeight;
@@ -390,7 +390,7 @@ public class MovableWindow
 		/* load and set prefs */
         loadPrefs();
 		/* setup windowholder - to keep and manipulate window layouts */
-        mWindowHolder = new WindowHolder(mActivity, MainXposed.mPref);
+        mWindowHolder = new WindowHolder3(mActivity, MainXposed.mPref);
 		/* setup aerosnap class - to manage snap-to-side windows */
         mAeroSnap = mAeroSnapEnabled ? new AeroSnap(mAeroSnapDelay) : null;
 		MOVE_MAX_RANGE=Util.realDp(MainXposed.mPref.getInt(Common.KEY_MOVE_MAX_RANGE, Common.DEFAULT_MOVE_MAX_RANGE), mActivity.getApplicationContext());
@@ -826,7 +826,7 @@ public class MovableWindow
 	}
 
 	public static void saveLayout(){
-		mWindowHolderCached = new WindowHolder(mWindowHolder);
+		mWindowHolderCached = new WindowHolder3(mWindowHolder);
 		DEBUG("savedLayout");
 	}
 

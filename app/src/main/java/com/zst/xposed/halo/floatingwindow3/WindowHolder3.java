@@ -15,7 +15,7 @@ import android.os.*;
 import android.content.*;
 import android.widget.*;
 
-public class WindowHolder{
+public class WindowHolder3{
     public boolean isSnapped = false;
     public boolean isMaximized = false;
     public boolean serviceConnected = false;
@@ -36,7 +36,7 @@ public class WindowHolder{
     //public boolean isSet=false;
     //public boolean mReceiverRegistered = false;
 
-    public WindowHolder(Activity sActivity, XSharedPreferences mPref){
+    public WindowHolder3(Activity sActivity, XSharedPreferences mPref){
         mActivity = sActivity;
         mPref.reload();
         alpha = mPref.getFloat(Common.KEY_ALPHA, Common.DEFAULT_ALPHA);
@@ -62,7 +62,7 @@ public class WindowHolder{
     }
 	
 	/* constructor to clone values*/
-	public WindowHolder (final WindowHolder sWindowHolder){
+	public WindowHolder3 (final WindowHolder3 sWindowHolder){
 		alpha = sWindowHolder.alpha;
         width = sWindowHolder.width;
         height = sWindowHolder.height;
@@ -123,7 +123,7 @@ public class WindowHolder{
     }
 
     //restore/copy precached data
-    public void restore(WindowHolder sWindowHolder){
+    public void restore(WindowHolder3 sWindowHolder){
         alpha = sWindowHolder.alpha;
         width = sWindowHolder.width;
         height = sWindowHolder.height;
