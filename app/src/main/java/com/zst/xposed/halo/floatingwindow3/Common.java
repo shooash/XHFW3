@@ -100,6 +100,7 @@ public class Common {
 	public static final String KEY_FLOATING_FLAG = "floating_flag";
 	public static final String KEY_FORCE_OPEN_ALT_GRAVITY = "window_force_snap";
 	public static final String KEY_MOVE_MAX_RANGE = "move_max_range";
+	public static final String KEY_BUTTONS_LIST = "buttons_list";
 
 	/* Preference defaults */
 	public static final float DEFAULT_ALPHA = 1f;
@@ -170,7 +171,8 @@ public class Common {
 	public static final boolean DEFAULT_STATUSBAR_TASKBAR_HIDE_ICON = false;
 	public static final int DEFAULT_STATUSBAR_TASKBAR_NUMBER = 5;
 	public static final int DEFAULT_FORCE_OPEN_ALT_GRAVITY = 0;
-	public static final int DEFAULT_MOVE_MAX_RANGE = 50;
+	public static final int DEFAULT_MOVE_MAX_RANGE = 10;
+	public static final String DEFAULT_BUTTONS_LIST = "mts-+x";
 	
 
 	/* Xposed Constants */

@@ -127,6 +127,20 @@ public class FloatDot
 		mPrefCommunication = true;
 	}
 	
+	public void showDraggerDelayed(final boolean show) {
+//		if(floatDotReceiverRunnable!=null) {
+//			floatDotReceiverHandler.removeCallbacks(floatDotReceiverRunnable);
+//		}
+//		floatDotReceiverRunnable = new Runnable() {
+//			@Override
+//			public void run()
+//			{
+//				showDragger(show);
+//			}
+//		};
+//		floatDotReceiverHandler.postDelayed(floatDotReceiverRunnable, 150);
+	}
+	
 	public void showDragger(boolean show){
 		image.setVisibility(show?View.VISIBLE:View.INVISIBLE);
 		if(mPrefCommunication&&show)
@@ -297,14 +311,16 @@ public class FloatDot
 		int newOrientation = Util.getScreenOrientation(mContext);
 		if(newOrientation==lastOrientation) return;
 		lastOrientation = newOrientation;
-		WindowManager.LayoutParams lp = (WindowManager.LayoutParams)image.getLayoutParams();
-		int newx = lp.y; // paramsF.y;
-		int newy = lp.x; // paramsF
-		lp.x = newx;
-		lp.y = newy;
-		mCoordinates.x = newx;
-		mCoordinates.y = newy;
-		mWindowManager.updateViewLayout(image, lp);
+//		WindowManager.LayoutParams lp = (WindowManager.LayoutParams)image.getLayoutParams();
+//		int newx = lp.y; // paramsF.y;
+//		int newy = lp.x; // paramsF
+//		lp.x = newx;
+//		lp.y = newy;
+//		mCoordinates.x = newx;
+//		mCoordinates.y = newy;
+		mCoordinates.x = paramsF.y;
+		mCoordinates.y = paramsF.x;
+		updateDot();
 	}
 
 	public void sendPosition(View v){

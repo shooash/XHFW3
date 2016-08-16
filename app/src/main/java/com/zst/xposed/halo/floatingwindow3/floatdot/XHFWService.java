@@ -30,6 +30,9 @@ public class XHFWService extends Service {
 	private boolean isLauncherDotEnabled;
 	private int lastTaskId = 0;
 	private int previousTaskId = 0;
+	private Handler floatDotReceiverHandler = new Handler();
+	private Runnable floatDotReceiverRunnable = null;
+	
 
 	@Override
 	public void onCreate()
@@ -197,9 +200,20 @@ public class XHFWService extends Service {
 			}
 				
 			if(!sIntent.getAction().equals(Common.SHOW_MULTIWINDOW_DRAGGER)) return;
-			boolean show = sIntent.getBooleanExtra(Common.INTENT_FLOAT_DOT_BOOL, false);
-			if(fd!=null) fd.showDragger(show);
-			if(ld!=null) ld.showDragger(!show);
+			final boolean show = sIntent.getBooleanExtra(Common.INTENT_FLOAT_DOT_BOOL, false);
+			if(floatDotReceiverRunnable!=null) {
+				floatDotReceiverHandler.removeCallbacks(floatDotReceiverRunnable);
+			}
+			floatDotReceiverRunnable = new Runnable() {
+				@Override
+				public void run()
+				{
+					if(fd!=null) fd.showDragger(show);
+					if(ld!=null) ld.showDragger(!show);
+				}
+			};
+			floatDotReceiverHandler.postDelayed(floatDotReceiverRunnable, 250);
+			
 		}
 	};
 	
@@ -230,6 +244,14 @@ public class XHFWService extends Service {
 		{
 			// TODO: Implement this method
 		}
+		
+		@Override
+		public void unfocusApp(int task) {
+			if(task != lastTaskId)
+				return;
+			previousTaskId = lastTaskId;
+			lastTaskId = -1;
+		}
 
 		@Override
 		public int getLastTaskId() throws RemoteException
@@ -244,8 +266,10 @@ public class XHFWService extends Service {
 		}
 		
 		@Override
-		public void bringToFront(int taskId) throws RemoteException
+		public boolean bringToFront(int taskId) throws RemoteException
 		{
+			if(taskId == lastTaskId)
+				return false;
 			previousTaskId = lastTaskId;
 			lastTaskId = taskId;
 			mContext=getApplicationContext();
@@ -255,9 +279,9 @@ public class XHFWService extends Service {
 				mActivityManager.moveTaskToFront(taskId, ActivityManager.MOVE_TASK_NO_USER_ACTION);
 			} catch (Exception e) {
 				Log.e("Xposed XHFWService", "Cannot move task to front", e);
-				return;
+				return false;
 			}
-			
+			return true;
 		}
 		
 		

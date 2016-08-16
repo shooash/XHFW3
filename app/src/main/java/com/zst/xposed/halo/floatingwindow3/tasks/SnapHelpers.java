@@ -21,10 +21,10 @@ public class SnapHelpers
 	public static WindowHolder checkAndGetFinalSnap(int x, int y, int screenW, int screenH, final Context mContext) {
 		int snapGravity = getSnapGravityByHotspot(x, y, screenW, screenH);
 		broadcastHideSnap(mContext);
-		WindowHolder mWindowHolder = getSnapLayout(snapGravity, screenW, screenH);
-		mWindowHolder.isSnapped = true;
-		mWindowHolder.SnapGravity = snapGravity;
-		return mWindowHolder;
+//		final WindowHolder mWindowHolder = 
+//		mWindowHolder.isSnapped = true;
+//		mWindowHolder.SnapGravity = snapGravity;
+		return getSnapLayout(snapGravity, screenW, screenH);
 	}
 	
 	public static int getSnapGravityByHotspot(int x, int y, int screenW, int screenH) {
@@ -59,7 +59,10 @@ public class SnapHelpers
 		} else if (Util.isFlag(snapGravity, Gravity.TOP)) {
 			h = InterActivity.FloatDotCoordinates[1];
 		}
-		return new WindowHolder(null, x, y, w, h);
+		final WindowHolder mWindowHolder = new WindowHolder(null, x, y, w, h);
+		mWindowHolder.SnapGravity = snapGravity;
+		mWindowHolder.isSnapped = true;
+		return mWindowHolder;
 	}
 	
 	public static void broadcastShowSnap(final Context ctx, final WindowHolder mWindowHolder) {

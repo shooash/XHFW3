@@ -25,7 +25,8 @@
     <string name="dnm_title">Drag To Move</string>
     <string name="dnm_transparency">Transparency</string>
     <string name="dnm_close_app">Close Window</string>
-    <string name="dnm_minimize">Minimize App</string>
+    <string name="dnm_minimize">Minimize</string>
+	<string name="dnm_maximize">Maximize</string>
     <string name="dnm_snap_window">Snap Window</string>
     <string name="dnm_snap_window_sub1">Snap (Top)</string>
     <string name="dnm_snap_window_sub2">Snap (Bottom)</string>

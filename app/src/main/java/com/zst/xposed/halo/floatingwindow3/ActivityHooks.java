@@ -8,13 +8,15 @@ import android.system.*;
 import android.os.*;
 import junit.runner.*;
 import android.view.*;
+import com.zst.xposed.halo.floatingwindow3.themable.*;
 
 public class ActivityHooks
 {
 	public static String packageName = null;
 	public static MWTasks taskStack = null;
 	public static Activity mCurrentActivity = null;
-	private static Activity mPreviousActivity = null;
+	public static OverlayTheme mOverlayTheme = null;
+	//private static Activity mPreviousActivity = null;
 	public static boolean isMovable;
 	
 	public static void loadActivityHooks(final XC_LoadPackage.LoadPackageParam lpparam) {
@@ -27,7 +29,7 @@ public class ActivityHooks
 		XposedBridge.hookAllMethods(Activity.class, "onCreate", new XC_MethodHook() {
 				@Override
 				protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-					mPreviousActivity = mCurrentActivity;
+					//mPreviousActivity = mCurrentActivity;
 					mCurrentActivity = (Activity) param.thisObject;
 					if(packageName==null)
 						packageName = mCurrentActivity.getPackageName();
@@ -111,7 +113,13 @@ public class ActivityHooks
 				protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
 					if(!isMovable||taskStack==null) return;
 					//mCurrentActivity =  (Activity) param.thisObject;
-					taskStack.onRemoveActivity((Activity) param.thisObject);
+					if(taskStack.onRemoveActivity((Activity) param.thisObject)) {
+						InterActivity.sendRemovedPackageInfo(packageName, ((Activity) param.thisObject).getApplicationContext(), true);
+						taskStack = null;
+						isMovable = false;
+						mCurrentActivity = null;
+						//packageName = null;
+					}
 					//mCurrentActivity = taskStack.startActivity;
 				}
 			});

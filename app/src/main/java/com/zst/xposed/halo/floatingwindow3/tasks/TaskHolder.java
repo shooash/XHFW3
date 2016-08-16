@@ -80,19 +80,11 @@ public class TaskHolder
 	public WindowHolder getLastOrDefaultWindow()
 	{
 		return defaultLayout;
-//		if(windowsStack.isEmpty())
-//			return defaultLayout;
-//		else
-//			return windowsStack.get(windowsStack.size()-1);
 	}
 
 	public void updateByFloatDot(int x, int y, int p2, int p3)
 	{
 		boolean changed = defaultLayout.updateByFloatDot(x, y, p2, p3);
-//		for(WindowHolder mWindowHolder : windowsStack) {
-//			if(mWindowHolder!=null) 
-//				mWindowHolder.updateByFloatDot(x, y, p2, p3);
-//			}
 		if(changed) {
 			syncAllWindowsAsWindow(defaultLayout);
 			InterActivity.resetFocusFrameIfNeeded(appContext,
@@ -107,9 +99,9 @@ public class TaskHolder
 	public void getDefaults(final XSharedPreferences mPref, final Activity mActivity){
 		defaultLayout.alpha = mPref.getFloat(Common.KEY_ALPHA, Common.DEFAULT_ALPHA);
         defaultLayout.dim = mPref.getFloat(Common.KEY_DIM, Common.DEFAULT_DIM);
-		defaultLayout.SnapGravity = Compatibility.snapSideToGravity(mActivity.getIntent().getIntExtra(Common.EXTRA_SNAP_SIDE, Compatibility.AeroSnap.SNAP_NONE));
-		defaultLayout.isSnapped=(defaultLayout.SnapGravity != 0);
-        defaultLayout.isMaximized=(defaultLayout.SnapGravity == Gravity.FILL);
+		//defaultLayout.SnapGravity = Compatibility.snapSideToGravity(mActivity.getIntent().getIntExtra(Common.EXTRA_SNAP_SIDE, Compatibility.AeroSnap.SNAP_NONE));
+		//defaultLayout.isSnapped=(defaultLayout.SnapGravity != 0);
+        //defaultLayout.isMaximized=(defaultLayout.SnapGravity == Gravity.FILL);
 	}
 	
 	public void resume(final Activity mActivity, final Window mWindow ) {
@@ -160,7 +152,7 @@ public class TaskHolder
 	
 	public boolean removeActivity(final Activity mActivity) {
 		activitiesStack.remove(mActivity.getComponentName().getClassName());
-		//removeOverlayView(mActivity.getWindow());
+		removeOverlayView(mActivity.getWindow());
 		return activitiesStack.isEmpty();
 	}
 	
@@ -412,6 +404,15 @@ public class TaskHolder
 			decorView=null;
 		}
 		if (decorView == null) return;
+		for (int i = 0; i < decorView.getChildCount(); ++i) {
+			final View child = decorView.getChildAt(i);
+			if (child instanceof OverlayView) {
+				// If our tag is different or null, then the
+				// view we found should be removed by now.
+				decorView.removeView(decorView.getChildAt(i));
+				break;
+			}
+		}
 		setTagInternalForView(decorView, Common.LAYOUT_OVERLAY_TAG,  null);
 	}
 //	public void putOverlayView(final Window mWindow){

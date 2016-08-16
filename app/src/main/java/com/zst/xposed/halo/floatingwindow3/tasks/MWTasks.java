@@ -7,6 +7,13 @@ import com.zst.xposed.halo.floatingwindow3.*;
 import android.content.*;
 import android.graphics.*;
 import android.content.res.*;
+import android.view.inputmethod.*;
+import android.os.*;
+import android.annotation.*;
+import android.content.pm.*;
+import com.zst.xposed.halo.floatingwindow3.themable.*;
+import com.zst.xposed.halo.floatingwindow3.overlays.*;
+import android.widget.*;
 
 public class MWTasks
 {
@@ -22,6 +29,7 @@ public class MWTasks
 	private float[] mPreviousRangeResize = new float[2];
 	private float[] mPreviousRangeDrag = new float[2];
 	private boolean mSnappable;
+	private boolean mStartMaximized;
 	/*Preferences*/
 	public boolean mRetainStartPosition;
     public boolean mConstantMovePosition;
@@ -35,6 +43,7 @@ public class MWTasks
 	public boolean mAeroFocusWindow;
 	static int mAeroSnapDelay;
     static boolean mAeroSnapSwipeApp;
+	public boolean mTitleBarSingleWindow;
 	public int MOVE_MAX_RANGE;
 	public int mInitGravity;
 	private WindowHolder defaultLayout = null;
@@ -45,6 +54,93 @@ public class MWTasks
 		 appContext = mActivity.getApplicationContext();
 		// startActivity = mActivity;
 		 onAppStart(mActivity);
+	}
+	
+	public void onAppStart(final Activity mActivity){
+		Point screenSize = Util.getScreenSize(appContext);
+		int x;
+		int y;
+		int snapGravity = Compatibility.snapSideToGravity(mActivity.getIntent().getIntExtra(Common.EXTRA_SNAP_SIDE, 0));
+		loadPrefs(mActivity);
+		/* setup listeners */
+		getConnected(mActivity.getApplicationContext());
+		/* load theme */
+		ActivityHooks.mOverlayTheme = new OverlayTheme();
+		
+		/* set initial snap */
+		if(snapGravity!=0) {
+			defaultLayout = SnapHelpers.getSnapLayout(snapGravity, screenSize.x, screenSize.y);
+			return;
+		}
+		/* setup default layout */
+		defaultLayout = new WindowHolder();
+		switch(Util.getScreenOrientation(mActivity)){
+            case Configuration.ORIENTATION_LANDSCAPE:
+                defaultLayout.size((int) (screenSize.x * MainXposed.mPref.getFloat(Common.KEY_LANDSCAPE_WIDTH, Common.DEFAULT_LANDSCAPE_WIDTH)), 
+								   (int) (screenSize.y * MainXposed.mPref.getFloat(Common.KEY_LANDSCAPE_HEIGHT, Common.DEFAULT_LANDSCAPE_HEIGHT)));
+                break;
+            case Configuration.ORIENTATION_PORTRAIT:
+            default:
+                defaultLayout.size((int) (screenSize.x * MainXposed.mPref.getFloat(Common.KEY_PORTRAIT_WIDTH, Common.DEFAULT_PORTRAIT_WIDTH)),
+								   (int) (screenSize.y * MainXposed.mPref.getFloat(Common.KEY_PORTRAIT_HEIGHT, Common.DEFAULT_PORTRAIT_HEIGHT)));
+                break;
+        }
+
+		if(Util.isFlag(mInitGravity, Gravity.LEFT))
+			x = 0;
+		else if(Util.isFlag(mInitGravity, Gravity.RIGHT))
+			x = screenSize.x-defaultLayout.width;
+		else
+			x = (screenSize.x-defaultLayout.width)/2;
+
+		if(Util.isFlag(mInitGravity, Gravity.TOP))
+			y = 0;
+		else if(Util.isFlag(mInitGravity, Gravity.BOTTOM))
+			y = screenSize.y-defaultLayout.height;
+		else
+			y = (screenSize.y-defaultLayout.height)/2;
+
+		defaultLayout.position(x,y);
+		//mTaskHolder = new TaskHolder(mActivity, defaultLayout);
+	}
+	
+	private void createNewTaskFromActivity(final Activity mActivity)
+	{
+		WindowHolder cachedlayout = null;
+		final TaskHolder mTaskHolder;
+		mSeparateWindows = mSeparateWindows || (!mConstantMovePosition&&Util.isFlag(mActivity.getIntent().getFlags(), Intent.FLAG_ACTIVITY_NEW_DOCUMENT));
+		if(mStartMaximized) {
+			cachedlayout = new WindowHolder();
+			cachedlayout.copy(defaultLayout);
+			defaultLayout.setMaximized();
+		}
+		
+		if(mSeparateWindows) {
+			mTaskHolder = new TaskHolder(mActivity, defaultLayout, cachedlayout);
+		}
+		else if (taskStack.isEmpty()){
+			mTaskHolder = new TaskHolder(mActivity, defaultLayout, cachedlayout);
+		} else {
+			final int anyId = getAnyRegisteredTaskId();
+			final WindowHolder mDefaultLayout = taskStack.get(anyId).defaultLayout;
+			final WindowHolder mCachedLayout = taskStack.get(anyId).cachedLayout;
+			mTaskHolder = new TaskHolder(mActivity, mDefaultLayout, mCachedLayout);
+		}
+
+		Integer task = (Integer) mActivity.getTaskId();
+		taskStack.put(task, mTaskHolder);
+		//tasksIndex.put(task, taskStack.size()-1);
+		InterActivity.sendPackageInfo(packageName, mActivity.getApplicationContext(), task, 0);
+	}
+	
+	public void switchSeparateWindows(final View v)
+	{
+//		if(!(v instanceof ImageButton))
+//			return;
+		mSeparateWindows = !mSeparateWindows;
+		Debugger.DEBUG("switchSeparateWindows " + mSeparateWindows);
+		TitleBarViewHelpers.setTheme((ImageButton) v, 's');
+		
 	}
 
 	public void updateLayoutByFloatDot()
@@ -71,33 +167,7 @@ public class MWTasks
 //			Debugger.DEBUG_E("MWTask addWindow(Window, int): taskId " + task + " is not registered");
 //	}
 
-	private void createNewTaskFromActivity(final Activity mActivity)
-	{
-		//WindowHolder2 mWindowHolder = new WindowHolder2(mActivity, defaultLayout);
-		mSeparateWindows = mSeparateWindows || (!mConstantMovePosition&&Util.isFlag(mActivity.getIntent().getFlags(), Intent.FLAG_ACTIVITY_NEW_DOCUMENT));
-		TaskHolder mTaskHolder;
-		if(mSeparateWindows)
-			mTaskHolder = new TaskHolder(mActivity, defaultLayout, null);
-		else if (taskStack.isEmpty()){
-			mTaskHolder = new TaskHolder(mActivity, defaultLayout, null);
-		} else {
-			final int anyId = getAnyRegisteredTaskId();
-			final WindowHolder mDefaultLayout = taskStack.get(anyId).defaultLayout;
-			final WindowHolder mCachedLayout = taskStack.get(anyId).cachedLayout;
-			mTaskHolder = new TaskHolder(mActivity, mDefaultLayout, mCachedLayout);
-		}
-			
-		/* DEBUG SECTION */
-//		int flags = mActivity.getIntent().getFlags();
-//		Debugger.DEBUG("DEBUG FLAG HAS MULTIPLE TASKS:" + Util.isFlag(flags, Intent.FLAG_ACTIVITY_MULTIPLE_TASK) + 
-//					   "DEBUG FLAG HAS NEW DOCUMENT" + Util.isFlag(flags, Intent.FLAG_ACTIVITY_NEW_DOCUMENT));
-		
-		/* TODO: CLEAN */
-		Integer task = (Integer) mActivity.getTaskId();
-		taskStack.put(task, mTaskHolder);
-		//tasksIndex.put(task, taskStack.size()-1);
-		InterActivity.sendPackageInfo(packageName, mActivity.getApplicationContext(), task, 0);
-	}
+	
 	
 	private void loadPrefs(Activity mActivity){
 		mActionBarDraggable = MainXposed.mPref.getBoolean(Common.KEY_WINDOW_ACTIONBAR_DRAGGING_ENABLED, Common.DEFAULT_WINDOW_ACTIONBAR_DRAGGING_ENABLED);
@@ -109,9 +179,11 @@ public class MWTasks
 		mAeroSnapSwipeApp = MainXposed.mPref.getBoolean(Common.KEY_WINDOW_RESIZING_AERO_SNAP_SWIPE_APP, Common.DEFAULT_WINDOW_RESIZING_AERO_SNAP_SWIPE_APP);
 		mAeroSnapChangeTitleBarVisibility = MainXposed.mPref.getBoolean(Common.KEY_WINDOW_RESIZING_AERO_SNAP_TITLEBAR_HIDE, Common.DEFAULT_WINDOW_RESIZING_AERO_SNAP_TITLEBAR_HIDE);
 		mMaximizeChangeTitleBarVisibility = MainXposed.mPref.getBoolean(Common.KEY_WINDOW_TITLEBAR_MAXIMIZE_HIDE, Common.DEFAULT_WINDOW_TITLEBAR_MAXIMIZE_HIDE);
+		mTitleBarSingleWindow = MainXposed.mPref.getBoolean(Common.KEY_WINDOW_TITLEBAR_SINGLE_WINDOW, Common.DEFAULT_WINDOW_TITLEBAR_SINGLE_WINDOW);
 		mAeroFocusWindow = MainXposed.mPref.getBoolean(Common.KEY_AERO_FOCUS_ENABLED, Common.DEFAULT_AERO_FOCUS_ENABLED);
 		MOVE_MAX_RANGE = Util.realDp(MainXposed.mPref.getInt(Common.KEY_MOVE_MAX_RANGE, Common.DEFAULT_MOVE_MAX_RANGE), appContext);
 		mInitGravity = MainXposed.mPref.getInt(Common.KEY_GRAVITY, Common.DEFAULT_GRAVITY);
+		mStartMaximized = MainXposed.mPref.getBoolean(Common.KEY_MAXIMIZE_ALL, Common.DEFAULT_MAXIMIZE_ALL)||MainXposed.isMaximizedlisted(packageName);
     }
 	
 	final private Runnable FloatDotCallback = new Runnable() {
@@ -129,56 +201,6 @@ public class MWTasks
 			InterActivity.FloatDotCoordinatesCallback = FloatDotCallback;
 			InterActivity.registerFloatDotBroadcastReceiver(mContext);
 		}
-	}
-	
-	public void onAppStart(final Activity mActivity){
-		Point screenSize = Util.getScreenSize(appContext);
-		int x;
-		int y;
-		loadPrefs(mActivity);
-		/* setup listeners */
-		getConnected(mActivity.getApplicationContext());
-		/* setup default layout */
-		defaultLayout = new WindowHolder();
-		switch(Util.getScreenOrientation(mActivity)){
-            case Configuration.ORIENTATION_LANDSCAPE:
-                defaultLayout.size((int) (screenSize.x * MainXposed.mPref.getFloat(Common.KEY_LANDSCAPE_WIDTH, Common.DEFAULT_LANDSCAPE_WIDTH)), 
-                	(int) (screenSize.y * MainXposed.mPref.getFloat(Common.KEY_LANDSCAPE_HEIGHT, Common.DEFAULT_LANDSCAPE_HEIGHT)));
-                break;
-            case Configuration.ORIENTATION_PORTRAIT:
-            default:
-                defaultLayout.size((int) (screenSize.x * MainXposed.mPref.getFloat(Common.KEY_PORTRAIT_WIDTH, Common.DEFAULT_PORTRAIT_WIDTH)),
-                	(int) (screenSize.y * MainXposed.mPref.getFloat(Common.KEY_PORTRAIT_HEIGHT, Common.DEFAULT_PORTRAIT_HEIGHT)));
-                break;
-        }
-		
-		if(Util.isFlag(mInitGravity, Gravity.LEFT))
-			x = 0;
-		else if(Util.isFlag(mInitGravity, Gravity.RIGHT))
-			x = screenSize.x-defaultLayout.width;
-		else
-			x = (screenSize.x-defaultLayout.width)/2;
-
-		if(Util.isFlag(mInitGravity, Gravity.TOP))
-			y = 0;
-		else if(Util.isFlag(mInitGravity, Gravity.BOTTOM))
-			y = screenSize.y-defaultLayout.height;
-		else
-			y = (screenSize.y-defaultLayout.height)/2;
-			
-		defaultLayout.position(x,y);
-		//mTaskHolder = new TaskHolder(mActivity, defaultLayout);
-		/* initial snap */
-		//TODO
-//		if(mAeroSnap!=null&&mWindowHolder.isSnapped) {
-//			mWindowHolder.isSnapped=false;
-//			mAeroSnap.forceSnapGravity(mWindowHolder.SnapGravity);
-//		}
-//		else if(MainXposed.mPref.getBoolean(Common.KEY_MAXIMIZE_ALL, Common.DEFAULT_MAXIMIZE_ALL) || MainXposed.isMaximizedlisted(mWindowHolder.packageName)){
-//			maximize();
-//		} else {
-//			mWindowHolder.syncLayout();
-//		}
 	}
 	
 	public void onNewTask(final Activity mActivity) {
@@ -242,16 +264,14 @@ public class MWTasks
 		//onTaskFocused(task);
 	}
 
-	public void onRemoveActivity(final Activity mActivity){
+	public boolean onRemoveActivity(final Activity mActivity){
 		int taskId = mActivity.getTaskId();
 		if(!taskStack.containsKey(taskId))
-			return;
+			return false;
 		final TaskHolder mTaskHolder = taskStack.get(taskId);
-		//if(
-		mTaskHolder.removeActivity(mActivity);//)
-			//taskStack.remove(taskId);
-		
-		
+		if(mTaskHolder.removeActivity(mActivity))
+			taskStack.remove(taskId);
+		return taskStack.isEmpty();
 	}
 
 	public void onClearAll(){}
@@ -356,7 +376,7 @@ public class MWTasks
 			return;
 		mTaskHolder.focus(mWindow);
 		final WindowHolder mWindowHolder = mTaskHolder.defaultLayout;
-		InterActivity.hideFocusFrame(appContext);
+		
 		if(mTaskHolder.isSnapped) {
 			InterActivity.drawFocusFrame(appContext, mWindowHolder.x, mWindowHolder.y, mWindowHolder.width, mWindowHolder.height);
 			InterActivity.toggleDragger(appContext, true);
@@ -367,9 +387,17 @@ public class MWTasks
 		InterActivity.unfocusApp(taskId);
 			InterActivity.hideFocusFrame(appContext);
 			InterActivity.toggleDragger(appContext, false);
+//		for(TaskHolder mTh : taskStack.values()) {
+//			if(mTh.mOverlay!=null)
+//				mTh.mOverlay.setWindowBorder();
+//		}
 		final TaskHolder mTaskHolder = taskStack.get(taskId);
-		if(mTaskHolder!=null)
+		if(mTaskHolder!=null) {
 			mTaskHolder.unfocus(mWindow);
+//			if(mTaskHolder.mOverlay!=null)
+//				mTaskHolder.mOverlay.setWindowBorder();
+		}
+			
 	}
 	
 	public void restoreIfNeeded(int taskId){
@@ -443,7 +471,7 @@ public class MWTasks
 	}
 	
 	public void maximize() {
-		maximize(ActivityHooks.mCurrentActivity.getTaskId());
+		maximize(InterActivity.focusedTaskId);
 	}
 	public void maximize(int taskId) {
 		InterActivity.toggleDragger(appContext, false);
@@ -464,10 +492,17 @@ public class MWTasks
 		}
 	}
 	
+	public void snapCurrentWindow(int snapGravity) {
+		int taskId = InterActivity.focusedTaskId;
+		if(taskId==-1||!taskStack.containsKey(taskId))
+			taskId = ActivityHooks.mCurrentActivity.getTaskId();
+		snap(SnapHelpers.getSnapLayout(snapGravity, appContext), taskId);
+	}
+	
 	public void snap(final WindowHolder snapWindowHolder, int taskId) {
 		
 		if(!mSeparateWindows) {
-			snap(snapWindowHolder);
+			snapAll(snapWindowHolder);
 			return;
 		}
 		if(!taskStack.containsKey(taskId))
@@ -478,9 +513,10 @@ public class MWTasks
 		InterActivity.toggleDragger(appContext, true);
 	}
 	
-	private void snap(final WindowHolder snapWindowHolder) {
+	private void snapAll(final WindowHolder snapWindowHolder) {
 		for(Map.Entry<Integer, TaskHolder> mTh : taskStack.entrySet()) {
-			if(mTh.getValue()!=null) mTh.getValue().snap(snapWindowHolder);
+			if(mTh.getValue()!=null) 
+				mTh.getValue().snap(snapWindowHolder);
 		}
 		InterActivity.drawFocusFrame(appContext, snapWindowHolder.x, snapWindowHolder.y, snapWindowHolder.width, snapWindowHolder.height);
 		InterActivity.toggleDragger(appContext, true);
@@ -524,4 +560,40 @@ public class MWTasks
 		}
 	}
 	
+	public void closeCurrentApp() {
+		try {
+			/* Work-around for bug:
+			 * When closing a floating window using the titlebar
+			 * while the keyboard is open, the floating window
+			 * closes but the keyboard remains open on top of
+			 * another fullscreen app.
+			 */
+			InputMethodManager imm = (InputMethodManager)
+				appContext.getSystemService(Context.INPUT_METHOD_SERVICE);
+			imm.hideSoftInputFromWindow(ActivityHooks.mCurrentActivity.getCurrentFocus().getWindowToken(), 0);
+		} catch (Exception e) {
+			//ignore
+		}
+		//final TaskHolder mTaskHolder = taskStack.get(InterActivity.focusedTaskId);
+		final Activity sActivity;
+		//if(mTaskHolder==null)
+			sActivity = ActivityHooks.mCurrentActivity;
+		//else
+		//	sActivity = mTaskHolder.mActivity;
+		if (mTitleBarSingleWindow && Build.VERSION.SDK_INT >= 16) {
+			sActivity.finishAffinity();
+		} else {
+			sActivity.finish();
+		}
+	}
+	
+	public void minimizeCurrentApp(){
+		//final TaskHolder mTaskHolder = taskStack.get(InterActivity.focusedTaskId);
+		final Activity sActivity;
+		//if(mTaskHolder==null)
+			sActivity = ActivityHooks.mCurrentActivity;
+		//else
+		//	sActivity = mTaskHolder.mActivity;
+		InterActivity.minimizeAndShowNotification(sActivity);
+	}
 }
