@@ -180,7 +180,7 @@ public class Common {
 	public static final String EXTRA_SNAP_SIDE = ORIGINAL_PACKAGE_NAME + ".EXTRA_SNAP_SIDE";
 	public static final String EXTRA_SNAP = ORIGINAL_PACKAGE_NAME + ".EXTRA_SNAP"; //int Gravity flags
 	public static final String REFRESH_APP_LAYOUT = ORIGINAL_PACKAGE_NAME + ".REFRESH_APP_LAYOUT";
-	
+	public static final String REFRESH_APP_PREFS= ORIGINAL_PACKAGE_NAME + ".REFRESH_APP_PREFS";
 
 	/* Others */
 	public static final String LOG_TAG = "XHaloFloatingWindow(SDK: " + Build.VERSION.SDK_INT + ") - ";
@@ -215,6 +215,20 @@ public class Common {
 	public static final int TITLEBAR_ICON_BachMinuetInG = 2;
 	public static final int TITLEBAR_ICON_SSNJR2002 = 3;
 	public static final int TITLEBAR_ICON_DEFAULT = TITLEBAR_ICON_BachMinuetInG;
+	
+	/* Titlebar layouts */
+	public static final int TITLEBAR_LAYOUT_ORIGINAL = 0;
+	public static final String TITLEBAR_LAYOUT_ORIGINAL_BUTTONS = "mt-+x";
+	public static final int TITLEBAR_LAYOUT_ORIGINAL_SEPARATE = 1;
+	public static final String TITLEBAR_LAYOUT_ORIGINAL_SEPARATE_BUTTONS = "mts-+x";
+	public static final int TITLEBAR_LAYOUT_LEFTSIDE = 2;
+	public static final String TITLEBAR_LAYOUT_LEFTSIDE_BUTTONS = "x+-tm";
+	public static final int TITLEBAR_LAYOUT_LEFTSIDE_SEPARATE = 3;
+	public static final String TITLEBAR_LAYOUT_LEFTSIDE_SEPARATE_BUTTONS = "x+-stm";
+	public static final int TITLEBAR_LAYOUT_MINIMAL_LEFT = 4;
+	public static final String TITLEBAR_LAYOUT_MINIMAL_LEFT_BUTTONS = "xtm";
+	public static final int TITLEBAR_LAYOUT_MINIMAL_RIGHT = 5;
+	public static final String TITLEBAR_LAYOUT_MINIMAL_RIGHT_BUTTONS = "mtx";
 
 	/*Floating dot themes */
 	public static final String KEY_FLOATDOT_LAUNCHER_ENABLED = "floatdot_launcher_enabled";

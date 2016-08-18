@@ -7,7 +7,7 @@ import android.util.*;
 
 public class Debugger
 {
-	public static boolean DEBUG_SWITCH = true;
+	public static boolean DEBUG_SWITCH = false;
 	public static String packageName = new String();
 	public static String packageId = new String();
 	public static String currentInstance = new String();
@@ -24,7 +24,7 @@ public class Debugger
 			setupDebug();
 		header = "XHFW:" + currentInstanceId + ":" + packageName;
 		msg.add(header + " " + sTag);
-		if(MovableWindow.mWindowHolder!=null){
+		if(ActivityHooks.taskStack!=null){
 			msg.add(header + "        " + DEBUG_MovableWindow_1());
 			msg.add(header + "        " + DEBUG_MovableWindow_2());
 		}
@@ -40,7 +40,7 @@ public class Debugger
 			setupDebug();
 		header = "XHFW:" + currentInstanceId + ":" + packageName;
 		msg.add(header + " " + sTag);
-		if(MovableWindow.mWindowHolder!=null){
+		if(ActivityHooks.taskStack!=null){
 			msg.add(header + "        " + DEBUG_MovableWindow_1());
 			msg.add(header + "        " + DEBUG_MovableWindow_2());
 		}
@@ -56,23 +56,21 @@ public class Debugger
 	}
 	
 	private static String DEBUG_MovableWindow(){
-		return "MovableWindow: " + (MovableWindow.isMovable?"isMovable, ":"") + 
-			"x:y [" + MovableWindow.mWindowHolder.x + ":" + MovableWindow.mWindowHolder.y + "] " +
-			"size [" + MovableWindow.mWindowHolder.width + ":" + MovableWindow.mWindowHolder.height + "] " +
-			
-			"isSnapped: " + MovableWindow.mWindowHolder.isSnapped + " isMaximized: " + MovableWindow.mWindowHolder.isMaximized +
-			" Windows stack size: " + MovableWindow.mWindowHolder.mWindows.size();
+		return "MovableWindow: " + (ActivityHooks.isMovable?"isMovable, ":"") + 
+			(ActivityHooks.taskStack.defaultLayout!=null?
+			"x:y [" + ActivityHooks.taskStack.defaultLayout.x + ":" + ActivityHooks.taskStack.defaultLayout.y + "] " +
+		"size [" + ActivityHooks.taskStack.defaultLayout.width + ":" + ActivityHooks.taskStack.defaultLayout.height + "] ":"no layout");
 	}
 	
 	private static String DEBUG_MovableWindow_1(){
-		return "MovableWindow: " + (MovableWindow.isMovable?"isMovable, ":"") + 
-		"x:y [" + MovableWindow.mWindowHolder.x + ":" + MovableWindow.mWindowHolder.y + "] " +
-		"size [" + MovableWindow.mWindowHolder.width + ":" + MovableWindow.mWindowHolder.height + "] ";
+		return "MovableWindow: " + (ActivityHooks.isMovable?"isMovable, ":"") + 
+			(ActivityHooks.taskStack.defaultLayout!=null?
+			"x:y [" + ActivityHooks.taskStack.defaultLayout.x + ":" + ActivityHooks.taskStack.defaultLayout.y + "] " +
+			"size [" + ActivityHooks.taskStack.defaultLayout.width + ":" + ActivityHooks.taskStack.defaultLayout.height + "] ":"no layout");
 	}
 	
 	private static String DEBUG_MovableWindow_2(){
-		return "isSnapped: " + MovableWindow.mWindowHolder.isSnapped + " isMaximized: " + MovableWindow.mWindowHolder.isMaximized +
-			" Windows stack size: " + MovableWindow.mWindowHolder.mWindows.size();
+		return "";
 	}
 	
 	private static void log(String text){

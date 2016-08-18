@@ -9,7 +9,6 @@ import de.robv.android.xposed.*;
 import android.view.*;
 import com.zst.xposed.halo.floatingwindow3.debug.*;
 import android.widget.*;
-import com.zst.xposed.halo.floatingwindow3.MovableOverlayView;
 import com.zst.xposed.halo.floatingwindow3.overlays.*;
 import android.content.*;
 import com.zst.xposed.halo.floatingwindow3.*;
@@ -393,7 +392,7 @@ public class TaskHolder
 			mOverlay.setTitleBarVisibility(true);
 	}
 	
-	private void removeOverlayView(final Window mWindow) {
+	public void removeOverlayView(final Window mWindow) {
 		mOverlay = null;
 		if(mWindow==null)
 			return;

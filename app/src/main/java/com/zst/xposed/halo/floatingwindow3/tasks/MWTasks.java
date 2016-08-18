@@ -46,7 +46,7 @@ public class MWTasks
 	public boolean mTitleBarSingleWindow;
 	public int MOVE_MAX_RANGE;
 	public int mInitGravity;
-	private WindowHolder defaultLayout = null;
+	public WindowHolder defaultLayout = null;
 	
 	public MWTasks(final String pkg, final Activity mActivity){
 		/* stuff that is common for all activities */
@@ -596,4 +596,5 @@ public class MWTasks
 		//	sActivity = mTaskHolder.mActivity;
 		InterActivity.minimizeAndShowNotification(sActivity);
 	}
+	
 }

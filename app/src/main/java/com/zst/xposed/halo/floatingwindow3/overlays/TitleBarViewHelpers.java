@@ -29,6 +29,7 @@ public class TitleBarViewHelpers
 	private static View.OnClickListener clickListener = null;
 	public static ImageButton more_button = null;
 	private static int mTextColor = Color.WHITE;
+	public static boolean USE_LOCAL = false;
 	
 	public static void setOnClickListener(final View.OnClickListener click)
 	{
@@ -141,16 +142,18 @@ public class TitleBarViewHelpers
 	public static void setTheme(ImageButton mButton, final Character code) {
 		if(code == null)
 			return;
-		if(code=='s'&&!ActivityHooks.taskStack.mSeparateWindows)
+		if(code=='s'&&!USE_LOCAL&&!ActivityHooks.taskStack.mSeparateWindows)
 			setThemeInActive(mButton, code);
-		else
-			mButton.setImageDrawable(tintIcon(ActivityHooks.mOverlayTheme.getButton(code).getConstantState().newDrawable(), mTextColor));
+		else {
+			mButton.setImageDrawable(tintIcon(ActivityHooks.mOverlayTheme.getButton(code), mTextColor));
+		}
+			
 	}
 	
 	public static void setThemeInActive(ImageButton mButton, final Character code) {
 		if(code == null)
 			return;
-		mButton.setImageDrawable(tintIcon(ActivityHooks.mOverlayTheme.getButton(code).getConstantState().newDrawable(), Color.GRAY));
+		mButton.setImageDrawable(tintIcon(ActivityHooks.mOverlayTheme.getButton(code), Color.GRAY));
 		}
 	
 	public static void setAction(final ImageButton mButton) {
@@ -298,6 +301,154 @@ public class TitleBarViewHelpers
 		return Color.argb(alpha, red, green, blue);
 	}
 
+	public static RelativeLayout getTitleBarView(final Context appContext, int mTitleBarHeight, boolean mTintedTitlebar, int mTitleBarColor, int mTitleBarDivider, final Runnable transparencyRunnable) {
+		RelativeLayout result = new RelativeLayout(appContext);
+		RelativeLayout.LayoutParams lp = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT, 0);
+		result.setLayoutParams(lp);
+		result.setBackgroundColor(0);
+		result.setTag("movable_titlebar");
+		result.setClickable(true);
+		result.setId(R.id.movable_titlebar);
+
+		final View divider = new View(appContext);
+		lp = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT, 2);
+		lp.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
+		lp.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
+		lp.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);	
+		divider.setLayoutParams(lp);
+		divider.setMinimumHeight(5);
+		divider.setBackgroundColor(Color.WHITE);
+		divider.setTag("movable_titlebar_line");
+
+		final View.OnClickListener click = new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				String tag = (v.getTag() instanceof String) ? (String) v.getTag() : "";
+				int id = v.getId();
+
+				if (id == R.id.movable_titlebar_close || tag.equals("movable_titlebar_close")) {
+					ActivityHooks.taskStack.closeCurrentApp();
+				} else if (id == R.id.movable_titlebar_max || tag.equals("movable_titlebar_max")) {
+					ActivityHooks.taskStack.maximize();
+				} else if (id == R.id.movable_titlebar_min || tag.equals("movable_titlebar_min")) {
+					ActivityHooks.taskStack.minimizeCurrentApp();
+				} else if (id == R.id.movable_titlebar_separate || tag.equals("movable_titlebar_separate")) {
+					ActivityHooks.taskStack.switchSeparateWindows(v);
+				}
+			}
+		};
+
+		TitleBarViewHelpers.setOnClickListener(click);
+		TitleBarViewHelpers.addButtons(result, appContext);
+		result.addView(divider);
+		if(TitleBarViewHelpers.more_button!=null&&!USE_LOCAL) {
+			final PopupMenu popupMenu = getTitleBarPopupMenu(appContext, TitleBarViewHelpers.more_button, transparencyRunnable);
+			TitleBarViewHelpers.more_button.setOnClickListener(new View.OnClickListener() {
+					@Override
+					public void onClick(View p1)
+					{
+						popupMenu.show();
+					}
+				});
+		}
+
+		RelativeLayout.LayoutParams header_param = (RelativeLayout.LayoutParams) result.getLayoutParams();
+		header_param.height = mTitleBarHeight;
+		result.setLayoutParams(header_param);
+
+		ViewGroup.LayoutParams divider_param = divider.getLayoutParams();
+		divider_param.height = mTitleBarDivider;
+		divider.setLayoutParams(divider_param);
+	
+		String color_str = MainXposed.mPref.getString(Common.KEY_WINDOW_TITLEBAR_SEPARATOR_COLOR,
+													  Common.DEFAULT_WINDOW_TITLEBAR_SEPARATOR_COLOR);
+		divider.setBackgroundColor(Color.parseColor("#" + color_str));
+
+		result.setOnTouchListener(new View.OnTouchListener(){
+				@Override
+				public boolean onTouch(View v, MotionEvent e)
+				{
+					if(ActivityHooks.taskStack!=null)
+						ActivityHooks.taskStack.onUserAction(null, e, Common.ACTION_DRAG, v);
+					return false;
+				}
+			});
+
+		if(mTintedTitlebar) result.setBackgroundColor(mTitleBarColor);
+
+		return result;
+	}
+	
+	public static PopupMenu getTitleBarPopupMenu(final Context appContext, final View anchor, final Runnable transparencyAction) {
+		final PopupMenu result = new PopupMenu(appContext, anchor);
+		final Menu menu = result.getMenu();
+		final String item1 = MainXposed.sModRes.getString(R.string.dnm_maximize);
+		final String item2 = MainXposed.sModRes.getString(R.string.dnm_minimize);
+		final String item3 = MainXposed.sModRes.getString(R.string.dnm_close_app);
+		final String item4 = MainXposed.sModRes.getString(R.string.dnm_snap_window);
+		final String menu_item4_sub1 = MainXposed.sModRes.getString(R.string.dnm_snap_window_sub1);
+		final String menu_item4_sub2 = MainXposed.sModRes.getString(R.string.dnm_snap_window_sub2);
+		final String menu_item4_sub3 = MainXposed.sModRes.getString(R.string.dnm_snap_window_sub3);
+		final String menu_item4_sub4 = MainXposed.sModRes.getString(R.string.dnm_snap_window_sub4);
+		//4WAYMOD
+		final String menu_item4_sub5 = MainXposed.sModRes.getString(R.string.dnm_snap_window_sub5);
+		final String menu_item4_sub6 = MainXposed.sModRes.getString(R.string.dnm_snap_window_sub6);
+		final String menu_item4_sub7 = MainXposed.sModRes.getString(R.string.dnm_snap_window_sub7);
+		final String menu_item4_sub8 = MainXposed.sModRes.getString(R.string.dnm_snap_window_sub8);
+		final String item5 = MainXposed.sModRes.getString(R.string.dnm_transparency);
+
+		menu.add(item1);
+		menu.add(item2);
+		menu.add(item3);
+		final SubMenu snaps = menu.addSubMenu(item4);
+		snaps.add(menu_item4_sub1);
+		snaps.add(menu_item4_sub2);
+		snaps.add(menu_item4_sub3);
+		snaps.add(menu_item4_sub4);
+		snaps.add(menu_item4_sub5);
+		snaps.add(menu_item4_sub6);
+		snaps.add(menu_item4_sub7);
+		snaps.add(menu_item4_sub8);
+		menu.add(item5);
+		final PopupMenu.OnMenuItemClickListener onClick = new PopupMenu.OnMenuItemClickListener() {
+			@Override
+			public boolean onMenuItemClick(MenuItem item)
+			{
+				if (item.getTitle().equals(item1)) {
+					ActivityHooks.taskStack.maximize();
+				} else if (item.getTitle().equals(item2)) {
+					ActivityHooks.taskStack.minimizeCurrentApp();
+				} else if (item.getTitle().equals(item3)) {
+					ActivityHooks.taskStack.closeCurrentApp();
+				} else if (item.getTitle().equals(menu_item4_sub1)) {
+					ActivityHooks.taskStack.snapCurrentWindow(Gravity.TOP);
+				} else if (item.getTitle().equals(menu_item4_sub2)) {
+					ActivityHooks.taskStack.snapCurrentWindow(Gravity.BOTTOM);
+				} else if (item.getTitle().equals(menu_item4_sub3)) {
+					ActivityHooks.taskStack.snapCurrentWindow(Gravity.LEFT);
+				} else if (item.getTitle().equals(menu_item4_sub4)) {
+					ActivityHooks.taskStack.snapCurrentWindow(Gravity.RIGHT);
+				}
+				else if (item.getTitle().equals(menu_item4_sub5)) {
+					ActivityHooks.taskStack.snapCurrentWindow(Gravity.TOP | Gravity.LEFT);
+				} else if (item.getTitle().equals(menu_item4_sub6)) {
+					ActivityHooks.taskStack.snapCurrentWindow(Gravity.TOP | Gravity.RIGHT);
+				}else if (item.getTitle().equals(menu_item4_sub7)) {
+					ActivityHooks.taskStack.snapCurrentWindow(Gravity.BOTTOM | Gravity.LEFT);
+				} else if (item.getTitle().equals(menu_item4_sub8)) {
+					ActivityHooks.taskStack.snapCurrentWindow(Gravity.BOTTOM | Gravity.RIGHT);
+				} else if (item.getTitle().equals(item5)) {
+					if(transparencyAction!=null)
+						transparencyAction.run();
+				}
+				return false;
+			}
+		};
+
+		result.setOnMenuItemClickListener(onClick);
+		return result;
+	}
+	
 	private static Bitmap drawableToBitmap(Drawable drawable) throws IllegalArgumentException {
 		if (drawable instanceof BitmapDrawable) {
 			return ((BitmapDrawable) drawable).getBitmap();
@@ -316,9 +467,13 @@ public class TitleBarViewHelpers
 	}
 	
 	public static Drawable tintIcon(final Drawable icon, int icon_color) {
+		Drawable result;
+		if(icon==null)
+			return null;
 		icon.clearColorFilter();
-		icon.setColorFilter(icon_color, PorterDuff.Mode.SRC_ATOP);
-		return icon;
+		result = icon.getConstantState().newDrawable();
+		result.setColorFilter(icon_color, PorterDuff.Mode.SRC_ATOP);
+		return result;
 	}
 	
 	static class TitleBarButton {

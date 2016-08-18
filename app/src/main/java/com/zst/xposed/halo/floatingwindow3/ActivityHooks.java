@@ -39,6 +39,8 @@ public class ActivityHooks
 						(Util.isFlag(mCurrentActivity.getIntent().getFlags(), MainXposed.mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW)));
 					if(!isMovable)
 						return;
+					MainXposed.mPref.reload();
+					registerPrefsUpdateReceiver();
 					if(taskStack==null)
 						taskStack = new MWTasks(packageName, mCurrentActivity);
 					taskStack.onNewTask(mCurrentActivity);
@@ -149,6 +151,42 @@ public class ActivityHooks
 			});
 	}
 	
+	/*
+	 * This is to fix "resuming" apps that have not been paused.
+	 * Some apps (eg. BoatBrowser) will throw exceptions and we
+	 * fix it using this hook.
+	 * 
+	 * According to the AOSP sources for Instrumentation.java:
+	 * 
+	 * 		To allow normal system exception process to occur, return false.
+	 *		If true is returned, the system will proceed as if the exception
+	 *		didn't happen.
+	 *
+	 * Therefore, to remove the exception, we return true if the resume activity
+	 * is in process and false when we are not resuming to let normal system behavior
+	 * continue as normal.
+	 */
+	static boolean mExceptionHook = false;
+	public static void fixExceptionWhenResuming(final Class<?> cls) throws Throwable {
+
+		XposedBridge.hookAllMethods(cls, "performResumeActivity",
+			new XC_MethodHook() {
+				protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+					mExceptionHook = true;
+				}
+				protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+					mExceptionHook = false;
+				}
+			});
+		XposedBridge.hookAllMethods(android.app.Instrumentation.class, "onException",
+			new XC_MethodReplacement() {
+				protected Object replaceHookedMethod(MethodHookParam param) throws Throwable {
+					return mExceptionHook;
+				}
+			});
+	}
+	
+	
 	final private static Runnable restartBroadcastCallback = new Runnable(){
 		@Override
 		public void run()
@@ -167,6 +205,12 @@ public class ActivityHooks
 			return;
 		InterActivity.restartCallback = restartBroadcastCallback;
 		InterActivity.registerRestartBroadcastReceiver(mCurrentActivity.getApplicationContext());
+	}
+	
+	private static void registerPrefsUpdateReceiver() {
+		if(InterActivity.updatePrefsReceiverRegistered)
+			return;
+		InterActivity.registerUpdatePrefsBroadcastReceiver(mCurrentActivity.getApplicationContext());
 	}
 	
 }

@@ -174,7 +174,7 @@ public class AndroidHooks
 					Context mContext = (Context) Util.getFailsafeObjectFromObject(mWindowManagerService, "mContext");
 					if(mContext==null)
 						return;
-					MovableWindow.sendRemovedPackageInfo(packageName, mContext, true);
+					InterActivity.sendRemovedPackageInfo(packageName, mContext, true);
 				}
 			});
 	}

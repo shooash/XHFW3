@@ -8,6 +8,8 @@ import android.graphics.*;
 import com.zst.xposed.halo.floatingwindow3.tasks.*;
 import android.content.pm.*;
 import android.annotation.*;
+import com.zst.xposed.halo.floatingwindow3.themable.*;
+import com.zst.xposed.halo.floatingwindow3.overlays.*;
 
 public class InterActivity
 {
@@ -18,6 +20,7 @@ public class InterActivity
 	private static Runnable floatDotSenderRunnable = null;
 	public static XHFWInterface XHFWInterfaceLink = null;
 	static boolean showFocusOutline = false;
+	public static boolean updatePrefsReceiverRegistered = false;
 	public static boolean restartReceiverRegistered = false;
 	public static boolean FloatDotReceiverRegistered = false;
 	public static int focusedTaskId = -1;
@@ -118,6 +121,35 @@ public class InterActivity
 		}
 		restartReceiverRegistered = true;
 		return true;
+	}
+	
+	final static BroadcastReceiver updatePrefsBroadcastReceiver = new BroadcastReceiver() {
+		@Override
+		public void onReceive(Context p1, Intent p2)
+		{
+			MainXposed.mPref.reload();
+			ActivityHooks.mOverlayTheme = new OverlayTheme();
+			TitleBarViewHelpers.buttons = null;
+			//ActivityHooks.taskStack.refreshAllOverlays();
+			//TODO: redraw Overlays
+		}
+	};
+	
+	public static boolean registerUpdatePrefsBroadcastReceiver(final Context mContext) {
+		IntentFilter filters = new IntentFilter();
+		filters.addAction(Common.REFRESH_APP_PREFS);
+		try{
+			mContext.registerReceiver(updatePrefsBroadcastReceiver, filters);
+		} catch(Throwable e){
+			Debugger.DEBUG_E("registerUpdatePrefsBroadcastReceiver failed");
+			return false;
+		}
+		updatePrefsReceiverRegistered = true;
+		return true;
+	}
+	
+	public static void sendUpdatePrefsBroadcast(final Context mContext) {
+		Util.sendBroadcastSafe(new Intent(Common.REFRESH_APP_PREFS), mContext);
 	}
 
 	public static boolean changeFocusApp(final Activity a) {
@@ -274,7 +306,8 @@ public class InterActivity
 				@Override
 				public void onReceive(Context context, Intent intent) {
 					notificationManager.cancel(ID_NOTIFICATION_RESTORE);
-					ActivityHooks.taskStack.onTaskFocused(ac.getTaskId(), ac.getWindow());
+					changeFocusApp(ac);
+					//ActivityHooks.taskStack.onTaskFocused(ac.getTaskId(), ac.getWindow());
 					context.unregisterReceiver(this);
 				}
 			}, new IntentFilter(Common.REMOVE_NOTIFICATION_RESTORE + ac.getPackageName()));

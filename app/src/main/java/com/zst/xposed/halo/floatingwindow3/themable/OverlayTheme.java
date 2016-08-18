@@ -1,18 +1,41 @@
 package com.zst.xposed.halo.floatingwindow3.themable;
 import android.graphics.drawable.*;
 import com.zst.xposed.halo.floatingwindow3.*;
+import android.content.*;
+import android.content.res.*;
 
 public class OverlayTheme
 {
 	final int currentThemeId;;
 	final titleBarThemeHolder currentTheme;
 	final String buttonsList;
+	SharedPreferences mSharedPrefs = null;
+	Resources mResources = null;
 	
 	public OverlayTheme(){
-		this(MainXposed.mPref.getInt(Common.KEY_WINDOW_TITLEBAR_ICON_TYPE,
-					 Common.DEFAULT_WINDOW_TITLEBAR_ICONS_TYPE));
+		this(-1);
 	}
+	
+	public OverlayTheme(final SharedPreferences prefs, final Resources res) {
+		this(prefs, res, prefs.getInt(Common.KEY_WINDOW_TITLEBAR_ICON_TYPE,
+					Common.DEFAULT_WINDOW_TITLEBAR_ICONS_TYPE));
+	}
+	
+	public OverlayTheme(final SharedPreferences prefs, final Resources res, int theme) {
+		mSharedPrefs = prefs;
+		mResources = res;
+		currentThemeId = theme;
+		currentTheme = new titleBarThemeHolder();
+		buttonsList = setButtonsList();
+		setCurrentTheme();
+	}
+	
 	public OverlayTheme(int theme) {
+//		if(MainXposed.mPref!=null)
+//			MainXposed.mPref.reload();
+		if(theme==-1)
+			theme = MainXposed.mPref.getInt(Common.KEY_WINDOW_TITLEBAR_ICON_TYPE,
+											Common.DEFAULT_WINDOW_TITLEBAR_ICONS_TYPE);
 		currentThemeId = theme;
 		currentTheme = new titleBarThemeHolder();
 		setCurrentTheme();
@@ -28,10 +51,16 @@ public class OverlayTheme
 	}
 	
 	private String setButtonsList() {
-		return MainXposed.mPref.getString(Common.KEY_BUTTONS_LIST, Common.DEFAULT_BUTTONS_LIST);
+		return mSharedPrefs==null?
+			MainXposed.mPref.getString(Common.KEY_BUTTONS_LIST, Common.DEFAULT_BUTTONS_LIST)
+			:mSharedPrefs.getString(Common.KEY_BUTTONS_LIST, Common.DEFAULT_BUTTONS_LIST);
 	}
 	
 	private void setCurrentTheme() {
+		if(mResources!=null) {
+			setCurrentThemeLocal();
+			return;
+		}
 		switch (currentThemeId) {
 			case Common.TITLEBAR_ICON_ORIGINAL:
 				currentTheme.close = MainXposed.sModRes.getDrawable(R.drawable.movable_title_close_old);
@@ -53,6 +82,32 @@ public class OverlayTheme
 				currentTheme.minimize = MainXposed.sModRes.getDrawable(R.drawable.movable_title_min_ssnjr);
 				currentTheme.menu = MainXposed.sModRes.getDrawable(R.drawable.movable_title_more_ssnjr);
 				currentTheme.separate = MainXposed.sModRes.getDrawable(R.drawable.movable_title_separate_ssnjr);
+				break;
+		}
+	}
+	
+	private void setCurrentThemeLocal(){
+		switch (currentThemeId) {
+			case Common.TITLEBAR_ICON_ORIGINAL:
+				currentTheme.close = mResources.getDrawable(R.drawable.movable_title_close_old);
+				currentTheme.maximize = mResources.getDrawable(R.drawable.movable_title_max_old);
+				currentTheme.minimize = mResources.getDrawable(R.drawable.movable_title_min_old);
+				currentTheme.menu = mResources.getDrawable(R.drawable.movable_title_more_old);
+				currentTheme.separate = mResources.getDrawable(R.drawable.movable_title_more_old);
+				break;
+			case Common.TITLEBAR_ICON_BachMinuetInG:
+				currentTheme.close = mResources.getDrawable(R.drawable.movable_title_close);
+				currentTheme.maximize = mResources.getDrawable(R.drawable.movable_title_max);
+				currentTheme.minimize = mResources.getDrawable(R.drawable.movable_title_min);
+				currentTheme.menu = mResources.getDrawable(R.drawable.movable_title_more);
+				currentTheme.separate = mResources.getDrawable(R.drawable.movable_title_more);
+				break;
+			case Common.TITLEBAR_ICON_SSNJR2002:
+				currentTheme.close = mResources.getDrawable(R.drawable.movable_title_close_ssnjr);
+				currentTheme.maximize = mResources.getDrawable(R.drawable.movable_title_max_ssnjr);
+				currentTheme.minimize = mResources.getDrawable(R.drawable.movable_title_min_ssnjr);
+				currentTheme.menu = mResources.getDrawable(R.drawable.movable_title_more_ssnjr);
+				currentTheme.separate = mResources.getDrawable(R.drawable.movable_title_separate_ssnjr);
 				break;
 		}
 	}

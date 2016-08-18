@@ -41,15 +41,17 @@ public class MainXposed implements IXposedHookLoadPackage, IXposedHookZygoteInit
 	if(mPref==null){
 		mPref = new XSharedPreferences(Common.THIS_MOD_PACKAGE_NAME, Common.PREFERENCE_MAIN_FILE);
 		mPref.makeWorldReadable();
-	}	
+	}
+	mPref.reload();
+//		mPackagesList.reload();
+		
 	if(mPackagesList==null){
 		mPackagesList = new XSharedPreferences(Common.THIS_MOD_PACKAGE_NAME, Common.PREFERENCE_PACKAGES_FILE);
 		mPackagesList.makeWorldReadable();
-	}	
-	else{
-		mPref.reload();
-//		mPackagesList.reload();
-		}
+	}
+	mPackagesList.reload();
+	
+	
 	if(!mPref.getBoolean(Common.KEY_MOVABLE_WINDOW, Common.DEFAULT_MOVABLE_WINDOW)) return;
 	
 	if(lpparam.packageName==null) return;
@@ -106,7 +108,7 @@ public class MainXposed implements IXposedHookLoadPackage, IXposedHookZygoteInit
 		try{
 			Class<?> clsAT = findClass("android.app.ActivityThread", lpparam.classLoader);
 			if(clsAT!=null){
-				MovableWindow.fixExceptionWhenResuming(clsAT);
+				ActivityHooks.fixExceptionWhenResuming(clsAT);
 				} 
 			}catch(Throwable t){XposedBridge.log(t);}
 //		
