@@ -130,6 +130,7 @@ public class InterActivity
 			MainXposed.mPref.reload();
 			ActivityHooks.mOverlayTheme = new OverlayTheme();
 			TitleBarViewHelpers.buttons = null;
+			Debugger.DEBUG_SWITCH = MainXposed.mPref.getBoolean(Common.KEY_DEBUG, Common.DEFAULT_DEBUG);
 			//ActivityHooks.taskStack.refreshAllOverlays();
 			//TODO: redraw Overlays
 		}

@@ -21,6 +21,7 @@ public class Common {
 	public static final int PACKAGE_UNUSED = 16;
 
 	/* Preference keys */
+	public static final String KEY_DEBUG = "debug_switch";
 	public static final String KEY_ALPHA = "window_alpha";
 	public static final String KEY_DIM = "window_dim";
 	public static final String KEY_MAXIMIZE_ALL = "window_maximize_all";
@@ -103,6 +104,7 @@ public class Common {
 	public static final String KEY_BUTTONS_LIST = "buttons_list";
 
 	/* Preference defaults */
+	public static final boolean DEFAULT_DEBUG = false;
 	public static final float DEFAULT_ALPHA = 1f;
 	public static final float DEFAULT_DIM = 0.25f;
 	public static final boolean DEFAULT_MAXIMIZE_ALL = false;

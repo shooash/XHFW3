@@ -21,6 +21,7 @@ public class ActivityHooks
 	
 	public static void loadActivityHooks(final XC_LoadPackage.LoadPackageParam lpparam) {
 		packageName = lpparam.packageName;
+		Debugger.DEBUG_SWITCH = MainXposed.mPref.getBoolean(Common.KEY_DEBUG, Common.DEFAULT_DEBUG);
 		hookActivityLoaders();
 		injectGenerateLayout(lpparam);
 	}

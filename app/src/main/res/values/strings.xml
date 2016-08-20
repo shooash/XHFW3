@@ -9,6 +9,7 @@
 	<string name="app_maximized">Maximized List</string>
     <string name="app_testing">Testing</string>
     <string name="app_statusbar_taskbar">Statusbar Taskbar</string>
+	<string name="getLogs">Save logs to /sdcard/XHFWlogs</string>
 
 	<!-- Gravity -->
     <string name="option_gravity_1">Top Left Corner</string>
