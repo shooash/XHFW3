@@ -263,6 +263,11 @@ public class WindowHolder implements Comparable<WindowHolder>
 		else if(Util.isFlag(SnapGravity, Gravity.TOP)) {
 			newheight = fdy + 1;
 		}
+		//Fix Chrome resize bug
+		if(ActivityHooks.packageName!=null&&ActivityHooks.packageName.startsWith("com.android.chrome")&&newx==0&&newy==0){
+			if(x==0&&y==0){newx=1; newy=1;}
+			else if(x==1&&y==1) {newx=0; newy=0;}
+		}
 		return updateLayoutIfNeeded(newx, newy, newwidth, newheight);
 	}
 
