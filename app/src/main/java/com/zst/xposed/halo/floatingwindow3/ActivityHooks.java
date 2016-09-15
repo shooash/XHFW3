@@ -99,7 +99,7 @@ public class ActivityHooks
 				@Override
 				protected void afterHookedMethod(MethodHookParam param) throws Throwable {
 					if(!isMovable|| taskStack==null) return;
-					boolean focused = param.args[0];
+					boolean focused = (boolean) param.args[0];
 					Debugger.DEBUG("onWindowFocusChanged " + focused);
 					if(!focused)
 						taskStack.onTaskUnFocused(((Activity) param.thisObject).getTaskId(), ((Activity) param.thisObject).getWindow());

@@ -25,6 +25,10 @@ public class InterActivity
 	public static boolean FloatDotReceiverRegistered = false;
 	public static int focusedTaskId = -1;
 	static final int ID_NOTIFICATION_RESTORE = 22222222;
+	public static final int STATUS_NONE = 0;
+	public static final int STATUS_FLOATING = 1;
+	public static final int STATUS_SNAPPED = 2;
+	public static final int STATUS_FULLSCREEN = 3;
 	
 	final static ServiceConnection XHFWServiceConnection = new ServiceConnection(){
 		@Override
@@ -155,6 +159,10 @@ public class InterActivity
 
 	public static boolean changeFocusApp(final Activity a) {
 		int task = a.getTaskId();
+		int status = STATUS_NONE;
+		final TaskHolder mTaskHolder = ActivityHooks.taskStack.taskStack.get(task);
+		if(mTaskHolder!=null&&mTaskHolder.isSnapped)
+			status = STATUS_SNAPPED;
 //		
 //		if(task == focusedTaskId&&a.getWindow().isActive())
 //			return false;
@@ -164,7 +172,7 @@ public class InterActivity
 		final WindowHolder mWindowHolder = new WindowHolder(a.getWindow());
 		drawFocusFrame(ActivityHooks.taskStack.appContext, mWindowHolder.x, mWindowHolder.y, mWindowHolder.width, mWindowHolder.height);
 		try {
-			if(XHFWInterfaceLink.bringToFront(task)) {
+			if(XHFWInterfaceLink.bringToFront(task, status)) {
 				focusedTaskId = task;
 				return true;
 			}
@@ -178,7 +186,21 @@ public class InterActivity
 		}
 		return true;
 	}
-	
+
+	public static void focusApp(final int taskId) {
+		int status = STATUS_NONE;
+		final TaskHolder mTaskHolder = ActivityHooks.taskStack.taskStack.get(taskId);
+		if(mTaskHolder!=null&&mTaskHolder.isSnapped)
+			status = STATUS_SNAPPED;
+		if (XHFWInterfaceLink == null)
+			connectService(ActivityHooks.taskStack.appContext);
+		Debugger.DEBUG("Ia.focusApp " + taskId);
+		try {
+			XHFWInterfaceLink.focusApp(taskId, status);
+		} catch (Throwable e) {
+			Debugger.DEBUG_E("Ia.focusApp failed for " + taskId);
+		}
+	}
 	public static boolean unfocusApp(int task) {
 		if(XHFWInterfaceLink==null)
 			connectService(ActivityHooks.taskStack.appContext);
@@ -225,21 +247,42 @@ public class InterActivity
 		}
 	}
 
-	public static void toggleDragger(final Context ctx, final boolean show){
-		final Intent intent = new Intent(Common.SHOW_MULTIWINDOW_DRAGGER);
-		intent.putExtra(Common.INTENT_FLOAT_DOT_BOOL, show);
-		if(floatDotSenderRunnable!=null) {
-			floatDotSenderHandler.removeCallbacks(floatDotSenderRunnable);
+	public static void updateStatus(final int taskId, final int status) {
+		if (XHFWInterfaceLink == null)
+			connectService(ActivityHooks.taskStack.appContext);
+		Debugger.DEBUG("Ia.updateStatus " + taskId);
+		try {
+			XHFWInterfaceLink.updateStatus(taskId, status);
+		} catch (Throwable e) {
+			Debugger.DEBUG_E("Ia.updateStatus failed for " + taskId);
 		}
-		floatDotSenderRunnable = new Runnable() {
-			@Override
-			public void run()
-			{
-				Util.sendBroadcastSafe(intent, ctx);
-			}
-		};
-		floatDotSenderHandler.postDelayed(floatDotSenderRunnable, 150);
-		//ctx.sendBroadcast(intent);
+	}
+
+	public static void toggleDragger(final boolean show){
+		if(XHFWInterfaceLink==null)
+			connectService(ActivityHooks.taskStack.appContext);
+		Debugger.DEBUG("Ia.toggleDragger " + show);
+		try {
+			XHFWInterfaceLink.toggleDragger(show);
+		}
+		catch (Throwable e)
+		{
+			Debugger.DEBUG_E("Ia.toggleDragger failed for " + show);
+		}
+//		final Intent intent = new Intent(Common.SHOW_MULTIWINDOW_DRAGGER);
+//		intent.putExtra(Common.INTENT_FLOAT_DOT_BOOL, show);
+//		if(floatDotSenderRunnable!=null) {
+//			floatDotSenderHandler.removeCallbacks(floatDotSenderRunnable);
+//		}
+//		floatDotSenderRunnable = new Runnable() {
+//			@Override
+//			public void run()
+//			{
+//				Util.sendBroadcastSafe(intent, ctx);
+//			}
+//		};
+//		floatDotSenderHandler.postDelayed(floatDotSenderRunnable, 150);
+//		//ctx.sendBroadcast(intent);
 	}
 
 	

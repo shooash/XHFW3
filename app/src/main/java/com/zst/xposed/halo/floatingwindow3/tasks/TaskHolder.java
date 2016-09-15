@@ -27,8 +27,8 @@ public class TaskHolder
 	String packageName;
 	//MovableOverlayView mMovableOverlay = null;
 	OverlayView mOverlay = null;
-	boolean isSnapped;
-	boolean isMaximized;
+	public boolean isSnapped;
+	public boolean isMaximized;
 	
 	public TaskHolder(final Activity sActivity, final WindowHolder mDefaultLayout, final WindowHolder mCachedLayout) {
 	

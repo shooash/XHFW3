@@ -81,6 +81,7 @@ public class OverlayView extends RelativeLayout
 		loadPrefs();
 		final LayoutParams lp = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
 		setBackground(null);
+		//noinspection ResourceType
 		setId(ID_OVERLAY_VIEW);
 		Util.setRootNamespace(this, false);
 		setCorners();
@@ -335,7 +336,7 @@ public class OverlayView extends RelativeLayout
 		tv.setLayoutParams(lp);
 		tv.setGravity(Gravity.CENTER_VERTICAL | Gravity.CENTER_HORIZONTAL);
 		tv.setText(MainXposed.sModRes.getString(R.string.dnm_title)); 
-		tv.setTextAppearance(appContext, android.R.attr.textAppearanceMedium);
+		tv.setTextAppearance(appContext, android.R.style.TextAppearance_Medium);
 		tv.setTextColor(Color.WHITE);
 		tv.setTypeface(Typeface.SANS_SERIF, Typeface.BOLD);
 		tv.setTag("movable_dtm_title");
@@ -496,7 +497,7 @@ public class OverlayView extends RelativeLayout
 			}
 	}
 	
-	public static final RelativeLayout.LayoutParams getParams() {
+	public final RelativeLayout.LayoutParams getParams() {
 		final RelativeLayout.LayoutParams paramz = new RelativeLayout.LayoutParams(
 			ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
 		paramz.setMargins(0, 0, 0, 0);

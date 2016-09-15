@@ -1,6 +1,10 @@
 package com.zst.xposed.halo.floatingwindow3.overlays;
 import java.util.*;
 import com.zst.xposed.halo.floatingwindow3.*;
+
+import android.annotation.SuppressLint;
+import android.os.Build;
+import android.support.annotation.StyleRes;
 import android.widget.*;
 import android.content.*;
 import android.text.*;
@@ -129,7 +133,11 @@ public class TitleBarViewHelpers
 		app_title.setEllipsize(TextUtils.TruncateAt.END);
 		app_title.setGravity(Gravity.CENTER_VERTICAL|Gravity.CENTER_HORIZONTAL);
 		app_title.setMaxLines(1);
-		app_title.setTextAppearance(appContext, android.R.attr.textAppearanceMedium);
+		if(Build.VERSION.SDK_INT<23)
+			//noinspection deprecation
+			app_title.setTextAppearance(appContext, android.R.style.TextAppearance_Medium);
+		else
+			app_title.setTextAppearance(android.R.style.TextAppearance_Medium);
 		app_title.setTextColor(mTextColor);
 		app_title.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
 		app_title.setTypeface(Typeface.SANS_SERIF, Typeface.BOLD);
@@ -218,6 +226,7 @@ public class TitleBarViewHelpers
 		mTextColor = getContrastTextColor(bgColor);
 	}
 	
+	@SuppressLint("NewApi")
 	public static int getPrimaryDarkColor(final Window mWindow){
 		int DEFAULT_TITLEBAR_COLOR = Color.BLACK;
 		//mWindow.get
@@ -243,7 +252,7 @@ public class TitleBarViewHelpers
 			DEFAULT_TITLEBAR_COLOR = getMainColorFromActionBarDrawable(actionBarBackground);
 		}
 		else {
-			DEFAULT_TITLEBAR_COLOR = getMainColorFromTheme(mWindow, mWindow.getContext().getTheme(), mWindow.getStatusBarColor());	
+			DEFAULT_TITLEBAR_COLOR = getMainColorFromTheme(mWindow, mWindow.getContext().getTheme(), (Build.VERSION.SDK_INT >= 21) ? mWindow.getStatusBarColor() : Color.BLACK);
 		}
 
 		return DEFAULT_TITLEBAR_COLOR;
@@ -421,22 +430,22 @@ public class TitleBarViewHelpers
 				} else if (item.getTitle().equals(item3)) {
 					ActivityHooks.taskStack.closeCurrentApp();
 				} else if (item.getTitle().equals(menu_item4_sub1)) {
-					ActivityHooks.taskStack.snapCurrentWindow(Gravity.TOP);
+					ActivityHooks.taskStack.snap(Gravity.TOP);
 				} else if (item.getTitle().equals(menu_item4_sub2)) {
-					ActivityHooks.taskStack.snapCurrentWindow(Gravity.BOTTOM);
+					ActivityHooks.taskStack.snap(Gravity.BOTTOM);
 				} else if (item.getTitle().equals(menu_item4_sub3)) {
-					ActivityHooks.taskStack.snapCurrentWindow(Gravity.LEFT);
+					ActivityHooks.taskStack.snap(Gravity.LEFT);
 				} else if (item.getTitle().equals(menu_item4_sub4)) {
-					ActivityHooks.taskStack.snapCurrentWindow(Gravity.RIGHT);
+					ActivityHooks.taskStack.snap(Gravity.RIGHT);
 				}
 				else if (item.getTitle().equals(menu_item4_sub5)) {
-					ActivityHooks.taskStack.snapCurrentWindow(Gravity.TOP | Gravity.LEFT);
+					ActivityHooks.taskStack.snap(Gravity.TOP | Gravity.LEFT);
 				} else if (item.getTitle().equals(menu_item4_sub6)) {
-					ActivityHooks.taskStack.snapCurrentWindow(Gravity.TOP | Gravity.RIGHT);
+					ActivityHooks.taskStack.snap(Gravity.TOP | Gravity.RIGHT);
 				}else if (item.getTitle().equals(menu_item4_sub7)) {
-					ActivityHooks.taskStack.snapCurrentWindow(Gravity.BOTTOM | Gravity.LEFT);
+					ActivityHooks.taskStack.snap(Gravity.BOTTOM | Gravity.LEFT);
 				} else if (item.getTitle().equals(menu_item4_sub8)) {
-					ActivityHooks.taskStack.snapCurrentWindow(Gravity.BOTTOM | Gravity.RIGHT);
+					ActivityHooks.taskStack.snap(Gravity.BOTTOM | Gravity.RIGHT);
 				} else if (item.getTitle().equals(item5)) {
 					if(transparencyAction!=null)
 						transparencyAction.run();

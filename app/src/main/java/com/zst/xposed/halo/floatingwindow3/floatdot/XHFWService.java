@@ -200,30 +200,33 @@ public class XHFWService extends Service {
 			}
 				
 			if(!sIntent.getAction().equals(Common.SHOW_MULTIWINDOW_DRAGGER)) return;
-			final boolean show = sIntent.getBooleanExtra(Common.INTENT_FLOAT_DOT_BOOL, false);
-			if(floatDotReceiverRunnable!=null) {
-				floatDotReceiverHandler.removeCallbacks(floatDotReceiverRunnable);
-			}
-			floatDotReceiverRunnable = new Runnable() {
-				@Override
-				public void run()
-				{
-					if(fd!=null) fd.showDragger(show);
-					if(ld!=null) ld.showDragger(!show);
-				}
-			};
-			floatDotReceiverHandler.postDelayed(floatDotReceiverRunnable, 250);
+			showDragger(sIntent.getBooleanExtra(Common.INTENT_FLOAT_DOT_BOOL, false));
 			
 		}
 	};
-	
+
+	private void showDragger(final boolean show) {
+		if(floatDotReceiverRunnable!=null) {
+			floatDotReceiverHandler.removeCallbacks(floatDotReceiverRunnable);
+		}
+		floatDotReceiverRunnable = new Runnable() {
+			@Override
+			public void run()
+			{
+				if(fd!=null) fd.showDragger(show);
+				if(ld!=null) ld.showDragger(!show);
+			}
+		};
+		floatDotReceiverHandler.postDelayed(floatDotReceiverRunnable, 250);
+	}
+
 	private void registerBroadcast(){
 		IntentFilter i = new IntentFilter();
 		i.addAction(Common.SHOW_MULTIWINDOW_DRAGGER);
 		i.addAction(Common.UPDATE_FLOATDOT_PARAMS);
 		registerReceiver(br,i);
 	}
-	
+
 	private final XHFWInterface.Stub mBinder = new XHFWInterface.Stub(){
 
 		@Override
@@ -244,34 +247,53 @@ public class XHFWService extends Service {
 		{
 			// TODO: Implement this method
 		}
-		
+
+		@Override
+		public boolean focusApp(int taskId, int status) throws RemoteException {
+			if(taskId == lastTaskId)
+				return false;
+			previousTaskId = lastTaskId;
+			lastTaskId = taskId;
+			updateStatus(taskId, status);
+			return true;
+		}
+
 		@Override
 		public void unfocusApp(int task) {
 			if(task != lastTaskId)
 				return;
 			previousTaskId = lastTaskId;
 			lastTaskId = -1;
+			showDragger(false);
 		}
 
 		@Override
 		public int getLastTaskId() throws RemoteException
 		{
-			// TODO: Implement this method
 			return lastTaskId;
 		}
 		
 		@Override
 		public void toggleDragger(boolean show) throws RemoteException {
-			fd.showDragger(show);
+			showDragger(show);
+		}
+
+		@Override
+		public void updateStatus(int taskId, int status) {
+			//taskId = -1 if it counts for all
+//			if(taskId!=-1&&taskId != lastTaskId)
+//				return;
+			showDragger(status==InterActivity.STATUS_SNAPPED);
 		}
 		
 		@Override
-		public boolean bringToFront(int taskId) throws RemoteException
+		public boolean bringToFront(int taskId, int status) throws RemoteException
 		{
 			if(taskId == lastTaskId)
 				return false;
 			previousTaskId = lastTaskId;
 			lastTaskId = taskId;
+			updateStatus(taskId, status);
 			mContext=getApplicationContext();
 			ActivityManager mActivityManager = (ActivityManager) mContext
 				.getSystemService(Context.ACTIVITY_SERVICE);
