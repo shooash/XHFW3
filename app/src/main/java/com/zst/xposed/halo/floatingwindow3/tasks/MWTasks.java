@@ -550,7 +550,7 @@ public class MWTasks
 	}
 	public WindowTaskHolderFinderResult findWindowTaskHolder(final Window mWindow) {
 		for(Map.Entry<Integer, TaskHolder> mTh : taskStack.entrySet()) {
-			String result = mTh.getValue().findWindowActivityId(mWindow);
+			Integer result = mTh.getValue().findWindowActivityId(mWindow);
 			if(result!=null)
 				return new WindowTaskHolderFinderResult(mTh.getKey(), result);
 		}
@@ -559,8 +559,8 @@ public class MWTasks
 	
 	public class WindowTaskHolderFinderResult {
 		final Integer taskId;
-		final String activityId;
-		public WindowTaskHolderFinderResult(final Integer t, final String s) {
+		final Integer activityId;
+		public WindowTaskHolderFinderResult(final Integer t, final Integer s) {
 			taskId = t;
 			activityId = s;
 		}

@@ -18,7 +18,7 @@ public class TaskHolder
 {
 	//final Activity mActivity;
 	final Context appContext;
-	Map<String, ArrayList<WindowHolder>> activitiesStack = new HashMap<>();
+	Map<Integer, ArrayList<WindowHolder>> activitiesStack = new HashMap<>();
 	//ArrayList<WindowHolder> windowsStack = new ArrayList<>();
 	int taskId;
 	WindowHolder defaultLayout = new WindowHolder();
@@ -104,7 +104,7 @@ public class TaskHolder
 	}
 	
 	public void resume(final Activity mActivity, final Window mWindow ) {
-		syncAllWindows(mActivity.getComponentName().getClassName());
+		syncAllWindows(mActivity.hashCode());
 		setOverlayView(mWindow);
 		if(isSnapped)
 			mOverlay.setWindowBorderFocused();
@@ -125,18 +125,18 @@ public class TaskHolder
 	}
 	
 	public boolean addWindow(final Window mWindow, final Activity mActivity) {
-		String activityClass = mActivity==null?"":mActivity.getComponentName().getClassName();
-		return addWindow(mWindow, activityClass);
+		//String activityClass = mActivity==null?"":mActivity.getComponentName().getClassName();
+		return addWindow(mWindow, mActivity.hashCode());
 		}
 		
-	public boolean addWindow(final Window mWindow, final String activityClass) {
+	public boolean addWindow(final Window mWindow, final Integer activityHash) {
 		ArrayList<WindowHolder> windowsStack;
-		if(mWindow==null ||mWindow.isFloating() || isWindowRegistered(mWindow, activityClass))
+		if(mWindow==null ||mWindow.isFloating() || isWindowRegistered(mWindow, activityHash))
 			return false;
-		if(activitiesStack.containsKey(activityClass))
-			windowsStack = activitiesStack.get(activityClass);
+		if(activitiesStack.containsKey(activityHash))
+			windowsStack = activitiesStack.get(activityHash);
 		else
-			windowsStack = addActivity(activityClass);
+			windowsStack = addActivity(activityHash);
 		WindowHolder mWindowHolder = new WindowHolder(mWindow, defaultLayout);
 		mWindowHolder.pushToWindow();
 		windowsStack.add(mWindowHolder);
@@ -150,15 +150,16 @@ public class TaskHolder
 	}
 	
 	public boolean removeActivity(final Activity mActivity) {
-		activitiesStack.remove(mActivity.getComponentName().getClassName());
+		activitiesStack.remove((Integer) mActivity.hashCode());
+//		activitiesStack.remove(mActivity.getComponentName().getClassName());
 		removeOverlayView(mActivity.getWindow());
 		return activitiesStack.isEmpty();
 	}
 	
-	public ArrayList<WindowHolder> addActivity(final String mActivityClass) {
-		Debugger.DEBUG("addActivity " + mActivityClass);
+	public ArrayList<WindowHolder> addActivity(final Integer mActivityHash) {
+		Debugger.DEBUG("addActivity " + mActivityHash);
 		final ArrayList<WindowHolder> windowsStack = new ArrayList<>();
-		activitiesStack.put(mActivityClass, windowsStack);
+		activitiesStack.put(mActivityHash, windowsStack);
 		return windowsStack;
 	}
 	
@@ -172,7 +173,7 @@ public class TaskHolder
 		}
 		return false;
 	}
-	public boolean isWindowRegistered(final Window mWindow, final String activityClass) {
+	public boolean isWindowRegistered(final Window mWindow, final Integer activityClass) {
 		if(!activitiesStack.containsKey(activityClass))
 			return false;
 		for(WindowHolder mWindowHolder : activitiesStack.get(activityClass)) {
@@ -190,12 +191,12 @@ public class TaskHolder
 //	}
 	
 	public void syncAllWindows() {
-		for(String activityClass : activitiesStack.keySet()) {
+		for(Integer activityClass : activitiesStack.keySet()) {
 			syncAllWindows(activityClass);
 		}
 	}
 	
-	public void syncAllWindows(final String activityClass) {
+	public void syncAllWindows(final Integer activityClass) {
 		for(WindowHolder mWindowHolder : activitiesStack.get(activityClass)) {
 			mWindowHolder.pushToWindow();
 		}
@@ -207,13 +208,13 @@ public class TaskHolder
 	}
 	
 	public void syncAllWindowsAsWindow(final WindowHolder copyLayout) {
-		for(String activityClass : activitiesStack.keySet()) {
+		for(Integer activityClass : activitiesStack.keySet()) {
 			syncAllWindowsAsWindow(copyLayout, activityClass);
 		}
 		defaultLayout.copy(copyLayout);
 	}
 	
-	public void syncAllWindowsAsWindow(final WindowHolder copyLayout, final String activityClass) {
+	public void syncAllWindowsAsWindow(final WindowHolder copyLayout, final Integer activityClass) {
 		for(WindowHolder mWindowHolder : activitiesStack.get(activityClass)) {
 			mWindowHolder.copy(copyLayout);
 			mWindowHolder.pushToWindow();
@@ -225,13 +226,13 @@ public class TaskHolder
 	public void move(int x, int y) {
 		if(isSnapped || isMaximized)
 			return;
-		for(String activityClass : activitiesStack.keySet()) {
+		for(Integer activityClass : activitiesStack.keySet()) {
 			move(x, y, activityClass);
 		}
 		defaultLayout.position(x, y);
 	}
 	
-	public void move(int x, int y, final String activityClass) {
+	public void move(int x, int y, final Integer activityClass) {
 		for(WindowHolder mWindowHolder : activitiesStack.get(activityClass)) {
 			if(mWindowHolder!=null) {
 				mWindowHolder.position(x, y);
@@ -304,7 +305,7 @@ public class TaskHolder
 	}
 	
 	public void maximize() {
-		for(String activityClass : activitiesStack.keySet()) {
+		for(Integer activityClass : activitiesStack.keySet()) {
 			maximize(activityClass);
 		}
 		defaultLayout.setMaximized();
@@ -316,7 +317,7 @@ public class TaskHolder
 		mOverlay.setWindowBorder();
 	}
 	
-	public void maximize(final String activityClass) {
+	public void maximize(final Integer activityClass) {
 		saveLayout();
 		for(WindowHolder mWindowHolder : activitiesStack.get(activityClass)) {
 			if(mWindowHolder!=null) {
@@ -435,8 +436,8 @@ public class TaskHolder
 		XposedHelpers.callMethod(view, "setTagInternal", classes, key, object);
 	}
 	
-	public String findWindowActivityId(final Window mWindow) {
-		for(String id : activitiesStack.keySet()) {
+	public Integer findWindowActivityId(final Window mWindow) {
+		for(Integer id : activitiesStack.keySet()) {
 			if(isWindowRegistered(mWindow, id))
 				return id;
 		}
