@@ -41,8 +41,8 @@ public class Debugger
 		header = "XHFW:" + currentInstanceId + ":" + packageName;
 		msg.add(header + " " + sTag);
 		if(ActivityHooks.taskStack!=null){
-			msg.add(header + "        " + DEBUG_MovableWindow_1());
-			msg.add(header + "        " + DEBUG_MovableWindow_2());
+			//msg.add(header + "        " + DEBUG_MovableWindow_1());
+			//msg.add(header + "        " + DEBUG_MovableWindow_2());
 		}
 		for(String s : msg){
 			log(s);
