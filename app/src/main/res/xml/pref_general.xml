@@ -10,7 +10,7 @@
         android:key="window_movable"
         android:title="Enable movable windows"
         android:enabled="true"/>
-		<com.zst.xposed.halo.floatingwindow3.prefs.IntListPreference
+	<com.zst.xposed.halo.floatingwindow3.prefs.IntListPreference
         android:defaultValue="8193"
         android:entries="@array/option_floating_flags"
         android:entryValues="@array/option_floating_flags_values"
@@ -78,5 +78,15 @@
             android:title="@string/pref_height_landscape_title" 
 			android:dependency="window_maximize_all" />
     </PreferenceCategory>
-    
+    <PreferenceCategory android:title="Debug">
+		<SwitchPreference
+			android:defaultValue="false"
+			android:key="debug_switch"
+			android:title="Debug XHFW3"
+			android:enabled="true"/>
+		<Preference
+			android:title="@string/getLogs"
+			android:key="getLogs"
+			android:dependency="debug_switch"/>
+	</PreferenceCategory>
 </PreferenceScreen>

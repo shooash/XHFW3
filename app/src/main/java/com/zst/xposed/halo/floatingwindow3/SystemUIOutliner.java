@@ -106,7 +106,7 @@ public class SystemUIOutliner {
 	}
 	
 	// show the outline with positioning (x,y)
-	private static void refreshOutlineView(Context ctx, int x, int y, int height, int width) {
+	private static void refreshOutlineView(Context ctx, int x, int y, int width, int height) {
 		if (mOutline == null) {
 			createOutlineView(ctx);
 		}
@@ -125,7 +125,7 @@ public class SystemUIOutliner {
 	}
 	
 	// show the outline with positioning (x,y)
-	private static void refreshOutlineViewFocus(Context ctx, int x, int y, int height, int width) {
+	private static void refreshOutlineViewFocus(Context ctx, int x, int y, int width, int height) {
 		if (mOutlineFocus == null) {
 			createOutlineView(ctx);
 		}

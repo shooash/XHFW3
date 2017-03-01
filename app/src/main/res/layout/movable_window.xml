@@ -187,6 +187,21 @@
             android:scaleType="fitCenter"
             android:src="#FFF"
             android:tag="movable_titlebar_min" />
+		
+		<ImageButton
+            android:id="@+id/movable_titlebar_separate"
+            style="@android:style/Widget.Holo.Button.Borderless"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentTop="true"
+            android:layout_toLeftOf="@+id/movable_titlebar_min"
+            android:adjustViewBounds="true"
+            android:paddingLeft="0dp"
+            android:paddingRight="0dp"
+            android:scaleType="fitCenter"
+            android:src="#FFF"
+            android:tag="movable_titlebar_min" />
 
         <ImageButton
             android:id="@+id/movable_titlebar_more"

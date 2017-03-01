@@ -76,7 +76,7 @@ public class FloatDotActivity extends Activity implements OnSharedPreferenceChan
 			if(mPref.getBoolean(key, Common.DEFAULT_FLOATDOT_SINGLE_COLOR_LAUNCHER))
 				mColor = mPref.getString(Common.KEY_FLOATDOT_COLOR_OUTER2, Common.DEFAULT_FLOATDOT_COLOR_OUTER2);
 			else
-				mColor = mPref.getString(Common.KEY_FLOATDOT_COLOR_INNER2, Common.KEY_FLOATDOT_COLOR_INNER2);		
+				mColor = mPref.getString(Common.KEY_FLOATDOT_COLOR_INNER2, Common.DEFAULT_FLOATDOT_COLOR_INNER2);		
 		}
 		else if(key.equals(Common.KEY_FLOATDOT_SIZE)){
 			size = mPref.getInt(key, Common.DEFAULT_FLOATDOT_SIZE);

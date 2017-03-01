@@ -162,7 +162,7 @@ public class BlacklistActivity extends Activity {
 		Set<String> result = new HashSet<String>();
 		for(Map.Entry<String, ?> E : pkgList.entrySet()){
 			
-			if(E.getValue() instanceof Integer && Util.isFlag(E.getValue(), Common.PACKAGE_BLACKLIST))
+			if(E.getValue() instanceof Integer && Util.isFlag((Integer)E.getValue(), Common.PACKAGE_BLACKLIST))
 				result.add(E.getKey());
 		}
 		return result;

@@ -8,6 +8,7 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam;
 import static de.robv.android.xposed.XposedHelpers.*;
 import android.content.res.*;
 import java.util.*;
+import com.zst.xposed.halo.floatingwindow3.debug.*;
 
 public class MainXposed implements IXposedHookLoadPackage, IXposedHookZygoteInit {
 	
@@ -15,13 +16,20 @@ public class MainXposed implements IXposedHookLoadPackage, IXposedHookZygoteInit
 	public static XSharedPreferences mPref = null;
 	public static XSharedPreferences mPackagesList = null;
 	public static Compatibility.Hooks mCompatibility =  new Compatibility.Hooks();
+	public static String mPackageName = "user";
 	
 
 	
 	@Override
 	public void initZygote(StartupParam startupParam) throws Throwable {
+//		mPref = new XSharedPreferences(Common.THIS_MOD_PACKAGE_NAME, Common.PREFERENCE_MAIN_FILE);
+//		mPref.makeWorldReadable();
+//		mPackagesList = new XSharedPreferences(Common.THIS_MOD_PACKAGE_NAME, Common.PREFERENCE_PACKAGES_FILE);
+//		mPackagesList.makeWorldReadable();
 		try{
-		sModRes = XModuleResources.createInstance(startupParam.modulePath, null);
+		//if(sModRes==null)
+		 	sModRes = XModuleResources.createInstance(startupParam.modulePath, null);
+			
 			}catch(Throwable t){
 				XposedBridge.log("ModuleResources init failed");
 				XposedBridge.log(t);
@@ -30,24 +38,33 @@ public class MainXposed implements IXposedHookLoadPackage, IXposedHookZygoteInit
 	
 	@Override
 	public void handleLoadPackage(final LoadPackageParam lpparam) throws Throwable {
-	if(mPref==null) 
-			mPref = new XSharedPreferences(Common.THIS_MOD_PACKAGE_NAME, Common.PREFERENCE_MAIN_FILE);
-	if(mPackagesList==null)
-			mPackagesList = new XSharedPreferences(Common.THIS_MOD_PACKAGE_NAME, Common.PREFERENCE_PACKAGES_FILE);
+	if(mPref==null){
+		mPref = new XSharedPreferences(Common.THIS_MOD_PACKAGE_NAME, Common.PREFERENCE_MAIN_FILE);
+		mPref.makeWorldReadable();
+	}
 	mPref.reload();
+//		mPackagesList.reload();
+		
+	if(mPackagesList==null){
+		mPackagesList = new XSharedPreferences(Common.THIS_MOD_PACKAGE_NAME, Common.PREFERENCE_PACKAGES_FILE);
+		mPackagesList.makeWorldReadable();
+	}
 	mPackagesList.reload();
+	
+	
 	if(!mPref.getBoolean(Common.KEY_MOVABLE_WINDOW, Common.DEFAULT_MOVABLE_WINDOW)) return;
 	
 	if(lpparam.packageName==null) return;
-	XposedBridge.log("XHFW3 load package " + lpparam.packageName);
+	mPackageName = lpparam.packageName;
+	Debugger.setupDebug();
 	if(lpparam.packageName.equals("android")){
 		try {
 			Class<?> classActivityRecord = findClass("com.android.server.am.ActivityRecord", lpparam.classLoader);
 			if (classActivityRecord != null)
-				SystemHooks.hookActivityRecord(classActivityRecord);
+				AndroidHooks.hookActivityRecord(classActivityRecord);
 			Class<?> classTaskRecord = findClass("com.android.server.am.TaskRecord", lpparam.classLoader);
 			if (classTaskRecord != null)
-				SystemHooks.hookTaskRecord(classTaskRecord);
+				AndroidHooks.hookTaskRecord(classTaskRecord);
 				else
 					XposedBridge.log("Failed to get class TaskRecord");
 //			Class<?> AMS = findClass("com.android.server.am.ActivityManagerService", lpparam.classLoader);
@@ -61,7 +78,7 @@ public class MainXposed implements IXposedHookLoadPackage, IXposedHookZygoteInit
 		try {
 			Class<?> classWMS = findClass("com.android.server.wm.WindowManagerService", lpparam.classLoader);
 			if(classWMS!=null)
-				SystemHooks.removeAppStartingWindow(classWMS);
+				AndroidHooks.removeAppStartingWindow(classWMS);
 		} catch(ClassNotFoundError e){
 			XposedBridge.log("Class com.android.server.wm.WindowManagerService not found in MainXposed");
 		}catch (Throwable e){
@@ -71,7 +88,7 @@ public class MainXposed implements IXposedHookLoadPackage, IXposedHookZygoteInit
 		try{
 			Class<?> classActivityStack = findClass("com.android.server.am.ActivityStack", lpparam.classLoader);
 			if(classActivityStack!=null)
-				SystemHooks.hookActivityStack(classActivityStack);
+				AndroidHooks.hookActivityStack(classActivityStack);
 		} catch(ClassNotFoundError e){
 			XposedBridge.log("Class com.android.server.am.ActivityStack not found in MainXposed");
 		}catch (Throwable e){
@@ -81,7 +98,8 @@ public class MainXposed implements IXposedHookLoadPackage, IXposedHookZygoteInit
 		
 	} else if(!lpparam.packageName.startsWith("com.android.systemui")){
 		try{
-			MovableWindow.hookActivity(lpparam);
+			//MovableWindow.hookActivity(lpparam);
+			ActivityHooks.loadActivityHooks(lpparam);
 		} catch (Throwable t){
 			XposedBridge.log("MovableWindow hook failed");
 			XposedBridge.log(t);
@@ -90,10 +108,10 @@ public class MainXposed implements IXposedHookLoadPackage, IXposedHookZygoteInit
 		try{
 			Class<?> clsAT = findClass("android.app.ActivityThread", lpparam.classLoader);
 			if(clsAT!=null){
-				MovableWindow.fixExceptionWhenResuming(clsAT);
+				ActivityHooks.fixExceptionWhenResuming(clsAT);
 				} 
 			}catch(Throwable t){XposedBridge.log(t);}
-		
+//		
 		// XHFW
 		TestingSettingHook.handleLoadPackage(lpparam);
 		}

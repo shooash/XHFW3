@@ -127,6 +127,20 @@ public class FloatDot
 		mPrefCommunication = true;
 	}
 	
+	public void showDraggerDelayed(final boolean show) {
+//		if(floatDotReceiverRunnable!=null) {
+//			floatDotReceiverHandler.removeCallbacks(floatDotReceiverRunnable);
+//		}
+//		floatDotReceiverRunnable = new Runnable() {
+//			@Override
+//			public void run()
+//			{
+//				showDragger(show);
+//			}
+//		};
+//		floatDotReceiverHandler.postDelayed(floatDotReceiverRunnable, 150);
+	}
+	
 	public void showDragger(boolean show){
 		image.setVisibility(show?View.VISIBLE:View.INVISIBLE);
 		if(mPrefCommunication&&show)
@@ -162,7 +176,12 @@ public class FloatDot
 				@Override
 				public boolean onLongClick(View p1)
 				{
-					mFloatLauncher.showSubMenu(image, mContext, mCoordinates.x, mCoordinates.y-mScreenHeight/2, mCircleDiameter, 0, null, new String[]{"Restart Top Activity as Movable"}, new int[] {mFloatLauncher. ACTION_HALOFY});
+					String mPackageName = Util.getTopAppPackageName(mContext);
+					mFloatLauncher.showSubMenu(image, mContext, mCoordinates.x, mCoordinates.y-mScreenHeight/2, mCircleDiameter, 0, mPackageName,
+						new String[]{mContext.getString(R.string.floatdot_action_movable),
+							mContext.getString(R.string.floatdot_action_fullscreen),
+								(mFloatLauncher.isInFavorites(mPackageName)?mContext.getString(R.string.floatdot_action_unfav):mContext.getString(R.string.floatdot_action_fav))},
+						new int[] {mFloatLauncher.ACTION_HALOFY, mFloatLauncher.ACTION_UNHALOFY, (mFloatLauncher.isInFavorites(mPackageName)?mFloatLauncher.ACTION_REMOVE_FROM_FAVORITES:mFloatLauncher.ACTION_ADD_TO_FAVORITES)});
 					return true;
 				}
 
@@ -191,7 +210,7 @@ public class FloatDot
 	private void menuLauncher(View anchor) {
 		if(mFloatLauncher.dismissedTime+500>SystemClock.uptimeMillis())
 			return;
-		mFloatLauncher.showMenu(paramsF, mCircleDiameter);
+		mFloatLauncher.showMenu(anchor, paramsF, mCircleDiameter);
 	}
 
 	//private void fillMenu(PopupMenu menu)
@@ -292,14 +311,16 @@ public class FloatDot
 		int newOrientation = Util.getScreenOrientation(mContext);
 		if(newOrientation==lastOrientation) return;
 		lastOrientation = newOrientation;
-		WindowManager.LayoutParams lp = (WindowManager.LayoutParams)image.getLayoutParams();
-		int newx = lp.y; // paramsF.y;
-		int newy = lp.x; // paramsF
-		lp.x = newx;
-		lp.y = newy;
-		mCoordinates.x = newx;
-		mCoordinates.y = newy;
-		mWindowManager.updateViewLayout(image, lp);
+//		WindowManager.LayoutParams lp = (WindowManager.LayoutParams)image.getLayoutParams();
+//		int newx = lp.y; // paramsF.y;
+//		int newy = lp.x; // paramsF
+//		lp.x = newx;
+//		lp.y = newy;
+//		mCoordinates.x = newx;
+//		mCoordinates.y = newy;
+		mCoordinates.x = paramsF.y;
+		mCoordinates.y = paramsF.x;
+		updateDot();
 	}
 
 	public void sendPosition(View v){

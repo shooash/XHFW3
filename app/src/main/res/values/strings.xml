@@ -9,6 +9,7 @@
 	<string name="app_maximized">Maximized List</string>
     <string name="app_testing">Testing</string>
     <string name="app_statusbar_taskbar">Statusbar Taskbar</string>
+	<string name="getLogs">Save logs to /sdcard/XHFWlogs</string>
 
 	<!-- Gravity -->
     <string name="option_gravity_1">Top Left Corner</string>
@@ -25,7 +26,8 @@
     <string name="dnm_title">Drag To Move</string>
     <string name="dnm_transparency">Transparency</string>
     <string name="dnm_close_app">Close Window</string>
-    <string name="dnm_minimize">Minimize App</string>
+    <string name="dnm_minimize">Minimize</string>
+	<string name="dnm_maximize">Maximize</string>
     <string name="dnm_snap_window">Snap Window</string>
     <string name="dnm_snap_window_sub1">Snap (Top)</string>
     <string name="dnm_snap_window_sub2">Snap (Bottom)</string>
@@ -324,5 +326,12 @@
 	<string name="pref_floatdot_alpha_title">Transparency</string>
 	<string name="pref_floatdot_launcher_title">Enable FloatDot Launcher</string>
     <string name="pref_floatdot_title">FloatDot settings</string>
-    
+    <string name="floatdot_action_close">Close</string>
+    <string name="floatdot_action_movable">Restart as movable</string>
+    <string name="floatdot_action_fullscreen">Restart as fullscreen</string>
+    <string name="floatdot_action_unfav">Remove from favs</string>
+    <string name="floatdot_action_fav">Add to favs</string>
+    <string name="floatdot_action_movable_top">Restart top app as movable</string>
+    <string name="floatdot_action_fullscreen_top">Restart top app as fullscreen</string>
+
 </resources>

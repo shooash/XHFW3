@@ -19,11 +19,23 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 
 import com.zst.xposed.halo.floatingwindow3.Common;
 import com.zst.xposed.halo.floatingwindow3.R;
+import com.zst.xposed.halo.floatingwindow3.debug.*;
+import com.zst.xposed.halo.floatingwindow3.*;
 
-public class MainFragment extends PreferenceFragment implements OnPreferenceClickListener {
+public class MainFragment extends PreferenceFragment implements OnPreferenceClickListener, OnSharedPreferenceChangeListener
+{
+
+	@Override
+	public void onSharedPreferenceChanged(SharedPreferences p1, String key)
+	{
+		if(key.equals(Common.KEY_DEBUG))
+			InterActivity.sendUpdatePrefsBroadcast(this.getContext());
+	}
+
 	
 	static MainFragment mInstance;
 	SharedPreferences mPref;
@@ -42,7 +54,7 @@ public class MainFragment extends PreferenceFragment implements OnPreferenceClic
 		getPreferenceManager().setSharedPreferencesName(Common.PREFERENCE_MAIN_FILE);
 		getPreferenceManager().setSharedPreferencesMode(PreferenceActivity.MODE_WORLD_READABLE);
 		addPreferencesFromResource(R.xml.pref_general);
-//		findPreference(Common.KEY_KEYBOARD_MODE).setOnPreferenceClickListener(this);
+		findPreference("getLogs").setOnPreferenceClickListener(this);
 //		findPreference(Common.KEY_RESTART_SYSTEMUI).setOnPreferenceClickListener(this);
 //		findPreference(Common.KEY_STATUSBAR_TASKBAR_RESTART_SYSTEMUI).setOnPreferenceClickListener(this);
 //		findPreference(Common.KEY_BLACKLIST_APPS).setOnPreferenceClickListener(this);
@@ -59,7 +71,10 @@ public class MainFragment extends PreferenceFragment implements OnPreferenceClic
 	
 	@Override
 	public boolean onPreferenceClick(Preference p) {
-//		String k = p.getKey();
+		String k = p.getKey();
+		if (k.equals("getLogs")) {
+			GetLogs.saveLogAll();
+		}
 //		if (k.equals(Common.KEY_KEYBOARD_MODE)) {
 //			showKeyboardDialog();
 //			return true;
@@ -107,7 +122,7 @@ public class MainFragment extends PreferenceFragment implements OnPreferenceClic
 					mPref.edit().putInt(Common.KEY_KEYBOARD_MODE, 2).commit();
 				} else if (title.equals(getResources().getString(R.string.keyboard_scale))) {
 					mPref.edit().putInt(Common.KEY_KEYBOARD_MODE, 3).commit();
-				}
+				} 
 				Toast.makeText(getActivity(), title, Toast.LENGTH_SHORT).show();
 				dialog.dismiss();
 			}

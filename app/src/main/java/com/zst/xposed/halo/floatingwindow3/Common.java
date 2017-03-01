@@ -21,6 +21,7 @@ public class Common {
 	public static final int PACKAGE_UNUSED = 16;
 
 	/* Preference keys */
+	public static final String KEY_DEBUG = "debug_switch";
 	public static final String KEY_ALPHA = "window_alpha";
 	public static final String KEY_DIM = "window_dim";
 	public static final String KEY_MAXIMIZE_ALL = "window_maximize_all";
@@ -100,8 +101,10 @@ public class Common {
 	public static final String KEY_FLOATING_FLAG = "floating_flag";
 	public static final String KEY_FORCE_OPEN_ALT_GRAVITY = "window_force_snap";
 	public static final String KEY_MOVE_MAX_RANGE = "move_max_range";
+	public static final String KEY_BUTTONS_LIST = "buttons_list";
 
 	/* Preference defaults */
+	public static final boolean DEFAULT_DEBUG = false;
 	public static final float DEFAULT_ALPHA = 1f;
 	public static final float DEFAULT_DIM = 0.25f;
 	public static final boolean DEFAULT_MAXIMIZE_ALL = false;
@@ -118,7 +121,7 @@ public class Common {
 	public static final boolean DEFAULT_SYSTEM_PREVENT_HOME_TO_FRONT = false;
 	public static final boolean DEFAULT_SYSTEM_RECENTS_LONGPRESS_OPTION = false;
 	public static final boolean DEFAULT_WINDOW_MOVING_RETAIN_START_POSITION = true;
-	public static final boolean DEFAULT_WINDOW_MOVING_CONSTANT_POSITION = true;
+	public static final boolean DEFAULT_WINDOW_MOVING_CONSTANT_POSITION = false; //TODO CHANGE TO TRUE
 	public static final boolean DEFAULT_WINDOW_RESIZING_LIVE_UPDATE = false;
 	public static final boolean DEFAULT_WINDOW_RESIZING_AERO_SNAP_ENABLED = true;
 	public static final int DEFAULT_WINDOW_RESIZING_AERO_SNAP_DELAY = 1000;
@@ -170,7 +173,8 @@ public class Common {
 	public static final boolean DEFAULT_STATUSBAR_TASKBAR_HIDE_ICON = false;
 	public static final int DEFAULT_STATUSBAR_TASKBAR_NUMBER = 5;
 	public static final int DEFAULT_FORCE_OPEN_ALT_GRAVITY = 0;
-	public static final int DEFAULT_MOVE_MAX_RANGE = 50;
+	public static final int DEFAULT_MOVE_MAX_RANGE = 10;
+	public static final String DEFAULT_BUTTONS_LIST = "mts-+x";
 	
 
 	/* Xposed Constants */
@@ -178,7 +182,7 @@ public class Common {
 	public static final String EXTRA_SNAP_SIDE = ORIGINAL_PACKAGE_NAME + ".EXTRA_SNAP_SIDE";
 	public static final String EXTRA_SNAP = ORIGINAL_PACKAGE_NAME + ".EXTRA_SNAP"; //int Gravity flags
 	public static final String REFRESH_APP_LAYOUT = ORIGINAL_PACKAGE_NAME + ".REFRESH_APP_LAYOUT";
-	
+	public static final String REFRESH_APP_PREFS= ORIGINAL_PACKAGE_NAME + ".REFRESH_APP_PREFS";
 
 	/* Others */
 	public static final String LOG_TAG = "XHaloFloatingWindow(SDK: " + Build.VERSION.SDK_INT + ") - ";
@@ -213,6 +217,20 @@ public class Common {
 	public static final int TITLEBAR_ICON_BachMinuetInG = 2;
 	public static final int TITLEBAR_ICON_SSNJR2002 = 3;
 	public static final int TITLEBAR_ICON_DEFAULT = TITLEBAR_ICON_BachMinuetInG;
+	
+	/* Titlebar layouts */
+	public static final int TITLEBAR_LAYOUT_ORIGINAL = 0;
+	public static final String TITLEBAR_LAYOUT_ORIGINAL_BUTTONS = "mt-+x";
+	public static final int TITLEBAR_LAYOUT_ORIGINAL_SEPARATE = 1;
+	public static final String TITLEBAR_LAYOUT_ORIGINAL_SEPARATE_BUTTONS = "mts-+x";
+	public static final int TITLEBAR_LAYOUT_LEFTSIDE = 2;
+	public static final String TITLEBAR_LAYOUT_LEFTSIDE_BUTTONS = "x+-tm";
+	public static final int TITLEBAR_LAYOUT_LEFTSIDE_SEPARATE = 3;
+	public static final String TITLEBAR_LAYOUT_LEFTSIDE_SEPARATE_BUTTONS = "x+-stm";
+	public static final int TITLEBAR_LAYOUT_MINIMAL_LEFT = 4;
+	public static final String TITLEBAR_LAYOUT_MINIMAL_LEFT_BUTTONS = "xtm";
+	public static final int TITLEBAR_LAYOUT_MINIMAL_RIGHT = 5;
+	public static final String TITLEBAR_LAYOUT_MINIMAL_RIGHT_BUTTONS = "mtx";
 
 	/*Floating dot themes */
 	public static final String KEY_FLOATDOT_LAUNCHER_ENABLED = "floatdot_launcher_enabled";
@@ -238,8 +256,12 @@ public class Common {
 	public static final String KEY_FLOATDOT_LAUNCHER_Y = "floatdot_launcher_y";
 	public static final int DEFAULT_FLOATDOT_LAUNCHER_X = 80;
 	public static final int DEFAULT_FLOATDOT_LAUNCHER_Y = 20;
-
+	public static final String UPDATE_FLOATLAUNCHER_PARAMS = "update_floatlauncher_params";
+	public static final String RESTART_ACTIVITY = THIS_MOD_PACKAGE_NAME + "restart_activity";
 	
-
+	/*Overlay and hotspot actions*/
+	public static final int ACTION_DRAG = 1;
+	public static final int ACTION_RESIZE_LEFT = 2;
+	public static final int ACTION_RESIZE_RIGHT = 4;
 	
 }

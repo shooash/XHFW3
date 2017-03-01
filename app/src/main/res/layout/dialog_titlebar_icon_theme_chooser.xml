@@ -151,12 +151,35 @@
 
 	</LinearLayout>
 
+	<TextView
+		android:layout_height="wrap_content"
+		android:textAppearance="?android:attr/textAppearanceLarge"
+		android:layout_width="wrap_content"
+		android:text="Theme"
+		android:id="@+id/themes_title"
+		android:layout_below="@android:id/home"
+		android:layout_centerHorizontal="true"/>
+
 	<ListView
 		android:layout_height="wrap_content"
 		android:layout_width="wrap_content"
 		android:id="@+id/titlebar_themes"
-		android:layout_below="@android:id/home" 
-		/>
+		android:layout_below="@id/themes_title"/>
+
+	<TextView
+		android:layout_height="wrap_content"
+		android:textAppearance="?android:attr/textAppearanceLarge"
+		android:layout_width="wrap_content"
+		android:text="Layout"
+		android:id="@+id/layouts_title"
+		android:layout_below="@id/titlebar_themes"
+		android:layout_centerHorizontal="true"/>
+
+	<ListView
+		android:layout_height="wrap_content"
+		android:layout_width="wrap_content"
+		android:layout_below="@id/layouts_title"
+		android:id="@+id/titlebar_layouts"/>
 
 </RelativeLayout>
 

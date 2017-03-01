@@ -28,6 +28,11 @@ public class XHFWService extends Service {
 	private int[] mColors = new int[4];
 	private int mDotsSize = Common.DEFAULT_FLOATDOT_SIZE;
 	private boolean isLauncherDotEnabled;
+	private int lastTaskId = 0;
+	private int previousTaskId = 0;
+	private Handler floatDotReceiverHandler = new Handler();
+	private Runnable floatDotReceiverRunnable = null;
+	
 
 	@Override
 	public void onCreate()
@@ -37,56 +42,7 @@ public class XHFWService extends Service {
 		mContext = this;
 		mPref = getSharedPreferences(Common.PREFERENCE_MAIN_FILE, MODE_MULTI_PROCESS);
 		isLauncherDotEnabled = mPref.getBoolean(Common.KEY_FLOATDOT_LAUNCHER_ENABLED, Common.DEFAULT_FLOATDOT_LAUNCHER_ENABLED);
-//		mPref.registerOnSharedPreferenceChangeListener(new SharedPreferences.OnSharedPreferenceChangeListener(){
-//
-//				@Override
-//				public void onSharedPreferenceChanged(SharedPreferences prefs, String key)
-//				{
-//					if(key.equals(Common.KEY_FLOATDOT_COLOR_OUTER1)&&fd!=null){
-//						fd.setColor(Color.parseColor("#" + prefs.getString(Common.KEY_FLOATDOT_COLOR_OUTER1, Common.DEFAULT_FLOATDOT_COLOR_OUTER1)), false);
-//						fd.redrawView();
-//					}
-//					else if(key.equals(Common.KEY_FLOATDOT_COLOR_INNER1)&&fd!=null){
-//						fd.setColor(Color.parseColor("#" + prefs.getString(Common.KEY_FLOATDOT_COLOR_INNER1, Common.DEFAULT_FLOATDOT_COLOR_INNER1)), true);
-//						fd.redrawView();
-//					}
-//					else if(key.equals(Common.KEY_FLOATDOT_COLOR_OUTER2)&&ld!=null){
-//						ld.setColor(Color.parseColor("#" + prefs.getString(Common.KEY_FLOATDOT_COLOR_OUTER2, Common.DEFAULT_FLOATDOT_COLOR_OUTER2)), false);
-//						ld.redrawView();
-//					}
-//					else if(key.equals(Common.KEY_FLOATDOT_COLOR_INNER2)&&ld!=null){
-//						ld.setColor(Color.parseColor("#" + prefs.getString(Common.KEY_FLOATDOT_COLOR_INNER2, Common.DEFAULT_FLOATDOT_COLOR_INNER2)), true);
-//						ld.redrawView();
-//					}
-//					else if(key.equals(Common.KEY_FLOATDOT_SIZE)){
-//						if(fd!=null) {
-//							fd.setSize(prefs.getInt(key, Common.DEFAULT_FLOATDOT_SIZE));
-//							fd.redrawView();
-//							}
-//						if(ld!=null) {
-//							ld.setSize(prefs.getInt(key, Common.DEFAULT_FLOATDOT_SIZE));
-//							ld.redrawView();
-//							}
-//					}
-//					else if(key.equals(Common.KEY_FLOATDOT_SINGLE_COLOR_SNAP)&&fd!=null){
-//						if(prefs.getBoolean(key, Common.DEFAULT_FLOATDOT_SINGLE_COLOR_SNAP))
-//							fd.setColor(fd.mColor);
-//						else
-//							fd.setColor(Color.parseColor("#" + prefs.getString(Common.KEY_FLOATDOT_COLOR_INNER1, Common.DEFAULT_FLOATDOT_COLOR_INNER1)), true);
-//						fd.redrawView();
-//					}
-//					else if(key.equals(Common.KEY_FLOATDOT_SINGLE_COLOR_LAUNCHER)&&ld!=null){
-//						if(prefs.getBoolean(key, Common.DEFAULT_FLOATDOT_SINGLE_COLOR_LAUNCHER))
-//							ld.setColor(ld.mColor);
-//						else
-//							ld.setColor(Color.parseColor("#" + prefs.getString(Common.KEY_FLOATDOT_COLOR_INNER2, Common.DEFAULT_FLOATDOT_COLOR_INNER2)), true);
-//						ld.redrawView();
-//					}
-//					//TODO add disable launcher dot
-//				}
-//				
-//			
-//		});
+
 		mFloatLauncher = new FloatLauncher(mContext, mPref.getInt(Common.KEY_FLOATING_FLAG, Common.FLAG_FLOATING_WINDOW));
 		cachedRotation = Util.getDisplayRotation(mContext.getApplicationContext());
 		
@@ -244,19 +200,33 @@ public class XHFWService extends Service {
 			}
 				
 			if(!sIntent.getAction().equals(Common.SHOW_MULTIWINDOW_DRAGGER)) return;
-			boolean show = sIntent.getBooleanExtra(Common.INTENT_FLOAT_DOT_BOOL, false);
-			if(fd!=null) fd.showDragger(show);
-			if(ld!=null) ld.showDragger(!show);
+			showDragger(sIntent.getBooleanExtra(Common.INTENT_FLOAT_DOT_BOOL, false));
+			
 		}
 	};
-	
+
+	private void showDragger(final boolean show) {
+		if(floatDotReceiverRunnable!=null) {
+			floatDotReceiverHandler.removeCallbacks(floatDotReceiverRunnable);
+		}
+		floatDotReceiverRunnable = new Runnable() {
+			@Override
+			public void run()
+			{
+				if(fd!=null) fd.showDragger(show);
+				if(ld!=null) ld.showDragger(!show);
+			}
+		};
+		floatDotReceiverHandler.postDelayed(floatDotReceiverRunnable, 250);
+	}
+
 	private void registerBroadcast(){
 		IntentFilter i = new IntentFilter();
 		i.addAction(Common.SHOW_MULTIWINDOW_DRAGGER);
 		i.addAction(Common.UPDATE_FLOATDOT_PARAMS);
 		registerReceiver(br,i);
 	}
-	
+
 	private final XHFWInterface.Stub mBinder = new XHFWInterface.Stub(){
 
 		@Override
@@ -279,20 +249,51 @@ public class XHFWService extends Service {
 		}
 
 		@Override
+		public boolean focusApp(int taskId, int status) throws RemoteException {
+			if(taskId == lastTaskId)
+				return false;
+			previousTaskId = lastTaskId;
+			lastTaskId = taskId;
+			updateStatus(taskId, status);
+			return true;
+		}
+
+		@Override
+		public void unfocusApp(int task) {
+			if(task != lastTaskId)
+				return;
+			previousTaskId = lastTaskId;
+			lastTaskId = -1;
+			showDragger(false);
+		}
+
+		@Override
 		public int getLastTaskId() throws RemoteException
 		{
-			// TODO: Implement this method
-			return 0;
+			return lastTaskId;
 		}
 		
 		@Override
 		public void toggleDragger(boolean show) throws RemoteException {
-			fd.showDragger(show);
+			showDragger(show);
+		}
+
+		@Override
+		public void updateStatus(int taskId, int status) {
+			//taskId = -1 if it counts for all
+//			if(taskId!=-1&&taskId != lastTaskId)
+//				return;
+			showDragger(status==InterActivity.STATUS_SNAPPED);
 		}
 		
 		@Override
-		public void bringToFront(int taskId) throws RemoteException
+		public boolean bringToFront(int taskId, int status) throws RemoteException
 		{
+			if(taskId == lastTaskId)
+				return false;
+			previousTaskId = lastTaskId;
+			lastTaskId = taskId;
+			updateStatus(taskId, status);
 			mContext=getApplicationContext();
 			ActivityManager mActivityManager = (ActivityManager) mContext
 				.getSystemService(Context.ACTIVITY_SERVICE);
@@ -300,9 +301,9 @@ public class XHFWService extends Service {
 				mActivityManager.moveTaskToFront(taskId, ActivityManager.MOVE_TASK_NO_USER_ACTION);
 			} catch (Exception e) {
 				Log.e("Xposed XHFWService", "Cannot move task to front", e);
-				return;
+				return false;
 			}
-			
+			return true;
 		}
 		
 		
